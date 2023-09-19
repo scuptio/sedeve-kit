@@ -1,0 +1,9 @@
+{
+  "actions":
+  [
+    {"Input":{"source":1,"dest":1,"payload":{"x":1,"y":"xxx1"}}},
+    {"Internal":{"source":2,"dest":2,"payload":{"x":2,"y":"xxx2"}}},
+    {"Output":{"source":3,"dest":3,"payload":{"x":3,"y":"xxx3"}}},
+    {"Input":{"source":4,"dest":4,"payload":{"x":4,"y":"xxx4 "}}}
+  ]
+}

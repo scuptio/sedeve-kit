@@ -1,0 +1,595 @@
+[
+  {
+    "type": "tla_binary_number",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "format",
+          "named": true
+        },
+        {
+          "type": "value",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "tla_boolean",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "tla_conjunction_variable_value",
+    "named": true,
+    "fields": {
+      "conjunction": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "tla_conjunction",
+            "named": true
+          }
+        ]
+      },
+      "tla_variable_value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "tla_variable_value",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "tla_escape_char",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "tla_finite_set",
+    "named": true,
+    "fields": {
+      "tla_finite_set_item_comma_list": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_finite_set_item_comma_list",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "tla_finite_set_item_comma_list",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "tla_value_expr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "tla_function",
+    "named": true,
+    "fields": {
+      "tla_function_comma_list": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_function_comma_list",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "tla_function_comma_list",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "tla_mapping",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "tla_hex_number",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "format",
+          "named": true
+        },
+        {
+          "type": "value",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "tla_mapping",
+    "named": true,
+    "fields": {
+      "tla_map_to": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "tla_map_to",
+            "named": true
+          }
+        ]
+      },
+      "tla_record_field_left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "tla_value_expr",
+            "named": true
+          }
+        ]
+      },
+      "tla_record_field_right": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "tla_value_expr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "tla_number",
+    "named": true,
+    "fields": {
+      "tla_binary_number": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_binary_number",
+            "named": true
+          }
+        ]
+      },
+      "tla_hex_number": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_hex_number",
+            "named": true
+          }
+        ]
+      },
+      "tla_nat_number": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_nat_number",
+            "named": true
+          }
+        ]
+      },
+      "tla_octal_number": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_octal_number",
+            "named": true
+          }
+        ]
+      },
+      "tla_real_number": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_real_number",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "tla_octal_number",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "format",
+          "named": true
+        },
+        {
+          "type": "value",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "tla_record",
+    "named": true,
+    "fields": {
+      "tla_record_item_comma_list": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_record_item_comma_list",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "tla_record_field",
+    "named": true,
+    "fields": {
+      "tla_record_field_left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "tla_variable",
+            "named": true
+          }
+        ]
+      },
+      "tla_record_field_right": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "tla_value_expr",
+            "named": true
+          }
+        ]
+      },
+      "tla_record_variable_map_to_to": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "tla_all_map_to",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "tla_record_item_comma_list",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "tla_record_field",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "tla_sequence",
+    "named": true,
+    "fields": {
+      "tla_sequence_item_comma_list": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_sequence_item_comma_list",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "tla_langle_bracket",
+          "named": true
+        },
+        {
+          "type": "tla_rangle_bracket",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "tla_sequence_item_comma_list",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "tla_value_expr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "tla_state_conjunction_variable_value_list",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "tla_conjunction_variable_value",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "tla_string",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "tla_escape_char",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "tla_value_expr",
+    "named": true,
+    "fields": {
+      "tla_boolean": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_boolean",
+            "named": true
+          }
+        ]
+      },
+      "tla_finite_set": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_finite_set",
+            "named": true
+          }
+        ]
+      },
+      "tla_function": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_function",
+            "named": true
+          }
+        ]
+      },
+      "tla_number": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_number",
+            "named": true
+          }
+        ]
+      },
+      "tla_record": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_record",
+            "named": true
+          }
+        ]
+      },
+      "tla_sequence": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_sequence",
+            "named": true
+          }
+        ]
+      },
+      "tla_string": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_string",
+            "named": true
+          }
+        ]
+      },
+      "tla_variable": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "tla_variable",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "tla_variable_value",
+    "named": true,
+    "fields": {
+      "tla_variable_value_left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "tla_variable",
+            "named": true
+          }
+        ]
+      },
+      "tla_variable_value_right": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "tla_value_expr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "\"",
+    "named": false
+  },
+  {
+    "type": "(",
+    "named": false
+  },
+  {
+    "type": ")",
+    "named": false
+  },
+  {
+    "type": ",",
+    "named": false
+  },
+  {
+    "type": "=",
+    "named": false
+  },
+  {
+    "type": "@@",
+    "named": false
+  },
+  {
+    "type": "FALSE",
+    "named": false
+  },
+  {
+    "type": "TRUE",
+    "named": false
+  },
+  {
+    "type": "[",
+    "named": false
+  },
+  {
+    "type": "\\",
+    "named": false
+  },
+  {
+    "type": "]",
+    "named": false
+  },
+  {
+    "type": "format",
+    "named": true
+  },
+  {
+    "type": "tla_all_map_to",
+    "named": true
+  },
+  {
+    "type": "tla_conjunction",
+    "named": true
+  },
+  {
+    "type": "tla_langle_bracket",
+    "named": true
+  },
+  {
+    "type": "tla_map_to",
+    "named": true
+  },
+  {
+    "type": "tla_nat_number",
+    "named": true
+  },
+  {
+    "type": "tla_rangle_bracket",
+    "named": true
+  },
+  {
+    "type": "tla_real_number",
+    "named": true
+  },
+  {
+    "type": "tla_variable",
+    "named": true
+  },
+  {
+    "type": "value",
+    "named": true
+  },
+  {
+    "type": "{",
+    "named": false
+  },
+  {
+    "type": "}",
+    "named": false
+  }
+]

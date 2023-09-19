@@ -1,0 +1,63 @@
+[[bin]]
+name = "action_player"
+path = "src/action_player/bin/main.rs"
+
+[[bin]]
+name = "rust_gen"
+path = "src/rust_gen/bin/main.rs"
+
+[[bin]]
+name = "trace_gen"
+path = "src/trace_gen/bin/main.rs"
+
+
+[package]
+name = "sedeve-kit"
+version = "0.0.1"
+edition = "2021"
+authors = ["Guo Hua <guohua16@outlook.com>"]
+description = "ScupT Specification-Driven Development Kit"
+repository = "https://github.com/scuptio/sedeve-kit/"
+homepage = "https://github.com/scuptio/"
+documentation = "https://github.com/scuptio/sedeve-kit/README.md"
+readme = "README.md"
+license = "Apache-2.0"
+
+[dependencies]
+tree-sitter-action = { path = "tree-sitter-action" }
+tree-sitter-dot = { path = "tree-sitter-dot" }
+tree-sitter-label-tla = { path = "tree-sitter-label-tla" }
+scupt-util = { git = "https://github.com/scuptio/scupt-util.git" }
+scupt-net = { git = "https://github.com/scuptio/scupt-net.git" }
+
+clap = { version = "4.0.32", features = ["derive"] }
+env_logger = "0.10.0"
+substring = "1.4.5"
+tracing = "0.1.37"
+tracing-subscriber = "0.3.14"
+log = "0.4.17"
+tree-sitter = { git = "https://github.com/scuptio/tree-sitter" }
+project-root = "0.2.2"
+bincode = "2.0.0-rc.3"
+serde = { version = "1.0.151", features = ["derive", "rc"] }
+serde_json = { version = "1.0.107", features = ["std", "arbitrary_precision", "preserve_order"] }
+uuid = "1.2.2"
+rusqlite = { version = "0.29.0", features = ["bundled"] }
+rand = "0.8.5"
+lazy_static = "1.4.0"
+rust-format = "0.3.4"
+scc = "2.0.1"
+tokio = { version = "1.32.0", features = ["full", "tracing"] }
+tokio-util = { version = "0.7.4", features = ["codec"] }
+async-trait = "0.1.58"
+async_fn_traits = "0.1.1"
+byteorder = "1.4.3"
+bytes = "1.2.1"
+futures = "0.3.25"
+serde_bytes = "0.11.7"
+console-subscriber = "0.1.8"
+async-backtrace = "0.2.5"
+once_cell = "1.18.0"
+
+
+

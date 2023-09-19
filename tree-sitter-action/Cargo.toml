@@ -1,0 +1,26 @@
+[package]
+name = "tree-sitter-action"
+description = "action grammar for the tree-sitter parsing library"
+version = "0.0.1"
+keywords = ["incremental", "parsing", "action"]
+categories = ["parsing", "text-editors"]
+repository = "https://github.com/tree-sitter/tree-sitter-action"
+edition = "2018"
+license = "MIT"
+
+build = "bindings/rust/build.rs"
+include = [
+  "bindings/rust/*",
+  "grammar.js",
+  "queries/*",
+  "src/*",
+]
+
+[lib]
+path = "bindings/rust/lib.rs"
+
+[dependencies]
+tree-sitter = { git = "https://github.com/scuptio/tree-sitter" }
+
+[build-dependencies]
+cc = "1.0"

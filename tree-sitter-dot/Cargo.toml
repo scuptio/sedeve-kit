@@ -1,0 +1,27 @@
+[package]
+name = "tree-sitter-dot"
+description = "dot grammar for the tree-sitter parsing library"
+version = "0.0.1"
+keywords = ["incremental", "parsing", "dot"]
+categories = ["parsing", "text-editors"]
+repository = "https://github.com/tree-sitter/tree-sitter-dot"
+edition = "2021"
+license = "MIT"
+
+build = "bindings/rust/build.rs"
+include = [
+    "bindings/rust/*",
+    "grammar.js",
+    "queries/*",
+    "src/*",
+]
+
+[lib]
+path = "bindings/rust/lib.rs"
+
+[dependencies]
+tree-sitter = { git = "https://github.com/scuptio/tree-sitter" }
+
+
+[build-dependencies]
+cc = "1.0"
