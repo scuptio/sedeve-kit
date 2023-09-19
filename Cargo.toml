@@ -1,0 +1,15 @@
+[package]
+name = "sedeve-kit"
+version = "0.0.1"
+edition = "2021"
+authors = ["Guo Hua <guohua16@outlook.com>"]
+description = "S\cupT Specification-Driven Development Kit"
+repository = "https://github.com/scuptio/sedeve-kit/"
+homepage = "https://github.com/scuptio/"
+documentation = "https://github.com/scuptio/sedeve-kit/README.md"
+readme = "README.md"
+license = "Apache-2.0"
+
+
+
+[dependencies]
