@@ -8,7 +8,7 @@ The workflow for building a system using **sedeve-kit**
 
 ![workflow](doc/workflow.png)
 
-## Use the kit
+## Using the kit
 
 [How to start](doc/how_to_start.md)
 
