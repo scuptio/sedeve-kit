@@ -23,10 +23,15 @@ pub const ACTION_SEQUENCE_FIELD_ACTIONS: &str = "a";
 pub const ACTION_SEQUENCE_FIELD_STATES: &str = "s";
 
 
+/// Setup action type in .tla+
 pub const ACTION_TYPE_SETUP: &str = "S";
+/// Check action type in .tla+
 pub const ACTION_TYPE_CHECK: &str = "C";
+/// Input action type in .tla+
 pub const ACTION_TYPE_INPUT: &str = "I";
+/// Output action type in .tla+
 pub const ACTION_TYPE_OUTPUT: &str = "O";
+/// Internal action type in .tla+
 pub const ACTION_TYPE_INTERNAL: &str = "T";
 
 

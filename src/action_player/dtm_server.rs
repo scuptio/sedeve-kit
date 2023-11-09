@@ -38,7 +38,7 @@ pub struct DTMServer {
 }
 
 
-
+/// Deterministic testing player server
 impl DTMServer {
     pub fn new(node_id: NID,
                name: String,

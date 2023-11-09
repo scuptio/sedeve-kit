@@ -12,22 +12,25 @@ use tracing::{debug, error};
 use crate::action_player::action_incoming::ActionIncoming;
 use crate::action_player::dtm_server::DTMServer;
 
-
+/// Deterministic  Player
 pub struct DTMPlayer {
 
 }
 
+/// Option parameters for a testing
 pub struct TestOption {
     /// when wait_both_begin_and_end_action is enable, the DTM player would synchronize all
-    /// begin or end Input/Internal/Output actions, otherwise, only end Input actions, begin Output
-    /// actions, begin/end Internal actions are synchronized.
+    /// begin or end Setup/Check/Input/Internal/Output actions, otherwise,
+    /// only end Setup/Check/Input actions, begin Output actions, begin/end Internal actions are
+    /// synchronized.
     pub wait_both_begin_and_end_action:bool,
 
     /// when output_action_sequential is enable, we do not concern the order of a sequence of output
     /// actions
     pub output_action_sequential:bool,
 
-    /// after `seconds_wait_message_timeout`(default is 30) seconds, report as an inconsistency trace error
+    /// after `seconds_wait_message_timeout`(default is 30) seconds, report as an inconsistency
+    /// trace error
     pub seconds_wait_message_timeout:u64,
 }
 
@@ -68,11 +71,29 @@ impl Default for TestOption {
 
 impl DTMPlayer
 {
+    /// Create a new deterministic player
     pub fn new() -> Self {
         Self {
         }
     }
 
+
+    /// Deterministic run a trace.
+    ///
+    /// `player_node_id` is the node id of the player server
+    ///
+    /// `player_addr` is the network address of the player server
+    ///
+    /// `peers` is a map of the tested node's node id and their network addresses
+    ///
+    /// `action_incoming` is a Arc pointer of ActionIncoming trait which the player can read
+    ///     a sequence of actions(a trace)
+    ///
+    /// `notifier` is a Notifier type to notify stop the service
+    ///
+    /// `option` is option parameters for the testing
+    ///
+    /// `fn_done` invoke when testing finish
     pub fn run_trace<F>(
         player_node_id: NID,
         player_addr: SocketAddr,
@@ -80,7 +101,7 @@ impl DTMPlayer
         action_incoming: Arc<dyn ActionIncoming>,
         notifier: Notifier,
         option:TestOption,
-        f_done: F,
+        fn_done: F,
     ) -> Res<()>
         where F: Fn() + 'static
     {
@@ -124,7 +145,7 @@ impl DTMPlayer
                 }
 
                 debug!("dtm player handle test done");
-                f_done();
+                fn_done();
             };
             spawn_cancelable_task_local_set(
                 &ls,

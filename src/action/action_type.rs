@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use crate::action::action_message::ActionMessage;
 use crate::action::constant;
 
+
+/// Action type definition
 #[derive(
 Clone,
 Serialize,
@@ -16,11 +18,20 @@ Decode,
 Encode,
 )]
 pub enum ActionType {
+    /// Set up and initializes the state of a node
     Setup,
+
+    /// Check the state correctness of a node, used for asserting invariants
     Check,
+
+    /// Represent a node receiving an input message, from a network endpoint or a terminal, for example
     Input,
-    Internal,
+
+    /// Represent a node sending an output message, to a network endpoint or a terminal, for example
     Output,
+
+    /// Represent an internal event in a node
+    Internal,
 }
 
 impl ActionType {
@@ -31,7 +42,6 @@ impl ActionType {
             constant::ACTION_TYPE_INTERNAL => { ActionType::Internal }
             constant::ACTION_TYPE_SETUP => { ActionType::Setup }
             constant::ACTION_TYPE_CHECK => { ActionType::Check }
-
             _ => {panic!("unknown TLA+ action type error")}
         }
     }

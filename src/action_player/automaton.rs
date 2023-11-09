@@ -18,12 +18,13 @@ use crate::action::action_type::ActionType;
 use crate::action_player::async_action_driver::AsyncActionDriver;
 use crate::action_player::dtm_client::DTMClient;
 
-
-pub fn automaton_unset(name: &str,) {
+/// Clean an automaton setting
+pub fn automaton_clear(name: &str,) {
     action_driver_unset_gut(name)
 }
 
-pub fn automaton_setup(
+/// Initialize an automaton setting
+pub fn automaton_init(
     name: &str,
     server_id: NID,
     server_addr: &str
@@ -31,9 +32,228 @@ pub fn automaton_setup(
     action_driver_setup_gut(name, server_id, server_addr);
 }
 
-pub fn automaton_contains(name:&str) -> bool {
+/// Is an automation named `name` enable
+pub fn automaton_enable(name:&str) -> bool {
     __DRIVERS.contains(name)
 }
+
+/// A-synchronize begin an action
+pub async fn automaton_async_begin_action<M: MsgTrait + 'static>(
+    automaton_name: &str,
+    action_type: ActionType,
+    message: Message<M>) {
+    async_action_gut(automaton_name, action_type, message, true).await
+}
+
+/// A-synchronize end an action
+pub async fn automaton_async_end_action<M: MsgTrait + 'static>(
+    automaton_name: &str,
+    action_type: ActionType,
+    message: Message<M>) {
+    async_action_gut(automaton_name, action_type, message, false).await
+}
+
+/// Initialize an automaton.
+/// The automation name is `automaton_name`. And it connect to player whose node id(NID) is
+/// `player_id`, and network address(with string representation) is `player_addr`
+#[macro_export]
+macro_rules! auto_init {
+    (
+        $automaton_name:expr,
+        $player_id:expr,
+        $player_addr:expr
+    ) => {
+        {
+            automaton::automaton_init($automaton_name, $player_id, $player_addr);
+        }
+    };
+}
+
+/// Clear an automaton setting
+#[macro_export]
+macro_rules! auto_clear {
+    (
+        $automaton_name:expr
+    ) => {
+        {
+            automaton::automaton_clear($automaton_name);
+        }
+    };
+}
+
+/// Begin an action
+#[macro_export]
+macro_rules! action_begin {
+    ($automaton_name:expr, $action_type:expr, $message:expr) => {
+        {
+            automaton::automaton_async_begin_action($automaton_name, $action_type, $message).await;
+        }
+    };
+}
+
+/// End an action
+#[macro_export]
+macro_rules! action_end {
+    ($automaton_name:expr, $action_type:expr, $message:expr) => {
+        {
+            automaton::automaton_async_end_action($automaton_name, $action_type, $message).await;
+        }
+    };
+}
+
+/// End a Setup action , alias of `setup_end`
+#[macro_export]
+macro_rules! setup {
+    ($automaton_name:expr,  $message:expr) => {
+        {
+            automaton::automaton_async_end_action($automaton_name, ActionType::Setup, $message).await;
+        }
+    };
+}
+
+/// End a Check action , alias of `check_end`
+#[macro_export]
+macro_rules! check {
+    ($automaton_name:expr,  $message:expr) => {
+        {
+            automaton::automaton_async_end_action($automaton_name, ActionType::Check, $message).await;
+        }
+    };
+}
+
+/// End an Input action , alias of `input_end`
+#[macro_export]
+macro_rules! input {
+    ($automaton_name:expr,  $message:expr) => {
+        {
+            automaton::automaton_async_end_action($automaton_name, ActionType::Input, $message).await;
+        }
+    };
+}
+
+/// End an Output action , alias of `output_end`
+#[macro_export]
+macro_rules! output {
+    ($automaton_name:expr,  $message:expr) => {
+        {
+            automaton::automaton_async_begin_action($automaton_name, ActionType::Output, $message).await;
+        }
+    };
+}
+
+/// Begin a Setup action
+#[macro_export]
+macro_rules! setup_begin {
+    ($automaton_name:expr,  $message:expr) => {
+        {
+            automaton::automaton_async_begin_action($automaton_name, ActionType::Setup, $message).await;
+        }
+    };
+}
+
+/// End a Setup action
+#[macro_export]
+macro_rules! setup_end {
+    ($automaton_name:expr,  $message:expr) => {
+        {
+            automaton::automaton_async_end_action($automaton_name, ActionType::Setup, $message).await;
+        }
+    };
+}
+
+/// Begin a Check action
+#[macro_export]
+macro_rules! check_begin {
+    ($automaton_name:expr,  $message:expr) => {
+        {
+            automaton::automaton_async_begin_action($automaton_name, ActionType::Check, $message).await;
+        }
+    };
+}
+
+
+/// End a Check action
+#[macro_export]
+macro_rules! check_end {
+    ($automaton_name:expr,  $message:expr) => {
+        {
+            automaton::automaton_async_end_action($automaton_name, ActionType::Check, $message).await;
+        }
+    };
+}
+
+/// Begin an Input action
+#[macro_export]
+macro_rules! input_begin {
+    ($automaton_name:expr,  $message:expr) => {
+        {
+            automaton::automaton_async_begin_action($automaton_name, ActionType::Input, $message).await;
+        }
+    };
+}
+
+/// End an Input action
+#[macro_export]
+macro_rules! input_end {
+    ($automaton_name:expr,  $message:expr) => {
+        {
+            automaton::automaton_async_end_action($automaton_name, ActionType::Input, $message).await;
+        }
+    };
+}
+
+/// Begin an Output action
+#[macro_export]
+macro_rules! output_begin {
+    ($automaton_name:expr,  $message:expr) => {
+        {
+            automaton::automaton_async_begin_action($automaton_name, ActionType::Output, $message).await;
+        }
+    };
+}
+
+/// End an Output action
+#[macro_export]
+macro_rules! output_end {
+    ($automaton_name:expr,  $message:expr) => {
+        {
+            automaton::automaton_async_end_action($automaton_name, ActionType::Output, $message).await;
+        }
+    };
+}
+
+/// Begin an Internal action
+#[macro_export]
+macro_rules! internal_begin {
+    ($automaton_name:expr,  $message:expr) => {
+        {
+            automaton::automaton_async_begin_action($automaton_name, ActionType::Internal, $message).await;
+        }
+    };
+}
+
+
+/// End an Internal action
+#[macro_export]
+macro_rules! internal_end {
+    ($automaton_name:expr,  $message:expr) => {
+        {
+            automaton::automaton_async_end_action($automaton_name, ActionType::Internal, $message).await;
+        }
+    };
+}
+
+/// Is an automation enable
+#[macro_export]
+macro_rules! auto_enable {
+    ($automaton_name:expr) => {
+        {
+            automaton::automaton_enable($automaton_name)
+        }
+    };
+}
+
+
 
 fn action_driver_unset_gut(name: &str) {
     let opt = __DRIVERS.get(&name.to_string());
@@ -68,7 +288,7 @@ fn action_driver_setup_gut(
     }
 }
 
- async fn async_action_gut<M: MsgTrait + 'static>(
+async fn async_action_gut<M: MsgTrait + 'static>(
     automaton_name: &str,
     action_type: ActionType,
     message: Message<M>,
@@ -96,198 +316,6 @@ fn action_driver_setup_gut(
                 action.to_serde_json_string().unwrap(), begin, e);
         }
     }
-}
-
-pub async fn automaton_async_begin_action<M: MsgTrait + 'static>(
-    automaton_name: &str,
-    action_type: ActionType,
-    message: Message<M>) {
-    async_action_gut(automaton_name, action_type, message, true).await
-}
-
-
-pub async fn automaton_async_end_action<M: MsgTrait + 'static>(
-    automaton_name: &str,
-    action_type: ActionType,
-    message: Message<M>) {
-    async_action_gut(automaton_name, action_type, message, false).await
-}
-
-#[macro_export]
-macro_rules! auto_init {
-    (
-        $automaton_name:expr,
-        $server_id:expr,
-        $server_addr:expr
-    ) => {
-        {
-            automaton::automaton_setup($automaton_name, $server_id, $server_addr);
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! auto_clear {
-    (
-        $automaton_name:expr
-    ) => {
-        {
-            automaton::automaton_unset($automaton_name);
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! action_begin {
-    ($automaton_name:expr, $action_type:expr, $message:expr) => {
-        {
-            automaton::automaton_async_begin_action($automaton_name, $action_type, $message).await;
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! action_end {
-    ($automaton_name:expr, $action_type:expr, $message:expr) => {
-        {
-            automaton::automaton_async_end_action($automaton_name, $action_type, $message).await;
-        }
-    };
-}
-
-
-#[macro_export]
-macro_rules! setup {
-    ($automaton_name:expr,  $message:expr) => {
-        {
-            automaton::automaton_async_end_action($automaton_name, ActionType::Setup, $message).await;
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! check {
-    ($automaton_name:expr,  $message:expr) => {
-        {
-            automaton::automaton_async_end_action($automaton_name, ActionType::Check, $message).await;
-        }
-    };
-}
-#[macro_export]
-macro_rules! input {
-    ($automaton_name:expr,  $message:expr) => {
-        {
-            automaton::automaton_async_end_action($automaton_name, ActionType::Input, $message).await;
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! output {
-    ($automaton_name:expr,  $message:expr) => {
-        {
-            automaton::automaton_async_begin_action($automaton_name, ActionType::Output, $message).await;
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! setup_begin {
-    ($automaton_name:expr,  $message:expr) => {
-        {
-            automaton::automaton_async_begin_action($automaton_name, ActionType::Setup, $message).await;
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! setup_end {
-    ($automaton_name:expr,  $message:expr) => {
-        {
-            automaton::automaton_async_end_action($automaton_name, ActionType::Setup, $message).await;
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! check_begin {
-    ($automaton_name:expr,  $message:expr) => {
-        {
-            automaton::automaton_async_begin_action($automaton_name, ActionType::Check, $message).await;
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! check_end {
-    ($automaton_name:expr,  $message:expr) => {
-        {
-            automaton::automaton_async_end_action($automaton_name, ActionType::Check, $message).await;
-        }
-    };
-}
-#[macro_export]
-macro_rules! input_begin {
-    ($automaton_name:expr,  $message:expr) => {
-        {
-            automaton::automaton_async_begin_action($automaton_name, ActionType::Input, $message).await;
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! input_end {
-    ($automaton_name:expr,  $message:expr) => {
-        {
-            automaton::automaton_async_end_action($automaton_name, ActionType::Input, $message).await;
-        }
-    };
-}
-
-
-#[macro_export]
-macro_rules! output_begin {
-    ($automaton_name:expr,  $message:expr) => {
-        {
-            automaton::automaton_async_begin_action($automaton_name, ActionType::Output, $message).await;
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! output_end {
-    ($automaton_name:expr,  $message:expr) => {
-        {
-            automaton::automaton_async_end_action($automaton_name, ActionType::Output, $message).await;
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! internal_begin {
-    ($automaton_name:expr,  $message:expr) => {
-        {
-            automaton::automaton_async_begin_action($automaton_name, ActionType::Internal, $message).await;
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! internal_end {
-    ($automaton_name:expr,  $message:expr) => {
-        {
-            automaton::automaton_async_end_action($automaton_name, ActionType::Internal, $message).await;
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! automaton_enable {
-    ($automaton_name:expr) => {
-        {
-            automaton::automaton_contains($automaton_name)
-        }
-    };
 }
 
 unsafe impl Sync for __ActionDriver {}

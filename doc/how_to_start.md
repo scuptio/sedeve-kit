@@ -47,13 +47,13 @@ A trace is a finite sequence of actions. An action is a step of state transition
 The action types include:
 
 
-| Action Type	  | Description of Action Type 	                                                                 |
-|---------------|----------------------------------------------------------------------------------------------|
-| Setup         | Set up and initializes the state of a node                                                   |
-| Check         | Check the state correctness of a node, used for asserting invariants                         |
-| Input         | Represent a node receiving an input message, from the network or a terminal, for example     |
-| Output        | Represent a node sending an output message, to a network endpoint or a terminal, for example |
-| Internal      | Represent an internal event in a node                                                        |
+| Action Type	  | Description of Action Type 	                                                                    |
+|---------------|-------------------------------------------------------------------------------------------------|
+| Setup         | Set up and initializes the state of a node                                                      |
+| Check         | Check the state correctness of a node, used for asserting invariants                            |
+| Input         | Represent a node receiving an input message, from a network endpoint or a terminal, for example |
+| Output        | Represent a node sending an output message, to a network endpoint or a terminal, for example    |
+| Internal      | Represent an internal event in a node                                                           |
 
 
 Use the [trace-gen](../src/trace_gen/bin/main.rs) to traversal dot file(like [this dot file](../src/data/toolbox_dump.dot)) 

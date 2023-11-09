@@ -10,6 +10,7 @@ use serde_json::Value;
 use crate::action::action_message::ActionMessage;
 use crate::action::res_serde::res_serde;
 
+/// Trace definition
 #[derive(
 Clone,
 Serialize,
