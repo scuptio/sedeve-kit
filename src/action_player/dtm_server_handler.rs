@@ -297,6 +297,14 @@ impl  DTMServerHandler {
         // store node id when finding the first input action
         let mut found_input_action : HashSet<NID> = HashSet::new();
 
+        // get the max index in trace
+        let max_index = match trace.last() {
+            Some((_, index)) => {
+                assert!(*index > 0);
+                *index - 1
+            },
+            None => 0
+        };
         for (value, num) in trace {
             i += 1;
             assert!(num >= 1);
@@ -380,6 +388,8 @@ impl  DTMServerHandler {
                 }
             }
         }
+        // synchronize and wait for all actions done
+        waiter.wait_finish_prefix(max_index).await;
         Ok(())
     }
 
