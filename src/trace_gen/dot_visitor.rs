@@ -12,13 +12,14 @@ use tree_sitter::Node;
 
 use crate::action::constant::{ACTION_LABEL, LABEL, LOGICAL_CONJUNCTION};
 use crate::action::tal_vars_parser::TLAVarsParser;
-use crate::trace_gen::action_exec::{ActionGraph, ActionNode};
+use crate::trace_gen::action_graph::ActionGraph;
 use crate::trace_gen::context_string::node_context_string;
-use crate::trace_gen::{dot_ast};
+use crate::trace_gen::dot_ast;
 use crate::trace_gen::dot_ast::NodeId;
 use crate::trace_gen::graph_util::adj_add_new_edge;
 use crate::action::tla_ast;
 use crate::action::tla_var_list_visitor::TLAVarListVisitor;
+use crate::trace_gen::action_node::ActionNode;
 
 pub struct DotVisitor {
     text: String,
@@ -41,7 +42,7 @@ impl DotVisitor {
         }
     }
 
-    pub fn action_graph(&mut self) -> ActionGraph {
+    pub fn action_graph(&mut self) -> ActionGraph<i64, ActionNode> {
         let mut node = HashMap::new();
         let mut adj = HashMap::new();
         std::mem::swap(&mut self.action_node_json, &mut node);
@@ -560,8 +561,8 @@ impl DotVisitor {
             let opt_node = self.action_node_json.get_mut(&left_id);
             match opt_node {
                 None => {}
-                Some(node) => {
-                    node.add_sub_link(right_id.clone());
+                Some(_node) => {
+
                 }
             }
             adj_add_new_edge(&mut self.adj, &left_id, &right_id);

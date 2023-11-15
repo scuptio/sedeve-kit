@@ -87,8 +87,15 @@ pub const __TEST_TLA_ACTION_VARIABLE_CONST: &str = r###"
 
 lazy_static! {
 pub static ref  __TEST_NODE_ID_MAP : HashMap<String, Value> = HashMap::from(
-    [("A_n1".to_string(), Value::Number(Number::from(1))),
+    [
+        ("A_n1".to_string(), Value::Number(Number::from(1))),
         ("A_n2".to_string(), Value::Number(Number::from(2))),
-        ("NULL_VALUE".to_string(), Value::Null)]
+        ("A_n3".to_string(), Value::Number(Number::from(3))),
+        ("A_v1".to_string(), Value::Number(Number::from(1))),
+        ("A_v2".to_string(), Value::Number(Number::from(2))),
+        ("A_v3".to_string(), Value::Number(Number::from(3))),
+        ("NULL_VALUE".to_string(), Value::Null),
+        ("INVALID_NODE_ID".to_string(), Value::Null)
+    ]
 );
 }

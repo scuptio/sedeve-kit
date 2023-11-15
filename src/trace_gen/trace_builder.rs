@@ -1,11 +1,11 @@
 // convert TLA+ output json to action serde json
 
 
+use scupt_util::error_type::ET;
 use scupt_util::res::Res;
-use scupt_util::res_of::res_option;
 use serde_json::Value;
 
-use tracing::trace;
+use tracing::{error, trace};
 use uuid::Uuid;
 use crate::action::tla_actions::TLAActionSeq;
 use crate::trace_gen::trace_db::{TraceDB, TraceDBTrans};
@@ -38,7 +38,7 @@ impl TraceBuilder {
         Self::build_gut(db_path, remove_intermediate)
     }
 
-    fn add_trace_to_db(trans:&mut TraceDBTrans, id:String, trace_path:Vec<i64>, trace:Vec<Value>) -> Res<()> {
+    fn add_trace_to_db(trans:&mut TraceDBTrans, id:String, trace_path:Vec<String>, trace:Vec<Value>) -> Res<()> {
         if !trace.is_empty() {
             let s = serde_json::to_string_pretty(&trace).unwrap();
             trans.insert_trace(id.to_string(), trace_path.clone(), s)?;
@@ -64,22 +64,34 @@ impl TraceBuilder {
             let mut path = vec![];
 
             for i in 0..path_vec.len() {
-                let v_id = path_vec[i];
+                let v_id = path_vec[i].clone();
 
                 let opt = map.get(&v_id);
-                let s = res_option(opt)?;
+                let s = match opt {
+                    Some(s) => { s }
+                    None => {
+                        error!("no such vertex ID {} in the graph", v_id);
+                        return Err(ET::NoSuchElement);
+                    }
+                };
                 let tla_action_seq = TLAActionSeq::from_str(s)?;
                 let continuous_trace = if i > 0 {
-                    let v_id1 = path_vec[i - 1];
+                    let v_id1 = path_vec[i - 1].clone();
                     let opt1 = map.get(&v_id1);
-                    let s1 = res_option(opt1)?;
+                    let s1 = match opt1 {
+                        Some(s) => { s }
+                        None => {
+                            error!("no such vertex ID {} in the graph", v_id1);
+                            return Err(ET::NoSuchElement);
+                        }
+                    };
                     let tla_action_seq1 = TLAActionSeq::from_str(s1)?;
                     tla_action_seq1.id.eq(&tla_action_seq.id_prev)
                 } else {
                     true
                 };
                 if continuous_trace {
-                    path.push(v_id);
+                    path.push(v_id.clone());
                     for action in tla_action_seq.actions() {
                         let json_value = action.to_action_json()?;
                         trace.push(json_value.action_json_value());

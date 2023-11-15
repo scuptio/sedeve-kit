@@ -3,13 +3,13 @@
 
 pub mod trace_builder;
 pub mod trace_reader;
-pub mod dot2case;
+pub mod gen_case;
 pub mod trace_db;
 
 pub mod read_json;
 
-mod parse_dot;
-mod action_exec;
+mod graph_from_parse_dot;
+mod action_graph;
 mod dot_ast;
 mod dot_parser;
 mod dot_visitor;
@@ -27,3 +27,7 @@ mod subgraph_path;
 mod test_to_trace;
 mod test_dot_to_case;
 mod test_trace_reader;
+mod to_json_value;
+mod action_node;
+mod graph_from_read_state_db;
+mod test_state_db_to_case;

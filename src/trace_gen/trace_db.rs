@@ -96,7 +96,7 @@ impl <'c> TraceDBTrans<'c> {
 
         let r = self.transaction.execute(
             "create table action (
-                        id integer not null,
+                        id text not null,
                         action_json text not null
                         )",
                 (), // empty list of parameters.
@@ -189,7 +189,7 @@ impl <'c> TraceDBTrans<'c> {
         res_sqlite(self.transaction.commit())
     }
 
-    pub fn insert_path( &mut self, path:Vec<i64>) -> Res<()> {
+    pub fn insert_path( &mut self, path:Vec<String>) -> Res<()> {
         let opt_r = serde_json::to_value(path);
         let s = res_parse(opt_r)?;
         let id = Uuid::new_v4();
@@ -199,14 +199,14 @@ impl <'c> TraceDBTrans<'c> {
         Ok(())
     }
 
-    pub fn insert_action( &mut self, id:i64, action:Value) -> Res<()> {
+    pub fn insert_action( &mut self, id:String, action:Value) -> Res<()> {
         let stmt  = Self::opt_stmt(&mut self.stmt_insert_action)?;
         let r = stmt.execute(params!(id.to_string(), action.to_string()));
         let _ = res_sqlite(r);
         Ok(())
     }
 
-    pub fn insert_trace( &mut self, id:String, path:Vec<i64>, trace:String) -> Res<()> {
+    pub fn insert_trace( &mut self, id:String, path:Vec<String>, trace:String) -> Res<()> {
         let opt_r = serde_json::to_value(path);
         let s = res_parse(opt_r)?;
         let stmt  = Self::opt_stmt(&mut self.stmt_insert_trace)?;
@@ -228,7 +228,7 @@ impl <'c> TraceDBTrans<'c> {
         Ok(path_vec)
     }
 
-    pub fn path_vec(&mut self) -> Res<Vec<(String, Vec<i64>)>> {
+    pub fn path_vec(&mut self) -> Res<Vec<(String, Vec<String>)>> {
         let stmt = Self::opt_stmt(&mut self.stmt_select_path)?;
         let mut path_vec = vec![];
         let r_rows = stmt.query([]);
@@ -238,7 +238,7 @@ impl <'c> TraceDBTrans<'c> {
             let id: String = res_sqlite(row.get(0))?;
             let json_value: String = res_sqlite(row.get(1))?;
             let r = serde_json::from_str(json_value.as_str());
-            let vec: Vec<i64> = match r {
+            let vec: Vec<String> = match r {
                 Ok(value) => { value }
                 Err(e) => { return Err(ET::JSONError(e.to_string())); }
             };
@@ -250,7 +250,7 @@ impl <'c> TraceDBTrans<'c> {
 
     pub fn action_map(
         &mut self,
-    ) -> Res<HashMap<i64, String>>
+    ) -> Res<HashMap<String, String>>
     {
         let mut map = HashMap::new();
         let statement = Self::opt_stmt(&mut self.stmt_select_action)?;
@@ -285,6 +285,4 @@ impl <'c> TraceDBTrans<'c> {
             None => { Err(ET::NoneOption)}
         }
     }
-
-
 }

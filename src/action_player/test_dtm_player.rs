@@ -45,14 +45,14 @@ mod test {
     #[test]
     fn test_dtm_player_check_all() {
         set_panic_hook();
-        logger_setup("debug");
+        logger_setup("info");
         run_test(3, 4, 5, 18000, true);
     }
 
     #[test]
     fn test_dtm_player_no_check() {
         set_panic_hook();
-        logger_setup("debug");
+        logger_setup("info");
         run_test(3, 4, 5, 19000, false);
     }
 

@@ -14,3 +14,7 @@ pub mod trace;
 mod test_action;
 mod res_serde;
 pub mod panic;
+mod tla_value_kind;
+pub mod tla_typed_value;
+mod test_tla_typed_value;
+

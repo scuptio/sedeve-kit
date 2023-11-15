@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use clap::Parser;
 use scupt_util::init_logger::logger_setup;
-use sedeve_kit::trace_gen::dot2case::dot_to_case;
+use sedeve_kit::trace_gen::gen_case::{DataInput, gen_case};
 use sedeve_kit::trace_gen::read_json;
 
 
@@ -17,7 +17,11 @@ enum TestType {
 struct Args {
     /// Path of the TLA+ output .dot file
     #[arg(short, long)]
-    dot_path: String,
+    dot_path: Option<String>,
+
+    /// Path of the state sqlite DB file
+    #[arg(short, long)]
+    state_db_path: Option<String>,
 
     /// Type name of the actions
     #[arg(short, long)]
@@ -42,19 +46,27 @@ fn main() {
         Err(e) => { panic!("read from dict json file error: {}", e.to_string()); }
     };
 
-    let dump_path: String = args.dot_path;
+    let dump_path: Option<String> = args.dot_path;
+    let state_db_path : Option<String>  = args.state_db_path;
 
+    let path_input = if dump_path.is_some() {
+        DataInput::DotFile(dump_path.unwrap())
+    } else if state_db_path.is_some() {
+        DataInput::StateDB(state_db_path.unwrap())
+    } else {
+        panic!("no input path");
+    };
 
-    let path_buf_dot = PathBuf::from(dump_path.clone());
-    if !path_buf_dot.exists() {
-        panic!("no such dot file {:?}", path_buf_dot);
+    let path_buf = PathBuf::from(path_input.path());
+    if !path_buf.exists() {
+        panic!("no such dot file {:?}", path_buf);
     }
-    let file_name = path_buf_dot.file_name().unwrap().to_str().unwrap().to_string();
+    let file_name = path_buf.file_name().unwrap().to_str().unwrap().to_string();
 
-    let path = match &args.out_db_path {
+    let path_output = match &args.out_db_path {
         Some(path) => { path.clone() }
         None => {
-            let output_sqlite_path = match path_buf_dot.parent() {
+            let output_sqlite_path = match path_buf.parent() {
                 None => {
                     panic!("error path parent");
                 }
@@ -66,5 +78,5 @@ fn main() {
         }
     };
 
-    dot_to_case(dump_path, path, args.remove_intermediate, dict).unwrap();
+    gen_case(path_input,path_output, args.remove_intermediate, dict).unwrap();
 }

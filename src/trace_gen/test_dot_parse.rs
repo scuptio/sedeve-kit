@@ -3,7 +3,8 @@ mod tests {
     use std::collections::HashMap;
     use scupt_util::init_logger;
     use crate::data::path::test::test_data_path;
-    use crate::trace_gen::parse_dot::parse_dot;
+    use crate::trace_gen::graph_find_path::gen_new_vertex_id;
+    use crate::trace_gen::graph_from_parse_dot::parse_dot;
 
     #[test]
     fn test_parse_dot() {
@@ -13,6 +14,7 @@ mod tests {
         match r {
             Ok(actions) => {
                 let _r = actions.handle_action(
+                    &gen_new_vertex_id,
                     &|_v|
                         {
 

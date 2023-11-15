@@ -1,45 +1,32 @@
 use std::collections::{HashMap, HashSet};
+use std::fmt::Debug;
+use std::hash::Hash;
 use std::time::Instant;
 
 use scupt_util::res::Res;
 use serde_json::Value;
 use tracing::{error, info, trace};
 
-use crate::trace_gen::graph_find_path::{gen_new_vertex_id, graph_find_path};
 
-pub struct ActionNode {
-    json_value: Value,
-    sub: HashSet<i64>,
+use crate::trace_gen::graph_find_path::graph_find_path;
+use crate::trace_gen::to_json_value::ToJsonValue;
+
+pub struct ActionGraph<
+    K:Eq + Hash + Clone + Ord + Debug + ToString,
+    V:ToJsonValue + 'static,
+> {
+    node: HashMap<K, V>,
+    adj: HashMap<K, Vec<K>>,
 }
 
-impl ActionNode {
-    pub fn new(value: Value) -> Self {
-        Self {
-            json_value: value,
-            sub: Default::default(),
-        }
-    }
-
-    pub fn add_sub_link(&mut self, id: i64) {
-        let _ = self.sub.insert(id);
-    }
-
-
-    pub fn json_value(&self) -> &Value {
-        &self.json_value
-    }
-
-}
-
-pub struct ActionGraph {
-    node: HashMap<i64, ActionNode>,
-    adj: HashMap<i64, Vec<i64>>,
-}
-
-impl ActionGraph {
+impl <
+    K:Eq + Hash + Clone + Ord + Debug + ToString,
+    V:ToJsonValue + 'static,
+>
+ActionGraph<K, V> {
     pub fn new(
-        node: HashMap<i64, ActionNode>,
-        adj: HashMap<i64, Vec<i64>>,
+        node: HashMap<K, V>,
+        adj: HashMap<K, Vec<K>>,
     ) -> Self {
         Self {
             node,
@@ -47,31 +34,31 @@ impl ActionGraph {
         }
     }
 
-    pub fn handle_action<FP, FV>(
+    pub fn handle_action<NV, FP, FV>(
         &self,
+        fn_new_vertex: &NV,
         fn_handle_path: &FP,
         fn_handle_json_value: &FV,
     ) -> Res<()>
         where
+            // create a new vertex ID not in set
+            NV: Fn(&HashSet<K>) -> K,
             // on finding a path
-            FP: Fn(Vec<i64>),
+            FP: Fn(Vec<K>),
             // on finding an action
-            FV: Fn(i64, Value),
-    {
-        let fn_new_vertex = |s: &HashSet<i64>| -> i64 {
-            gen_new_vertex_id(s)
-        };
+            FV: Fn(K, Value),
 
-        let fn_find_scc = |s: &HashMap<i64, Vec<i64>>, i: &i64| {
-            trace!("find scc {}, {:?}", i, s);
+    {
+        let fn_find_scc = |s: &HashMap<K, Vec<K>>, i: &K| {
+            trace!("find scc {:?}, {:?}", i, s);
         };
         let adj = self.adj.clone();
-        let fn_find_path = |v: Vec<i64>| {
+        let fn_find_path = |v: Vec<K>| {
             trace!("find path {:?}", v);
             for i in 0..v.len() {
                 if i + 1 < v.len() {
-                    let id1 = v[i];
-                    let id2 = v[i + 1];
+                    let id1 = v[i].clone();
+                    let id2 = v[i + 1].clone();
                     let opt_v = adj.get(&id1);
                     match opt_v {
                         Some(_v) => {
@@ -83,7 +70,7 @@ impl ActionGraph {
                                 }
                             }
                             if !ok {
-                                error!("not adjacent {} {}", id1, id2);
+                                error!("not adjacent {:?} {:?}", id1, id2);
                                 panic!("todo");
                             }
                         }
@@ -100,7 +87,7 @@ impl ActionGraph {
         let start = Instant::now();
 
         for (id, action) in self.node.iter() {
-            fn_handle_json_value(id.clone(), action.json_value().clone());
+            fn_handle_json_value(id.clone(), action.to_json_value());
         }
         let duration = start.elapsed();
         info!("Time elapsed write json value : {:?}", duration);
