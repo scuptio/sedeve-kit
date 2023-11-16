@@ -29,5 +29,5 @@ mod test_dot_to_case;
 mod test_trace_reader;
 mod to_json_value;
 mod action_node;
-mod from_read_state_db;
+pub mod from_read_state_db;
 mod test_state_db_to_case;
