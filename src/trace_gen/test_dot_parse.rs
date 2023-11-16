@@ -4,7 +4,7 @@ mod tests {
     use scupt_util::init_logger;
     use crate::data::path::test::test_data_path;
     use crate::trace_gen::graph_find_path::gen_new_vertex_id;
-    use crate::trace_gen::from_parse_dot::parse_dot;
+    use crate::trace_gen::action_from_parse_dot::parse_dot;
 
     #[test]
     fn test_parse_dot() {

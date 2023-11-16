@@ -12,8 +12,8 @@ use uuid::Uuid;
 
 use crate::trace_gen::action_graph::ActionGraph;
 use crate::trace_gen::graph_find_path::gen_new_vertex_id;
-use crate::trace_gen::from_parse_dot::parse_dot;
-use crate::trace_gen::from_read_state_db::read_from_state_db;
+use crate::trace_gen::action_from_parse_dot::parse_dot;
+use crate::trace_gen::action_from_state_db::graph_read_actions_from_state_db;
 use crate::trace_gen::to_json_value::ToJsonValue;
 use crate::trace_gen::trace_db::TraceDB;
 use crate::trace_gen::trace_builder::TraceBuilder;
@@ -57,7 +57,7 @@ pub fn gen_case(
             info!("Time elapsed to generate action trace, time costs: {:?}",  duration);
         }
         DataInput::StateDB(path) => {
-            let action_graph = read_from_state_db(path.clone(), dict)?;
+            let action_graph = graph_read_actions_from_state_db(path.clone(), dict)?;
             let duration = inst.elapsed();
 
             info!("Time elapsed to read from state DB {}, time costs: {:?}", path, duration);

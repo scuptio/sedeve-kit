@@ -13,8 +13,8 @@ use crate::trace_gen::graph_util::adj_add_new_edge;
 use crate::trace_gen::to_json_value::ToJsonValue;
 
 
-pub fn read_actions_from_state_db<F>(path:String,  dict: &HashMap<String, Value>, fn_handle_action:&F)
-    -> Res<()>
+pub fn read_actions<F>(path:String, dict: &HashMap<String, Value>, fn_handle_action:&F)
+                       -> Res<()>
     where F: Fn(Value) -> Res<()>,
 {
     let conn = res_sqlite(Connection::open(path))?;
@@ -29,7 +29,7 @@ pub fn read_actions_from_state_db<F>(path:String,  dict: &HashMap<String, Value>
     Ok(())
 }
 
-pub fn read_from_state_db(path:String, dict: HashMap<String, Value>) -> Res<ActionGraph<String, ActionNode>> {
+pub fn graph_read_actions_from_state_db(path:String, dict: HashMap<String, Value>) -> Res<ActionGraph<String, ActionNode>> {
     let mut adj = HashMap::new();
     let nodes : RefCell<HashMap<String, ActionNode>> = RefCell::new(HashMap::new());
 
@@ -40,7 +40,7 @@ pub fn read_from_state_db(path:String, dict: HashMap<String, Value>) -> Res<Acti
         Ok(())
     };
 
-    read_actions_from_state_db(path, &dict, &f)?;
+    read_actions(path, &dict, &f)?;
 
     let nodes = nodes.into_inner();
     for (_k, v) in nodes.iter() {

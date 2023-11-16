@@ -8,7 +8,7 @@ pub mod trace_db;
 
 pub mod read_json;
 
-mod from_parse_dot;
+mod action_from_parse_dot;
 mod action_graph;
 mod dot_ast;
 mod dot_parser;
@@ -29,5 +29,5 @@ mod test_dot_to_case;
 mod test_trace_reader;
 mod to_json_value;
 mod action_node;
-pub mod from_read_state_db;
+pub mod action_from_state_db;
 mod test_state_db_to_case;

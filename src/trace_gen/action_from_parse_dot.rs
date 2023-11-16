@@ -16,11 +16,11 @@ use crate::trace_gen::dot_parser::DotParser;
 pub fn parse_dot(path: String, dict: HashMap<String, Value>) -> Res<ActionGraph<i64, ActionNode>> {
     let read_result = read_to_string(path);
     let dot = res_io(read_result)?;
-    let action_graph = parse_from_dot_text(dot, dict)?;
+    let action_graph = parse_dot_text(dot, dict)?;
     Ok(action_graph)
 }
 
-fn parse_from_dot_text(text: String, dict: HashMap<String, Value>) -> Res<ActionGraph<i64, ActionNode>> {
+fn parse_dot_text(text: String, dict: HashMap<String, Value>) -> Res<ActionGraph<i64, ActionNode>> {
     let mut dot_parser = DotParser::new();
 
     let tree = dot_parser.parse(&text)?;
