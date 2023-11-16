@@ -4,7 +4,6 @@ use rusqlite::Connection;
 use scupt_util::res::Res;
 use scupt_util::res_of::{res_parse, res_sqlite};
 use serde_json::Value;
-use tracing::info;
 use crate::action::tla_actions::TLAActionSeq;
 use crate::action::tla_typed_value::get_typed_value;
 use crate::trace_gen::action_graph::ActionGraph;
@@ -46,9 +45,6 @@ pub fn graph_read_actions_from_state_db(path:String, dict: HashMap<String, Value
     for (_k, v) in nodes.iter() {
         let prev_id = TLAActionSeq::field_prev_state_id(&v.to_json_value())?;
         let id = TLAActionSeq::field_state_id(&v.to_json_value())?;
-        if prev_id.is_empty() {
-            info!("{} -> {}", prev_id, id);
-        }
         if nodes.contains_key(&prev_id) && nodes.contains_key(&id) {
             adj_add_new_edge(&mut adj, &prev_id, &id);
         }
