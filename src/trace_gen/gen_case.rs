@@ -12,8 +12,8 @@ use uuid::Uuid;
 
 use crate::trace_gen::action_graph::ActionGraph;
 use crate::trace_gen::graph_find_path::gen_new_vertex_id;
-use crate::trace_gen::graph_from_parse_dot::parse_dot;
-use crate::trace_gen::graph_from_read_state_db::read_from_state_db;
+use crate::trace_gen::from_parse_dot::parse_dot;
+use crate::trace_gen::from_read_state_db::read_from_state_db;
 use crate::trace_gen::to_json_value::ToJsonValue;
 use crate::trace_gen::trace_db::TraceDB;
 use crate::trace_gen::trace_builder::TraceBuilder;
