@@ -292,7 +292,7 @@ impl  DTMServerHandler {
         waiter: ActionPrefixWaiter,
         tasks:&mut Vec<JoinHandle<Option<Res<()>>>>,
     ) -> Res<()> {
-        let mut i = 0;
+        let mut seq_no_node = 0;
 
         // store node id when finding the first input action
         let mut found_input_action : HashSet<NID> = HashSet::new();
@@ -305,15 +305,18 @@ impl  DTMServerHandler {
             },
             None => 0
         };
-        for (value, num) in trace {
-            i += 1;
-            assert!(num >= 1);
+        for (value, seq_no) in trace {
+            seq_no_node += 1;
+            assert!(seq_no >= 1);
             // num start with 1
-            let index = num - 1;
+            let index = seq_no - 1;
+            let id_s;
             if node_id.is_none() {
-                debug!("DTM trace, No.{} action: {:?}", i,  value);
+                id_s = format!("No.{}", seq_no);
+                debug!("DTM trace, {} action: {:?}", id_s.clone(),  value);
             } else {
-                debug!("DTM trace, Node:{:?}, No.{}.{}, action: {:?}", node_id, num, i,  value);
+                id_s = format!("No.{}.{}", seq_no, seq_no_node);
+                debug!("DTM trace, Node:{:?}, {} action: {:?}", node_id, id_s.clone(),  value);
             }
 
             let action_type = value.action_type()?;
@@ -362,13 +365,13 @@ impl  DTMServerHandler {
                         Ok(ok) => {
                             w.finish_one(index).await;
                             if !ok {
-                                error!("message timeout, expect tested node sync {:?}", ss);
+                                error!("message timeout, expect tested node sync {} {:?}", id_s, ss);
                                 sleep(Duration::from_secs(seconds_timeout)).await;
                                 exit(-1);
                             }
                         }
                         Err(e) => {
-                            error!("failed error {:?}, expect action {}", e, ss);
+                            error!("failed error {:?}, expect action {} {}", e, id_s, ss);
                             exit(-1);
                         }
                     }
@@ -380,7 +383,7 @@ impl  DTMServerHandler {
                 let ok = executor.expect_node_sync(&value).instrument(trace_span!("file input")).await?;
                 if !ok {
                     let s = value.to_action_message().to_string().unwrap();
-                    error!("message timeout, expect tested node sync {:?}", s);
+                    error!("message timeout, expect tested node sync {} {:?}", id_s, s);
                     sleep(Duration::from_secs(seconds_timeout)).await;
                     exit(-1);
                 } else {
