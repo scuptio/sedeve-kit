@@ -282,7 +282,7 @@ mod test {
             &self,
         ) -> Res<()> {
             let receiver = {
-                let receivers = self.service.message_receivers();
+                let receivers = self.service.message_receiver();
                 if receivers.len() != 1 {
                     panic!("must only 1 receiver");
                 }
