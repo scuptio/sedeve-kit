@@ -6,7 +6,8 @@ use scupt_util::res::Res;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::time::sleep;
 use tracing::{trace, error};
-
+use scupt_util::message::Message;
+use scupt_util::node_id::NID;
 use crate::action::action_serde_json_value::ActionSerdeJsonValue;
 use crate::action::action_type::ActionType;
 use crate::action_player::action_reorder::ActionReorder;
@@ -117,10 +118,12 @@ impl ActionExecutor {
 
     pub async fn expect_action_in_trace(
         &self,
+        source:NID,
+        dest:NID,
         id:String, // request message id
         action: ActionSerdeJsonValue,
         begin: bool,
-        ch_sender: UnboundedSender<MessageControl>
+        ch_sender: UnboundedSender<Message<MessageControl>>
     ) -> Res<()> {
         let ok = self.expect_action_in_trace_gut(&action, begin).await?;
         if !ok {
@@ -134,7 +137,10 @@ impl ActionExecutor {
             exit(-1);
         } else {
             // ACK of the requested action
-            let response = MessageControl::ActionACK { id };
+            let response = Message::new(
+                MessageControl::ActionACK { id },
+                dest,
+                source);
             trace!("send response {:?}", response);
             let r = ch_sender.send(response.clone());
             trace!("end send response {:?}", response);
@@ -147,7 +153,6 @@ impl ActionExecutor {
                 }
             }
         }
-
         Ok(())
     }
 

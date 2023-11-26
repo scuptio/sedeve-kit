@@ -7,7 +7,7 @@ use scupt_net::event_sink::ESConnectOpt;
 
 use scupt_net::node::Node;
 use scupt_net::notifier::Notifier;
-use scupt_util::node_id::{INVALID_NODE_ID, NID};
+use scupt_util::node_id::NID;
 use scupt_util::res::Res;
 use tokio::runtime::Runtime;
 use tokio::select;
@@ -16,6 +16,7 @@ use tokio::sync::oneshot::Sender;
 use tokio::task::LocalSet;
 use tokio::time::sleep;
 use std::sync::Mutex as StdMutex;
+use scupt_util::message::Message;
 use crate::action_player::async_action_driver::AsyncActionDriver;
 use crate::action_player::async_action_driver_impl::AsyncActionDriverImpl;
 use crate::action_player::dtm_client_handler::DTMClientHandler;
@@ -27,12 +28,13 @@ type DTMClientNode = Node<
 >;
 
 struct _ClientContext {
+    node_id:NID,
     dtm_server_node_id: NID,
     dtm_server_addr: SocketAddr,
     node: DTMClientNode,
     // sender/receiver would redirect send message to message loop task
-    sender: UnboundedSender<(MessageControl, Sender<MessageControl>)>,
-    receiver: StdMutex<Option<UnboundedReceiver<(MessageControl, Sender<MessageControl>)>>>,
+    sender: UnboundedSender<(Message<MessageControl>, Sender<Message<MessageControl>>)>,
+    receiver: StdMutex<Option<UnboundedReceiver<(Message<MessageControl>, Sender<Message<MessageControl>>)>>>,
 }
 
 #[derive(Clone)]
@@ -47,13 +49,14 @@ impl _ClientContext {
 impl DTMClient {
     pub fn new(
         task_name: String,
+        client_id:NID,
         server_id: NID,
         server_addr: SocketAddr,
         stop_notify: Notifier,
     ) -> Res<Self> {
         let handle = DTMClientHandler::new();
         let node = DTMClientNode::new(
-            INVALID_NODE_ID,
+            client_id,
             task_name,
             handle,
             stop_notify,
@@ -61,6 +64,7 @@ impl DTMClient {
         let (sender, receiver) = unbounded_channel();
         Ok(Self {
             context: Arc::new(_ClientContext {
+                node_id: client_id,
                 dtm_server_node_id: server_id,
                 dtm_server_addr: server_addr,
                 node,
@@ -71,12 +75,14 @@ impl DTMClient {
     }
 
 
-    fn sender(&self) -> Res<UnboundedSender<(MessageControl, Sender<MessageControl>)>> {
+    fn sender(&self) -> Res<UnboundedSender<(Message<MessageControl>, Sender<Message<MessageControl>>)>> {
         Ok(self.context.sender.clone())
     }
 
     pub fn new_async_driver(&self) -> Res<Arc<dyn AsyncActionDriver>> {
         let driver = Arc::new(AsyncActionDriverImpl::new(
+            self.context.node_id,
+            self.context.dtm_server_node_id,
             self.sender()?));
         Ok(driver)
     }
@@ -125,10 +131,11 @@ impl _ClientContext {
             std::mem::swap(&mut (*g), &mut opt_r);
             opt_r.unwrap()
         };
+
         let endpoint = self.connect_to_dtm_player().await?;
         let resp_senders = HashMap::new();
         loop {
-            self.handle_message(&endpoint, &mut r, &resp_senders).await?;
+            self.handle_message(&endpoint,  &mut r, &resp_senders).await?;
         }
     }
 
@@ -136,8 +143,8 @@ impl _ClientContext {
     async fn handle_message(
         &self,
         endpoint:&Endpoint,
-        incoming:&mut UnboundedReceiver<(MessageControl, Sender<MessageControl>)>,
-        resp_senders : &HashMap<String, Sender<MessageControl>>,
+        incoming:&mut UnboundedReceiver<(Message<MessageControl>, Sender<Message<MessageControl>>)>,
+        resp_senders : &HashMap<String, Sender<Message<MessageControl>>>,
     ) -> Res<()> {
         select! {
             r1 = self.handle_recv_response(endpoint, resp_senders) => {
@@ -152,11 +159,13 @@ impl _ClientContext {
     async fn handle_recv_response(
         &self,
         endpoint:&Endpoint,
-        resp_senders : &HashMap<String, Sender<MessageControl>>,
+        resp_senders : &HashMap<String, Sender<Message<MessageControl>>>,
     ) -> Res<()> {
         let r_m = endpoint.recv::<MessageControl>().await;
-        let m = match r_m {
-            Ok(m) => {m}
+        let (from, to, m) = match r_m {
+            Ok(m) => {
+                (m.source(), m.dest(), m.payload())
+            }
             Err(e) => { return Err(e); }
         };
 
@@ -168,20 +177,21 @@ impl _ClientContext {
             }
             None => { panic!("error, no such message, id:{}", id); }
         };
-        let _ = sender.send(m);
+        let mm = Message::new(m, to, from);
+        let _ = sender.send(mm);
         Ok(())
     }
 
     async fn handle_incoming_request(
         &self,
         endpoint:&Endpoint,
-        incoming:&mut UnboundedReceiver<(MessageControl, Sender<MessageControl>)>,
-        resp_senders : &HashMap<String, Sender<MessageControl>>,
+        incoming:&mut UnboundedReceiver<(Message<MessageControl>, Sender<Message<MessageControl>>)>,
+        resp_senders : &HashMap<String, Sender<Message<MessageControl>>>,
     ) -> Res<()> {
         let opt_in = incoming.recv().await;
         match opt_in {
             Some((m, s)) => {
-                let id = m.id().unwrap();
+                let id = m.payload_ref().id().unwrap();
                 let _ = resp_senders.insert(id, s).unwrap();
                 endpoint.send(m).await?;
             }

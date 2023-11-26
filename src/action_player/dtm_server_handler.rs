@@ -5,12 +5,12 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 use std::collections::HashSet;
-
+use scupt_util::message::Message;
 
 use scupt_net::endpoint::Endpoint;
 use scupt_net::handle_event::HandleEvent;
 use scupt_net::message_incoming::MessageIncoming;
-use scupt_net::message_sender::MessageSender;
+use scupt_net::message_sender::Sender;
 use scupt_net::notifier::{Notifier, spawn_task};
 use scupt_net::opt_send::OptSend;
 use scupt_util::error_type::ET;
@@ -42,7 +42,7 @@ struct Handler {
     output_action_sequential:bool,
     trace_in_one_sequence:bool,
     notify: Notifier,
-    node_sender: Arc<dyn MessageSender<ActionSerdeJsonString>>,
+    node_sender: Arc<dyn Sender<ActionSerdeJsonString>>,
     executor: Arc<ActionExecutor>,
     channel_s: Arc<mpsc::UnboundedSender<DTMCmd>>,
     channel_r: Arc<Mutex<mpsc::UnboundedReceiver<DTMCmd>>>,
@@ -51,11 +51,13 @@ struct Handler {
 pub struct DTMServerHandler {
     handler: Arc<Handler>,
     seconds_timeout:u64,
+    node_id:NID,
 }
 
 impl  DTMServerHandler {
     pub fn new(
-        node_sender: Arc<dyn MessageSender<ActionSerdeJsonString>>,
+        node_id:NID,
+        node_sender: Arc<dyn Sender<ActionSerdeJsonString>>,
         notify:Notifier,
         option:TestOption,
     ) -> DTMServerHandler {
@@ -77,6 +79,7 @@ impl  DTMServerHandler {
         Self {
             handler: Arc::new(h),
             seconds_timeout: option.seconds_wait_message_timeout,
+            node_id,
         }
     }
 
@@ -127,6 +130,7 @@ impl  DTMServerHandler {
         let notify = self.handler.notify.clone();
         let seconds_timeout = self.seconds_timeout;
         let r = Self::loop_read_input_action(
+            self.node_id,
             notify, input, executor, sender,
             self.handler.output_action_sequential,
             !self.handler.trace_in_one_sequence,
@@ -147,10 +151,11 @@ impl  DTMServerHandler {
 
     #[async_backtrace::framed]
     async fn loop_read_input_action(
+        server_node_id:NID,
         notify:Notifier,
         input: Arc<dyn ActionIncoming>,
         executor: Arc<ActionExecutor>,
-        sender: Arc<dyn MessageSender<ActionSerdeJsonString>>,
+        sender: Arc<dyn Sender<ActionSerdeJsonString>>,
         output_action_sequential:bool,
         per_node_trace:bool,
         seconds_timeout:u64
@@ -160,6 +165,7 @@ impl  DTMServerHandler {
             let mut tasks = vec![];
             let trace = Self::input_to_one_trace(input)?;
             let r = Self::handle_trace(
+                server_node_id,
                 None, notify, trace, executor, sender,
                 output_action_sequential, seconds_timeout,
                 waiter.clone(),
@@ -179,6 +185,7 @@ impl  DTMServerHandler {
                 let f = async move {
                     let mut tasks = vec![];
                     let r = Self::handle_trace(
+                        server_node_id,
                         Some(nid), n, trace, e, s, output_action_sequential, seconds_timeout,
                         w,
                         &mut tasks).await;
@@ -282,11 +289,12 @@ impl  DTMServerHandler {
 
     #[async_backtrace::framed]
     async fn handle_trace(
+        dtm_server_node_id:NID,
         node_id : Option<NID>,
         notify:Notifier,
         trace: Vec<(ActionSerdeJsonValue, u64)>,
         executor: Arc<ActionExecutor>,
-        sender: Arc<dyn MessageSender<ActionSerdeJsonString>>,
+        sender: Arc<dyn Sender<ActionSerdeJsonString>>,
         output_action_sequential:bool,
         seconds_timeout:u64,
         waiter: ActionPrefixWaiter,
@@ -348,7 +356,8 @@ impl  DTMServerHandler {
                 let action_message = ActionSerdeJsonString::from_json_value(
                     json_value.message_payload_json_value()?);
                 trace!("action message: {:?}", action_message);
-                sender.send(dest_node_id, action_message, OptSend::default().enable_no_wait(false))
+                let m = Message::new(action_message, dtm_server_node_id, dest_node_id);
+                sender.send(m, OptSend::default().enable_no_wait(false))
                     .instrument(trace_span!("message to node"))
                     .await?;
             }
@@ -398,8 +407,8 @@ impl  DTMServerHandler {
 
     async fn handle_message_request_response(
         &self, ep:&Endpoint,
-        channel:&mut UnboundedReceiver<MessageControl>,
-        sender:&UnboundedSender<MessageControl>,
+        channel:&mut UnboundedReceiver<Message<MessageControl>>,
+        sender:&UnboundedSender<Message<MessageControl>>,
         tasks:&mut Vec<JoinHandle<Option<Res<()>>>>,
     ) -> Res<()> {
         select! {
@@ -413,7 +422,7 @@ impl  DTMServerHandler {
                             n,
                             format!("dtm handle message {:?}", m).as_str(),
                             async move {
-                                    _self.handle_one_message(m, s).await
+                                    _self.handle_one_message(m.source(), m.dest(), m.payload(), s).await
                             }
                         )?;
                         tasks.push(task);
@@ -437,11 +446,15 @@ impl  DTMServerHandler {
         Ok(())
     }
 
-    async fn handle_one_message(&self, message:MessageControl, channel:UnboundedSender<MessageControl>) -> Res<()> {
+    async fn handle_one_message(&self,
+                                source:NID,
+                                dest:NID,
+                                message:MessageControl,
+                                channel:UnboundedSender<Message<MessageControl>>) -> Res<()> {
         match message {
             MessageControl::ActionReq { id, action, begin } => {
                 let action_json = action.to_action_serde_json_value()?;
-                self.handler.executor.expect_action_in_trace(id, action_json, begin, channel).await?;
+                self.handler.executor.expect_action_in_trace(source, dest, id, action_json, begin, channel).await?;
             }
             MessageControl::ActionACK { id : _ }=> {
                 panic!("error message")
@@ -476,6 +489,7 @@ impl Clone for DTMServerHandler {
         Self {
             handler: self.handler.clone(),
             seconds_timeout: self.seconds_timeout,
+            node_id: self.node_id,
         }
     }
 }

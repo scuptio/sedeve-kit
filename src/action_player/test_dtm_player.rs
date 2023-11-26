@@ -12,7 +12,7 @@ mod test {
     use rand::rngs::ThreadRng;
     use scupt_net::event_sink::{ESServeOpt, ESStopOpt};
     use scupt_net::io_service::IOService;
-    use scupt_net::message_receiver::MessageReceiver;
+    use scupt_net::message_receiver::Receiver;
     use scupt_net::notifier::Notifier;
     use scupt_util::error_type::ET;
     use scupt_util::message::{Message, MsgTrait};
@@ -97,7 +97,7 @@ mod test {
             thd_simulator.push(thd);
         }
 
-        auto_init!(AUTOMATON_NAME, dtm_node_id, dtm_address.to_string().as_str());
+        auto_init!(AUTOMATON_NAME,0,  dtm_node_id, dtm_address.to_string().as_str());
 
         for (k, v) in address.iter() {
             let id = k.clone();
@@ -178,7 +178,7 @@ mod test {
 
     #[derive(Clone)]
     struct TestNode {
-        service: Arc<IOService<Message<AppMsg>>>,
+        service: Arc<IOService<AppMsg>>,
         history: History,
         stop: Arc<AtomicBool>,
         enable_check: bool,
@@ -220,7 +220,7 @@ mod test {
     impl TestNode {
         fn new(node_id: NID,  history: History, enable_check: bool) -> Res<TestNode> {
             let name = format!("node_{}", node_id);
-            let service = IOService::<Message<AppMsg>>::new(node_id, name.clone(), 1, Notifier::new())?;
+            let service = IOService::<AppMsg>::new(node_id, name.clone(), 1, Notifier::new())?;
             Ok(Self {
                 service: Arc::new(service),
                 history,
@@ -294,7 +294,7 @@ mod test {
 
         async fn app_message_loop(
             &self,
-            receiver: Arc<dyn MessageReceiver<Message<AppMsg>>>,
+            receiver: Arc<dyn Receiver<AppMsg>>,
             enable_check: bool
         ) -> Res<()> {
             loop {
@@ -430,7 +430,7 @@ mod test {
 
         async fn app_handle_message(
             &self,
-            receiver: Arc<dyn MessageReceiver<Message<AppMsg>>>,
+            receiver: Arc<dyn Receiver<AppMsg>>,
             enable_check: bool
         ) -> Res<()> {
             let dtm_msg = receiver.receive().await?;

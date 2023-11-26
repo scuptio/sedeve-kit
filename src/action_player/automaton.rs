@@ -26,10 +26,11 @@ pub fn automaton_clear(name: &str,) {
 /// Initialize an automaton setting
 pub fn automaton_init(
     name: &str,
+    client_id:NID,
     server_id: NID,
     server_addr: &str
 ) {
-    action_driver_setup_gut(name, server_id, server_addr);
+    action_driver_setup_gut(name, client_id, server_id, server_addr);
 }
 
 /// Is an automation named `name` enable
@@ -60,11 +61,12 @@ pub async fn automaton_async_end_action<M: MsgTrait + 'static>(
 macro_rules! auto_init {
     (
         $automaton_name:expr,
+        $node_id:expr,
         $player_id:expr,
         $player_addr:expr
     ) => {
         {
-            automaton::automaton_init($automaton_name, $player_id, $player_addr);
+            automaton::automaton_init($automaton_name, $node_id, $player_id, $player_addr);
         }
     };
 }
@@ -270,6 +272,7 @@ fn action_driver_unset_gut(name: &str) {
 
 fn action_driver_setup_gut(
     name: &str,
+    client_id:NID,
     server_id: NID,
     server_addr: &str,
 ) {
@@ -277,7 +280,7 @@ fn action_driver_setup_gut(
         server_addr.parse()
             .expect("Unable to resolve domain");
     if !__DRIVERS.contains(name) {
-        let driver = __ActionDriver::new(server_id, addr).unwrap();
+        let driver = __ActionDriver::new(client_id, server_id, addr).unwrap();
         let opt_d = __DRIVERS.insert(name.to_string(), driver);
         match opt_d {
             Ok(_) => {}
@@ -333,6 +336,7 @@ struct __ActionDriver {
 
 impl __ActionDriver {
     fn new(
+        client_id:NID,
         server_id: NID, server_addr: SocketAddr,
     ) -> Res<Self> {
         let r_build = Builder::new_current_thread()
@@ -340,10 +344,10 @@ impl __ActionDriver {
             .build();
         let r = res_io(r_build)?;
         let runtime = Arc::new(r);
-        let node_name = format!("driver_to_{}", server_id);
+        let node_name = format!("driver_{}->{}", client_id, server_id);
         let notifier = Notifier::new_with_name(node_name.clone());
         let cli = DTMClient::new(
-            node_name, server_id,
+            node_name, client_id, server_id,
             server_addr,
             notifier.clone())?;
         let thd = {

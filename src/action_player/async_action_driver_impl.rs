@@ -1,6 +1,8 @@
 use std::sync::Arc;
 use async_trait::async_trait;
 use scupt_util::error_type::ET;
+use scupt_util::message::Message;
+use scupt_util::node_id::NID;
 use scupt_util::res::Res;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::oneshot::{channel, Sender};
@@ -12,7 +14,9 @@ use crate::action_player::async_action_driver::AsyncActionDriver;
 use crate::action_player::msg_ctrl::MessageControl;
 
 pub struct AsyncActionDriverImplInner {
-    sender: UnboundedSender<(MessageControl, Sender<MessageControl>)>,
+    node_id:NID,
+    server_id:NID,
+    sender: UnboundedSender<(Message<MessageControl>, Sender<Message<MessageControl>>)>,
 }
 
 pub struct AsyncActionDriverImpl {
@@ -21,9 +25,9 @@ pub struct AsyncActionDriverImpl {
 
 
 impl AsyncActionDriverImpl {
-    pub fn new(sender:UnboundedSender<(MessageControl, Sender<MessageControl>)>) -> Self {
+    pub fn new(node_id:NID, server_node_id:NID, sender:UnboundedSender<(Message<MessageControl>, Sender<Message<MessageControl>>)>) -> Self {
         Self {
-            inner: Arc::new(AsyncActionDriverImplInner::new(sender)),
+            inner: Arc::new(AsyncActionDriverImplInner::new(node_id, server_node_id, sender)),
         }
     }
 }
@@ -40,8 +44,10 @@ impl AsyncActionDriver for AsyncActionDriverImpl {
 }
 
 impl AsyncActionDriverImplInner {
-    pub fn new(sender:UnboundedSender<(MessageControl, Sender<MessageControl>)>) -> Self {
+    pub fn new(node_id:NID, server_id:NID, sender:UnboundedSender<(Message<MessageControl>, Sender<Message<MessageControl>>)>) -> Self {
         Self {
+            node_id,
+            server_id,
             sender,
         }
     }
@@ -56,22 +62,23 @@ impl AsyncActionDriverImplInner {
 
     async fn async_send_action(&self, action: ActionSerdeJsonString, begin_action: bool) -> Res<()> {
         let uuid = Uuid::new_v4();
-        let request = MessageControl::ActionReq {
+        let m = MessageControl::ActionReq {
             id: uuid.to_string(),
             action,
             begin: begin_action,
         };
+        let req = Message::new(m, self.node_id, self.server_id);
 
         // send request
         let (req_sender, resp_receiver) = channel();
-        match self.sender.send((request, req_sender)) {
+        match self.sender.send((req, req_sender)) {
             Ok(()) => {}
             Err(e) => { return Err(ET::SerdeError(e.to_string())); }
         };
 
         // receive response
         let response:MessageControl = match resp_receiver.await {
-            Ok(m) => { m }
+            Ok(m) => { m.payload() }
             Err(e) => { return Err(ET::RecvError(e.to_string())); }
         };
 

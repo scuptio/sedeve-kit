@@ -52,7 +52,7 @@ impl DTMServer {
             HandleEventDummy::default(),
             stop_notify.clone())?;
         let node_sender = client_node.default_message_sender();
-        let h = DTMServerHandler::new(node_sender, stop_notify.clone(), option);
+        let h = DTMServerHandler::new(node_id, node_sender, stop_notify.clone(), option);
         let player_node: DTMNode = DTMNode::new(
             node_id,
             name,
