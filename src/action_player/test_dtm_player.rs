@@ -11,7 +11,7 @@ mod test {
     use rand::Rng;
     use rand::rngs::ThreadRng;
     use scupt_net::event_sink::{ESServeOpt, ESStopOpt};
-    use scupt_net::io_service::IOService;
+    use scupt_net::io_service::{IOService, IOServiceOpt};
     use scupt_net::message_receiver::Receiver;
     use scupt_net::notifier::Notifier;
     use scupt_util::error_type::ET;
@@ -220,7 +220,10 @@ mod test {
     impl TestNode {
         fn new(node_id: NID,  history: History, enable_check: bool) -> Res<TestNode> {
             let name = format!("node_{}", node_id);
-            let service = IOService::<AppMsg>::new(node_id, name.clone(), 1, Notifier::new())?;
+            let opt = IOServiceOpt {
+                num_message_receiver: 1,
+            };
+            let service = IOService::<AppMsg>::new(node_id, name.clone(), opt, Notifier::new())?;
             Ok(Self {
                 service: Arc::new(service),
                 history,
