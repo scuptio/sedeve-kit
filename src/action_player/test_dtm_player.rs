@@ -6,15 +6,17 @@ mod test {
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::thread;
 
-    use crate::action_player::automaton;
     use bincode::{Decode, Encode};
+    use once_cell::sync::Lazy;
     use rand::Rng;
     use rand::rngs::ThreadRng;
     use scupt_net::event_sink::{ESServeOpt, ESStopOpt};
     use scupt_net::io_service::{IOService, IOServiceOpt};
     use scupt_net::message_receiver::Receiver;
     use scupt_net::notifier::Notifier;
+    use scupt_net::task::spawn_local_task;
     use scupt_util::error_type::ET;
+    use scupt_util::logger::logger_setup;
     use scupt_util::message::{Message, MsgTrait};
     use scupt_util::node_id::NID;
     use scupt_util::res::Res;
@@ -25,18 +27,15 @@ mod test {
     use tokio::task;
     use tokio::task::LocalSet;
     use tracing::{error, info, Instrument, trace, trace_span};
-    use once_cell::sync::Lazy;
-    use scupt_util::logger::logger_setup;
 
+    use crate::{action_begin, action_end, auto_clear, auto_init, input, internal_begin, internal_end, output};
     use crate::action::action_message::ActionMessage;
     use crate::action::action_type::ActionType;
-
-    use crate::action_player::action_incoming::ActionIncoming;
-
-    use crate::action_player::dtm_server::DTMServer;
     use crate::action::panic::set_panic_hook;
-    use crate::{action_begin, action_end, auto_init, auto_clear, input, internal_begin, internal_end, output};
+    use crate::action_player::action_incoming::ActionIncoming;
+    use crate::action_player::automaton;
     use crate::action_player::dtm_player::TestOption;
+    use crate::action_player::dtm_server::DTMServer;
 
     const AUTOMATON_NAME:&str ="TEST_AUTOMATON";
 
@@ -255,9 +254,10 @@ mod test {
                 let s = self.clone();
                 let node_id = self.service.node_id();
                 ls.spawn_local(async move {
-                    task::Builder::default()
-                        .name(format!("app handle message {}", node_id).as_str())
-                        .spawn_local(async move {
+                    spawn_local_task(
+                        Notifier::new(),
+                        format!("app handle message {}", node_id).as_str(),
+                        async move {
                             let r = s.app_run_handle_message().await;
                             match r {
                                 Ok(()) => {}
@@ -327,10 +327,9 @@ mod test {
             match dtm_msg.payload() {
                 AppMsg::TaskNew { task_id, task_ops } => {
                     let this = self.clone();
-                    task::Builder::default()
-                        .name(format!("app task :{}", task_id).as_str())
-                        .spawn_local(
-                            async move {
+                    spawn_local_task(Notifier::default(),
+                                     format!("app task :{}", task_id).as_str(),
+                                     async move {
                                 let r = this.app_task_run(from, to, task_id, task_ops, enable_check).await;
                                 match r {
                                     Ok(()) => {}
@@ -342,9 +341,10 @@ mod test {
                 AppMsg::TaskStop => {
                     let this = self.clone();
                     let enable_check = self.enable_check;
-                    task::Builder::default()
-                        .name(format!("node {} stop task", from).as_str())
-                        .spawn_local(async move {
+                    spawn_local_task(
+                        Notifier::new(),
+                        format!("node {} stop task", from).as_str(),
+                        async move {
                             let r = this.app_task_stop(from, to, enable_check).await;
                             match r {
                                 Ok(()) => {}
