@@ -6,7 +6,8 @@ use std::time::Duration;
 use scupt_net::event_sink::{ESConnectOpt, ESServeOpt, ESStopOpt};
 use scupt_net::handle_event::HandleEventDummy;
 use scupt_net::node::Node;
-use scupt_net::notifier::{Notifier, spawn_cancelable_task};
+use scupt_net::notifier::Notifier;
+use scupt_net::task::spawn_local_task;
 use scupt_util::node_id::NID;
 use scupt_util::res::Res;
 use tokio::runtime::Runtime;
@@ -14,8 +15,8 @@ use tokio::sync::oneshot;
 use tokio::task::LocalSet;
 use tokio::time::sleep;
 use tracing::{error, trace};
-use crate::action::action_serde_json_string::ActionSerdeJsonString;
 
+use crate::action::action_serde_json_string::ActionSerdeJsonString;
 use crate::action_player::action_incoming::ActionIncoming;
 use crate::action_player::dtm_player::TestOption;
 use crate::action_player::dtm_server_handler::DTMServerHandler;
@@ -147,7 +148,7 @@ impl DTMServer {
         let notify = self.player_node.stop_notify();
 
         local_set.spawn_local(async move {
-            spawn_cancelable_task(notify, "dtm handler", future);
+            spawn_local_task(notify, "dtm handler", future).unwrap();
         });
     }
 

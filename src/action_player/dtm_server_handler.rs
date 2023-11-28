@@ -1,19 +1,19 @@
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::process::exit;
 use std::sync::Arc;
-use std::collections::HashMap;
 
 use async_trait::async_trait;
-use std::collections::HashSet;
-use scupt_util::message::Message;
-
 use scupt_net::endpoint::Endpoint;
 use scupt_net::handle_event::HandleEvent;
 use scupt_net::message_incoming::MessageIncoming;
 use scupt_net::message_sender::Sender;
-use scupt_net::notifier::{Notifier, spawn_task};
+use scupt_net::notifier::Notifier;
 use scupt_net::opt_send::OptSend;
+use scupt_net::task::spawn_local_task;
 use scupt_util::error_type::ET;
+use scupt_util::message::Message;
 use scupt_util::node_id::NID;
 use scupt_util::res::Res;
 use serde_json::Value;
@@ -21,8 +21,8 @@ use tokio::select;
 use tokio::sync::{mpsc, Mutex, oneshot};
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio::task::JoinHandle;
-use tokio::time::sleep;
 use tokio::time::Duration;
+use tokio::time::sleep;
 use tracing::{debug, error, Instrument, trace, trace_span};
 
 use crate::action::action_serde_json_string::ActionSerdeJsonString;
@@ -194,7 +194,7 @@ impl  DTMServerHandler {
                     }
                     r
                 };
-                let j = spawn_task(notify.clone(), format!("handle_trace_node_{:?}", nid).as_str(), f);
+                let j = spawn_local_task(notify.clone(), format!("handle_trace_node_{:?}", nid).as_str(), f);
                 join.push(j);
             }
             for j in join {
@@ -386,7 +386,7 @@ impl  DTMServerHandler {
                     }
                     Res::Ok(())
                 };
-                let task = spawn_task(n, format!("wait_output_action_{}", s).as_str(), f)?;
+                let task = spawn_local_task(n, format!("wait_output_action_{}", s).as_str(), f)?;
                 tasks.push(task);
             } else {
                 let ok = executor.expect_node_sync(&value).instrument(trace_span!("file input")).await?;
@@ -418,7 +418,7 @@ impl  DTMServerHandler {
                         let s = sender.clone();
                         let n = self.handler.notify.clone();
                         let _self = self.clone();
-                        let task = spawn_task(
+                        let task = spawn_local_task(
                             n,
                             format!("dtm handle message {:?}", m).as_str(),
                             async move {

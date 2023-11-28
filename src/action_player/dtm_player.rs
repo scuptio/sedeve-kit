@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use scupt_net::notifier::{Notifier, spawn_cancelable_task_local_set};
+
+use scupt_net::notifier::Notifier;
+use scupt_net::task::spawn_local_task;
 use scupt_util::node_id::NID;
 use scupt_util::res::Res;
 use scupt_util::res_of::res_io;
@@ -147,11 +149,10 @@ impl DTMPlayer
                 debug!("dtm player handle test done");
                 fn_done();
             };
-            spawn_cancelable_task_local_set(
-                &ls,
-                notifier.clone(), "dtm",
-                future,
-            );
+            let _n = notifier.clone();
+            ls.spawn_local(async {
+                spawn_local_task(_n, "dtm", future).unwrap();
+            });
         }
         server.run(Some(ls), runtime);
         debug!("dtm player server stopped");
