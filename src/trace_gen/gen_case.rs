@@ -60,7 +60,7 @@ pub fn gen_case(
             let action_graph = graph_read_actions_from_state_db(path.clone(), dict)?;
             let duration = inst.elapsed();
 
-            info!("Time elapsed to read from state DB {}, time costs: {:?}", path, duration);
+            info!("Time elapsed to read from state DB {} and build graph, time costs: {:?}", path, duration);
 
             let inst = Instant::now();
             let f_new_vertex = |set:&HashSet<String>| {

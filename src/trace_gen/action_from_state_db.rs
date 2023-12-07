@@ -1,9 +1,11 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::time::Instant;
 use rusqlite::Connection;
 use scupt_util::res::Res;
 use scupt_util::res_of::{res_parse, res_sqlite};
 use serde_json::Value;
+use tracing::info;
 use crate::action::tla_actions::TLAActionSeq;
 use crate::action::tla_typed_value::get_typed_value;
 use crate::trace_gen::action_graph::ActionGraph;
@@ -39,8 +41,13 @@ pub fn graph_read_actions_from_state_db(path:String, dict: HashMap<String, Value
         Ok(())
     };
 
+    let inst = Instant::now();
     read_actions(path, &dict, &f)?;
+    let duration = inst.elapsed();
 
+    info!("Time elapsed to read from DB, time costs: {:?}", duration);
+
+    let inst = Instant::now();
     let nodes = nodes.into_inner();
     for (_k, v) in nodes.iter() {
         let prev_id = TLAActionSeq::field_prev_state_id(&v.to_json_value())?;
@@ -49,5 +56,8 @@ pub fn graph_read_actions_from_state_db(path:String, dict: HashMap<String, Value
             adj_add_new_edge(&mut adj, &prev_id, &id);
         }
     }
+    let duration = inst.elapsed();
+    info!("Time elapsed to build graph, time costs: {:?}", duration);
+
     Ok(ActionGraph::new(nodes, adj))
 }
