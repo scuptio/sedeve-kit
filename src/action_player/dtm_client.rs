@@ -1,12 +1,16 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
+use std::sync::Mutex as StdMutex;
 use std::time::Duration;
+
 use scc::HashMap;
 use scupt_net::endpoint::Endpoint;
 use scupt_net::event_sink::ESConnectOpt;
-
 use scupt_net::node::Node;
 use scupt_net::notifier::Notifier;
+use scupt_net::task::spawn_local_task;
+use scupt_util::error_type::ET;
+use scupt_util::message::Message;
 use scupt_util::node_id::NID;
 use scupt_util::res::Res;
 use tokio::runtime::Runtime;
@@ -15,8 +19,7 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tokio::sync::oneshot::Sender;
 use tokio::task::LocalSet;
 use tokio::time::sleep;
-use std::sync::Mutex as StdMutex;
-use scupt_util::message::Message;
+
 use crate::action_player::async_action_driver::AsyncActionDriver;
 use crate::action_player::async_action_driver_impl::AsyncActionDriverImpl;
 use crate::action_player::dtm_client_handler::DTMClientHandler;
@@ -94,7 +97,15 @@ impl DTMClient {
         };
         let c = self.context.clone();
         let f = async move {
-            c.dtm_client_message_loop().await
+            let n = c.node.stop_notify().clone();
+            let j = spawn_local_task(
+                n,
+                "dtm client message loop",
+                async move {
+                    c.dtm_client_message_loop().await?;
+                    Ok::<(), ET>(())
+                });
+            let _ = j.unwrap().await;
         };
         local_set.spawn_local(f);
         self.context.node.block_run(Some(local_set), runtime);
