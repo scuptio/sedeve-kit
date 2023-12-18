@@ -48,8 +48,8 @@ pub const ACTION_NAME_SEPARATOR:&str = "::";
 pub const __TEST_TLA_ACTION_VARIABLE_CONST: &str = r###"
 /\ __action__ =
 [
-    i |-> "156e971a-2378-4a5a-8872-4a2b280f0594",
-    p |-> "36622177-7e2a-4c89-a02d-e5a90520c804",
+    i |-> 2,
+    p |-> 1,
     s |-> <<>>,
     a |-> <<
         [

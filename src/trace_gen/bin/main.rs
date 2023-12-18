@@ -1,9 +1,10 @@
 use std::path::PathBuf;
+
 use clap::Parser;
 use scupt_util::init_logger::logger_setup;
+
 use sedeve_kit::trace_gen::gen_case::{DataInput, gen_case};
 use sedeve_kit::trace_gen::read_json;
-
 
 #[derive(clap::ValueEnum, Clone, Debug)]
 enum TestType {
@@ -27,6 +28,10 @@ struct Args {
     #[arg(short, long)]
     out_db_path: Option<String>,
 
+    /// Type intermediate database path
+    #[arg(short, long)]
+    intermediate_db_path: Option<String>,
+
     /// Path of the json file stores the constant value map
     #[arg(short, long)]
     map_const_path: Option<String>,
@@ -48,6 +53,7 @@ fn main() {
 
     let dump_path: Option<String> = args.dot_path;
     let state_db_path : Option<String>  = args.state_db_path;
+    let intermediate_db_path:Option<String> = args.intermediate_db_path;
 
     let path_input = if dump_path.is_some() {
         DataInput::DotFile(dump_path.unwrap())
@@ -78,5 +84,6 @@ fn main() {
         }
     };
 
-    gen_case(path_input,path_output, args.remove_intermediate, dict).unwrap();
+    gen_case(path_input, path_output, dict,
+             intermediate_db_path).unwrap();
 }

@@ -1,4 +1,3 @@
-
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
@@ -10,8 +9,6 @@ use rand::{Rng, thread_rng};
 use rand::distributions::{Distribution, Standard};
 use scupt_util::error_type::ET;
 use scupt_util::res::Res;
-
-
 use tracing::{info, trace};
 
 use crate::trace_gen::cover_walk_path::covering_walk_path;
@@ -259,7 +256,7 @@ struct SCCContext<V> {
     adj:HashMap<V, Vec<V>>,
 }
 
-// this algorithm needs to improve
+
 fn contracted_scc<V, NV, FC>(
     adj: &HashMap<V, Vec<V>>,
     fn_new_vertex: &NV,
@@ -270,15 +267,6 @@ fn contracted_scc<V, NV, FC>(
         NV: Fn(&HashSet<V>) -> V,
         FC: Fn(&HashMap<V, Vec<V>>, &V),
 {
-
-    // test case generate code
-    /*
-    let ptr = (adj as *const _) as *const HashMap<i64, Vec<i64>>;
-    let map = unsafe { &*ptr };
-    let str = std_map_to_serde_json_string(map);
-    write(format!("/tmp/graph_adj.json"), str).unwrap();
-    */
-
     let mut v_set: HashSet<V> = adj.keys().cloned().collect();
 
     let start = Instant::now();
@@ -515,7 +503,9 @@ fn _find_path(adj: &HashMap<i32, Vec<i32>>) {
 mod tests {
     use std::fs::read_to_string;
     use std::sync::atomic::{AtomicI64, Ordering};
+
     use scupt_util::init_logger::logger_setup;
+
     use crate::data::path::test::test_data_path;
 
     use super::*;

@@ -1,18 +1,17 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::time::Instant;
+
 use rusqlite::Connection;
 use scupt_util::res::Res;
 use scupt_util::res_of::{res_parse, res_sqlite};
 use serde_json::Value;
 use tracing::info;
+
 use crate::action::tla_actions::TLAActionSeq;
 use crate::action::tla_typed_value::get_typed_value;
 use crate::trace_gen::action_graph::ActionGraph;
-use crate::trace_gen::action_node::ActionNode;
-use crate::trace_gen::graph_util::adj_add_new_edge;
-use crate::trace_gen::to_json_value::ToJsonValue;
-
+use crate::trace_gen::trace_db_interm::{Stage, TraceDBInterm};
 
 pub fn read_actions<F>(path:String, dict: &HashMap<String, Value>, fn_handle_action:&F)
                        -> Res<()>
@@ -30,34 +29,78 @@ pub fn read_actions<F>(path:String, dict: &HashMap<String, Value>, fn_handle_act
     Ok(())
 }
 
-pub fn graph_read_actions_from_state_db(path:String, dict: HashMap<String, Value>) -> Res<ActionGraph<String, ActionNode>> {
-    let mut adj = HashMap::new();
-    let nodes : RefCell<HashMap<String, ActionNode>> = RefCell::new(HashMap::new());
-
-    let f = |v :Value| -> Res<()> {
-        let mut n = nodes.borrow_mut();
-        let id = TLAActionSeq::field_state_id(&v)?;
-        n.insert(id,  ActionNode::new(v));
-        Ok(())
-    };
-
-    let inst = Instant::now();
-    read_actions(path, &dict, &f)?;
-    let duration = inst.elapsed();
-
-    info!("Time elapsed to read from DB, time costs: {:?}", duration);
-
-    let inst = Instant::now();
-    let nodes = nodes.into_inner();
-    for (_k, v) in nodes.iter() {
-        let prev_id = TLAActionSeq::field_prev_state_id(&v.to_json_value())?;
-        let id = TLAActionSeq::field_state_id(&v.to_json_value())?;
-        if nodes.contains_key(&prev_id) && nodes.contains_key(&id) {
-            adj_add_new_edge(&mut adj, &prev_id, &id);
+fn read_action_batch<F>(
+    path: String,
+    batch_rows: u64,
+    dict: &HashMap<String, Value>,
+    fn_handle_action: &F)
+    -> Res<()>
+    where F: Fn(Vec<Value>) -> Res<()>,
+{
+    let batch_rows = batch_rows as usize;
+    let conn = res_sqlite(Connection::open(path))?;
+    let mut stmt = res_sqlite(conn.prepare("select json_string from state order by json_string;"))?;
+    let mut rows = res_sqlite(stmt.query([]))?;
+    let mut batch = Vec::with_capacity(batch_rows);
+    while let Some(row) = res_sqlite(rows.next())? {
+        let json: String = res_sqlite(row.get(0))?;
+        let value: Value = res_parse(serde_json::from_str(json.as_str()))?;
+        let value = get_typed_value(value, dict)?;
+        batch.push(value);
+        if batch.len() >= batch_rows {
+            fn_handle_action(batch)?;
+            batch = Vec::with_capacity(batch_rows)
         }
     }
-    let duration = inst.elapsed();
-    info!("Time elapsed to build graph, time costs: {:?}", duration);
 
-    Ok(ActionGraph::new(nodes, adj))
+    if !batch.is_empty() {
+        fn_handle_action(batch)?;
+    }
+
+    Ok(())
+}
+
+pub fn graph_read_actions_from_state_db(path: String, dict: HashMap<String, Value>, output_path: String) -> Res<ActionGraph<i64>> {
+    let db = RefCell::new(TraceDBInterm::new(output_path, None, None)?);
+    let stage = {
+        let db_ref = db.borrow();
+        let stage = db_ref.get_state()?;
+        match &stage {
+            Stage::WriteAction => {
+                db_ref.begin_write_action()?;
+                stage
+            },
+
+            _ => {
+                stage
+            }
+        }
+    };
+    if stage == Stage::WriteAction {
+        info!("To write actions to DB");
+        let f = |vec: Vec<Value>| -> Res<()> {
+            let mut vec_rows: Vec<(i64, i64, String, String)> = vec![];
+            let db_ref = db.borrow();
+            for v in vec {
+                let seq = TLAActionSeq::from(v)?;
+                vec_rows.push(seq.to_tuple()?);
+            }
+            db_ref.write_action(vec_rows)?;
+            Ok(())
+        };
+
+        let inst = Instant::now();
+        read_action_batch(path, 10000, &dict, &f)?;
+        let duration = inst.elapsed();
+        {
+            let db_ref = db.borrow();
+            db_ref.end_write_action()?;
+        }
+        info!("Time elapsed to write actions to DB, time costs: {:?}", duration);
+    }
+
+    let db_ref = db.borrow();
+    let graph = db_ref.gen_graph()?;
+
+    Ok(graph)
 }

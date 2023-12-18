@@ -1,14 +1,15 @@
+use std::collections::HashMap;
+
+use scupt_util::error_type::ET;
 use scupt_util::id::OID;
-use crate::action::action_type::ActionType;
 use scupt_util::res::Res;
 use scupt_util::res_of::res_option;
 use serde_json::{Map, Number, Value};
-use std::collections::HashMap;
-use scupt_util::error_type::ET;
 use tracing::error;
 
 use crate::action::{constant, serde_json_util};
 use crate::action::action_serde_json_value::ActionSerdeJsonValue;
+use crate::action::action_type::ActionType;
 use crate::action::res_serde::res_serde;
 use crate::action::tal_vars_parser::TLAVarsParser;
 use crate::action::tla_var_list_visitor::TLAVarListVisitor;
@@ -19,8 +20,8 @@ Clone,
 Debug,
 )]
 pub struct TLAActionSeq {
-    pub id_prev: String,
-    pub id: String,
+    pub id_prev: i64,
+    pub id: i64,
     pub states:Vec<TLAAction>,
     pub actions: Vec<TLAAction>,
 }
@@ -50,15 +51,15 @@ pub struct TLAMessage {
 }
 
 impl TLAActionSeq {
-    pub fn field_prev_state_id(value:&Value) -> Res<String> {
+    pub fn field_prev_state_id(value: &Value) -> Res<i64> {
         let map = res_option(value.as_object())?;
 
-        serde_json_util::json_util_map_get_string(map, constant::ACTION_SEQUENCE_PREV_STATE_ID)
+        serde_json_util::json_util_map_get_i64(map, constant::ACTION_SEQUENCE_PREV_STATE_ID)
     }
 
-    pub fn field_state_id(value:&Value) -> Res<String> {
+    pub fn field_state_id(value: &Value) -> Res<i64> {
         let map = res_option(value.as_object())?;
-        serde_json_util::json_util_map_get_string(map, constant::ACTION_SEQUENCE_FIELD_STATE_ID)
+        serde_json_util::json_util_map_get_i64(map, constant::ACTION_SEQUENCE_FIELD_STATE_ID)
     }
 
     fn field_actions(value: &Value) -> Res<&Value> {
@@ -116,6 +117,22 @@ impl TLAActionSeq {
 
     pub fn states(&self) -> &Vec<TLAAction> {
         &self.states
+    }
+
+    pub fn to_tuple(&self) -> Res<(i64, i64, String, String)> {
+        let mut states = vec![];
+        let mut actions = vec![];
+        for state in &self.states {
+            let v = state.to_action_json()?.action_json_value();
+            states.push(v);
+        }
+        for action in &self.actions {
+            let v = action.to_action_json()?.action_json_value();
+            actions.push(v);
+        }
+        Ok((self.id, self.id_prev,
+            serde_json::to_string(&states).unwrap(),
+            serde_json::to_string(&actions).unwrap()))
     }
 }
 
