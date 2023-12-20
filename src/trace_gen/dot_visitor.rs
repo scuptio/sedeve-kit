@@ -1,31 +1,26 @@
 use std::collections::HashMap;
-use std::str::FromStr;
 use std::string::String;
 
 use scupt_util::error_type::ET;
 use scupt_util::escape_string::escape_string;
 use scupt_util::res::Res;
-use scupt_util::res_of::{res_option, res_parse};
+use scupt_util::res_of::res_option;
 use serde_json::Value;
 use tracing::info;
 use tree_sitter::Node;
 
 use crate::action::constant::{ACTION_LABEL, LABEL, LOGICAL_CONJUNCTION};
 use crate::action::tal_vars_parser::TLAVarsParser;
-use crate::trace_gen::action_graph::ActionGraph;
-use crate::trace_gen::context_string::node_context_string;
-use crate::trace_gen::dot_ast;
-use crate::trace_gen::dot_ast::NodeId;
-use crate::trace_gen::graph_util::adj_add_new_edge;
+use crate::action::tla_actions::TLAActionSeq;
 use crate::action::tla_ast;
 use crate::action::tla_var_list_visitor::TLAVarListVisitor;
-use crate::trace_gen::action_node::ActionNode;
+use crate::trace_gen::context_string::node_context_string;
+use crate::trace_gen::dot_ast;
 
 pub struct DotVisitor {
     text: String,
     action_var_parser: TLAVarsParser,
-    action_node_json: HashMap<i64, ActionNode>,
-    adj: HashMap<i64, Vec<i64>>,
+    action_node_json: Vec<(i64, i64, String, String)>,
     const_word_dict: HashMap<String, Value>,
 }
 
@@ -37,17 +32,12 @@ impl DotVisitor {
             text,
             action_var_parser: tla_parser,
             action_node_json: Default::default(),
-            adj: Default::default(),
             const_word_dict: map_const,
         }
     }
 
-    pub fn action_graph(&mut self) -> ActionGraph<i64, ActionNode> {
-        let mut node = HashMap::new();
-        let mut adj = HashMap::new();
-        std::mem::swap(&mut self.action_node_json, &mut node);
-        std::mem::swap(&mut self.adj, &mut adj);
-        ActionGraph::new(node, adj)
+    pub fn actions(&self) -> &Vec<(i64, i64, String, String)> {
+        &self.action_node_json
     }
 
     pub fn visit_root(&mut self, node: Node) -> Res<dot_ast::SourceFile> {
@@ -137,7 +127,6 @@ impl DotVisitor {
             }
             "edge_stmt" => {
                 let edge_stmt = self.visit_edge_stmt(n)?;
-                self.add_edge_relation(&edge_stmt)?;
                 dot_ast::Stmt::SEdgeStmt(edge_stmt)
             }
             "attr_stmt" => {
@@ -537,42 +526,8 @@ impl DotVisitor {
         node_context_string(&self.text, node)
     }
 
-    fn node_id_to_i64(id: &NodeId) -> Res<i64> {
-        let s = id.to_string();
-        let id = res_parse(i64::from_str(s.as_str()))?;
-        Ok(id)
-    }
-    fn add_edge_relation(&mut self, edge_stmt: &dot_ast::EdgeStmt) -> Res<()> {
-        let left_id = match &edge_stmt.left {
-            dot_ast::EdgeNode::ENNodeId(id) => {
-                Self::node_id_to_i64(id)?
-            }
-            dot_ast::EdgeNode::ENSubGraph(_) => { return Ok(()); }
-        };
-        for (_, edge) in &edge_stmt.right_list {
-            let right_id = match edge {
-                dot_ast::EdgeNode::ENNodeId(id) => { Self::node_id_to_i64(id)? }
-                dot_ast::EdgeNode::ENSubGraph(_) => {
-                    continue;
-                }
-            };
-
-
-            let opt_node = self.action_node_json.get_mut(&left_id);
-            match opt_node {
-                None => {}
-                Some(_node) => {
-
-                }
-            }
-            adj_add_new_edge(&mut self.adj, &left_id, &right_id);
-        }
-        Ok(())
-    }
 
     fn add_node_action_json(&mut self, node_stmt: &dot_ast::NodeStmt) -> Res<()> {
-        let r = i64::from_str(node_stmt.node_id.to_string().as_str());
-        let id = res_parse(r)?;
         let mut list = tla_ast::TLAVariableList {
             vec: vec![]
         };
@@ -586,19 +541,8 @@ impl DotVisitor {
         let opt_json = list.to_json(&self.const_word_dict);
         match opt_json {
             Some(json) => {
-                let opt_n = self.action_node_json.get(&id);
-                match opt_n {
-                    None => {
-                        self.action_node_json.insert(
-                            id,
-                            ActionNode::new(json),
-                        );
-                        self.adj.insert(id, vec![]);
-                    }
-                    Some(_) => {
-                        panic!("existing such node {}", id);
-                    }
-                }
+                let seq = TLAActionSeq::from(json)?;
+                self.action_node_json.push(seq.to_tuple()?);
             }
             None => {}
         }

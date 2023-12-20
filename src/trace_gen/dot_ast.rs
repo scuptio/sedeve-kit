@@ -1,6 +1,6 @@
 use std::string::String;
-use crate::action::tla_ast::TLAVariableList;
 
+use crate::action::tla_ast::TLAVariableList;
 
 #[derive(Debug)]
 pub enum Id {
@@ -26,18 +26,7 @@ pub struct NodeId {
 }
 
 
-impl NodeId {
-    pub fn to_string(&self) -> String {
-        match &self.id {
-            Id::Identifier(id) => { id.clone() }
-            Id::NumberLiteral(n) => { n.clone() }
-            Id::Html(html) => { html.clone() }
-            Id::StringList(s) => {
-                format!("{:?}", s)
-            }
-        }
-    }
-}
+impl NodeId {}
 
 pub struct NodeStmt {
     pub node_id: NodeId,

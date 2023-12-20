@@ -1,24 +1,19 @@
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use std::fmt::Debug;
-use std::hash::Hash;
-
 use std::time::Instant;
 
 use scupt_util::res::Res;
 use serde_json::Value;
-use tracing::{info, trace};
-use uuid::Uuid;
+use tracing::info;
 
+use crate::trace_gen::action_from_parse_dot::dot_action_to_db;
+use crate::trace_gen::action_from_state_db::graph_read_actions_from_state_db;
 use crate::trace_gen::action_graph::ActionGraph;
 use crate::trace_gen::graph_find_path::gen_new_vertex_id;
-use crate::trace_gen::action_from_parse_dot::parse_dot;
-use crate::trace_gen::action_from_state_db::graph_read_actions_from_state_db;
-use crate::trace_gen::to_json_value::ToJsonValue;
-use crate::trace_gen::trace_db::TraceDB;
 use crate::trace_gen::trace_builder::TraceBuilder;
+use crate::trace_gen::trace_db_interm::{Stage, TraceDBInterm};
 
-
+const PATH_WRITE_BATCH: usize = 1000;
 
 pub enum DataInput {
     DotFile(String),
@@ -35,99 +30,111 @@ impl DataInput {
 }
 pub fn gen_case(
     data_input: DataInput,
-    db_path: String,
-    remove_intermediate:bool,
-    dict: HashMap<String, Value>
+    data_output: String,
+    dict: HashMap<String, Value>,
+    opt_intermediate_path:Option<String>
 ) -> Res<()> {
+    let intermediate = match opt_intermediate_path {
+        Some(p) => { p }
+        None => {
+            format!("{}.intermediate.db", data_output)
+        }
+    };
     info!("use const mapping: {:?}", dict);
     let inst = Instant::now();
     match data_input {
         DataInput::DotFile(path) => {
             info!("Read dot file {}", path);
 
-            let action_graph = parse_dot(path.clone(), dict)?;
+            let graph = dot_action_to_db(path.clone(), dict, intermediate.clone())?;
             let duration = inst.elapsed();
 
             info!("Time elapsed to parse {}, time costs: {:?}", path, duration);
 
             let inst = Instant::now();
-
-            action_graph_output_to_db(&gen_new_vertex_id, &action_graph, db_path.clone())?;
+            action_graph_output_to_db(&gen_new_vertex_id, &graph, intermediate.clone())?;
             let duration = inst.elapsed();
             info!("Time elapsed to generate action trace, time costs: {:?}",  duration);
         }
         DataInput::StateDB(path) => {
-            let action_graph = graph_read_actions_from_state_db(path.clone(), dict)?;
+            let graph = graph_read_actions_from_state_db(path.clone(), dict, intermediate.clone())?;
             let duration = inst.elapsed();
-
-            info!("Time elapsed to read from state DB {} and build graph, time costs: {:?}", path, duration);
+            info!("Time elapsed to read from state DB {} and write actions, time costs: {:?}", path, duration);
 
             let inst = Instant::now();
-            let f_new_vertex = |set:&HashSet<String>| {
-                loop {
-                    let uuid = Uuid::new_v4().to_string();
-                    if !set.contains(&uuid) {
-                        return uuid;
-                    }
-                }
-            };
-            action_graph_output_to_db(&f_new_vertex, &action_graph, db_path.clone())?;
+            action_graph_output_to_db(&gen_new_vertex_id, &graph, intermediate.clone())?;
             let duration = inst.elapsed();
-            info!("Time elapsed to generate action trace, time costs: {:?}",  duration);
+            info!("Time elapsed to generate path, time costs: {:?}",  duration);
         }
     }
 
 
     let inst = Instant::now();
-    TraceBuilder::build(db_path, remove_intermediate)?;
+    TraceBuilder::build(intermediate, data_output)?;
 
     let duration = inst.elapsed();
     info!("Time elapsed to gen final trace, time costs: {:?}", duration);
     Ok(())
 }
 
+
 fn action_graph_output_to_db<
-    K:Eq + Hash + Clone + Ord + Debug + ToString,
-    V:ToJsonValue + 'static,
-    // create a new vertex ID not in set
-    NV: Fn(&HashSet<K>) -> K,
+    NV: Fn(&HashSet<i64>) -> i64,
 >(
     fn_new_vertex: &NV,
-    action_graph:&ActionGraph<K, V>,
-    db_path: String
+    action_graph: &ActionGraph<i64>,
+    db_path: String,
 ) -> Res<()> {
-    let vec_path: RefCell<Vec<Vec<K>>> = RefCell::new(vec![]);
-    let vec_dump: RefCell<Vec<(K, Value)>> = RefCell::new(vec![]);
-    let mut trace_db = TraceDB::new(db_path)?;
-
-
-    let f_p = |v: Vec<K>| {
-        trace!("find path :{:?}", v);
-        let mut path = vec_path.borrow_mut();
-        path.push(v);
-    };
-    let f_v = |v: K, value: Value| {
-        let mut dump = vec_dump.borrow_mut();
-        dump.push((v, value));
-    };
-
-    let inst = Instant::now();
-
-
-    action_graph.handle_action(fn_new_vertex, &f_p, &f_v)?;
-    let duration = inst.elapsed();
-    info!("Time elapsed to handle action graph, time costs: {:?}",  duration);
-    let mut db = trace_db.new_trans(true, false)?;
-    {
-        for path in vec_path.into_inner() {
-            let p = path.iter().map(|e| e.to_string()).collect();
-            db.insert_path(p)?;
+    let db = RefCell::new(TraceDBInterm::new(db_path, None, None)?);
+    let write_path = {
+        let db_ref = db.borrow();
+        let stage = db_ref.get_state()?;
+        match stage {
+            Stage::WriteAction | Stage::GeneratePath => {
+                db_ref.begin_generate_path()?;
+                true
+            }
+            _ => { false }
         }
-        for (v, dump) in vec_dump.into_inner() {
-            db.insert_action(v.to_string(), dump)?;
+    };
+    if write_path {
+        info!("To write path to DB");
+        let vec: RefCell<Vec<Vec<i64>>> = RefCell::new(
+            Vec::with_capacity(PATH_WRITE_BATCH));
+
+        let write_batch_to_db = || {
+            let mut vec_ref = vec.borrow_mut();
+            let mut batch = Vec::with_capacity(PATH_WRITE_BATCH);
+            let db_ref = db.borrow();
+            std::mem::swap(&mut batch, &mut vec_ref);
+            db_ref.write_path(batch).unwrap();
+        };
+        let f_write_path = |v: Vec<i64>| {
+            let write_to_db = {
+                let mut vec_ref = vec.borrow_mut();
+                if !v.is_empty() {
+                    vec_ref.push(v);
+                }
+
+                vec_ref.len() > PATH_WRITE_BATCH
+            };
+            if write_to_db {
+                write_batch_to_db();
+            }
+        };
+
+        let inst = Instant::now();
+        action_graph.handle_action(fn_new_vertex, &f_write_path)?;
+        {
+            write_batch_to_db();
         }
-        db.commit()?;
+
+        let duration = inst.elapsed();
+        {
+            let db_ref = db.borrow();
+            db_ref.end_generate_path()?;
+        }
+        info!("Time elapsed to handle action graph, time costs: {:?}",  duration);
     }
-
     Ok(())
 }

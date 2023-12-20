@@ -2,13 +2,13 @@ use std::collections::HashMap;
 use std::fs::read_to_string;
 use std::net::SocketAddr;
 
-
 use clap::Parser;
 use scupt_net::notifier::Notifier;
 use scupt_util::node_id::NID;
 use scupt_util::res::Res;
 use scupt_util::res_of::{res_io, res_parse};
 use serde::{Deserialize, Serialize};
+
 use sedeve_kit::action_player::action_incoming_factory::ActionIncomingFactory;
 use sedeve_kit::action_player::dtm_player::DTMPlayer;
 use sedeve_kit::trace_gen::trace_db::TraceDB;
@@ -36,9 +36,9 @@ pub struct PlayerConfig {
 }
 
 fn player_gut(db_path:String, player_id:NID, player_address:SocketAddr, peers:HashMap<NID, SocketAddr>) -> Res<()> {
-    let mut db = TraceDB::new(db_path)?;
-    let mut trans = db.new_trans(false, true)?;
-    let vec = trans.trace()?;
+    let db = TraceDB::new(db_path)?;
+
+    let vec = db.read_trace()?;
     for s in vec {
         let notifier = Notifier::new();
         let n = notifier.clone();

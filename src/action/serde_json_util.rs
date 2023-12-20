@@ -1,7 +1,7 @@
-use serde_json::{Map, Value};
-use scupt_util::res::Res;
-use tracing::error;
 use scupt_util::error_type::ET;
+use scupt_util::res::Res;
+use serde_json::{Map, Value};
+use tracing::error;
 
 pub fn json_util_empty_to_null(value: Value) -> Value {
     match value {
@@ -55,6 +55,19 @@ pub fn json_util_map_get_string(map: &Map<String, Value>, key: &str) -> Res<Stri
         }
         Some(s) => {
             Ok(s.to_string())
+        }
+    }
+}
+
+pub fn json_util_map_get_i64(map: &Map<String, Value>, key: &str) -> Res<i64> {
+    let v = json_util_map_get_value(map, key)?;
+    match v.as_i64() {
+        None => {
+            error!("{:?} is not i64 type", v);
+            return Err(ET::NoneOption);
+        }
+        Some(s) => {
+            Ok(s)
         }
     }
 }

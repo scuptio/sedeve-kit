@@ -1,14 +1,17 @@
 // convert TLA+ output json to action serde json
 
 
-use scupt_util::error_type::ET;
+use std::cell::RefCell;
+use std::path::PathBuf;
+use std::str::FromStr;
+use scupt_util::error_type::ET::IOError;
+
 use scupt_util::res::Res;
 use serde_json::Value;
+use tracing::info;
 
-use tracing::{error, trace};
-use uuid::Uuid;
-use crate::action::tla_actions::TLAActionSeq;
-use crate::trace_gen::trace_db::{TraceDB, TraceDBTrans};
+use crate::trace_gen::trace_db::TraceDB;
+use crate::trace_gen::trace_db_interm::TraceDBInterm;
 
 pub struct TraceBuilder {
 
@@ -32,108 +35,59 @@ impl TraceBuilder {
     ///
     ///
     pub fn build(
-        db_path: String,
-        remove_intermediate:bool
+        db_input: String,
+        db_output: String
     ) -> Res<()> {
-        Self::build_gut(db_path, remove_intermediate)
-    }
-
-    fn add_trace_to_db(trans:&mut TraceDBTrans, id:String, trace_path:Vec<String>, trace:Vec<Value>) -> Res<()> {
-        if !trace.is_empty() {
-            let s = serde_json::to_string_pretty(&trace).unwrap();
-            trans.insert_trace(id.to_string(), trace_path.clone(), s)?;
-        }
+        Self::build_gut(db_input, db_output, 10000)?;
         Ok(())
     }
 
+
     fn build_gut(
-        db_path:String,
-        remove_intermediate:bool
+        path_db_input: String,
+        path_db_output: String,
+        batch: u64,
     ) -> Res<()>
     {
-        let mut db = TraceDB::new(db_path.clone())?;
-        let mut trans = db.new_trans(false, false)?;
-
-        let vec = trans.path_vec()?;
-        let map = trans.action_map()?;
-
-        trace!("{:?}", vec);
-
-        for (_id, path_vec) in vec.iter() {
-            let mut trace = vec![];
-            let mut path = vec![];
-
-            for i in 0..path_vec.len() {
-                let v_id = path_vec[i].clone();
-
-                let opt = map.get(&v_id);
-                let s = match opt {
-                    Some(s) => { s }
-                    None => {
-                        error!("no such vertex ID {} in the graph", v_id);
-                        return Err(ET::NoSuchElement);
-                    }
-                };
-                let tla_action_seq = TLAActionSeq::from_str(s)?;
-                let continuous_trace = if i > 0 {
-                    let v_id1 = path_vec[i - 1].clone();
-                    let opt1 = map.get(&v_id1);
-                    let s1 = match opt1 {
-                        Some(s) => { s }
-                        None => {
-                            error!("no such vertex ID {} in the graph", v_id1);
-                            return Err(ET::NoSuchElement);
-                        }
-                    };
-                    let tla_action_seq1 = TLAActionSeq::from_str(s1)?;
-                    tla_action_seq1.id.eq(&tla_action_seq.id_prev)
-                } else {
-                    true
-                };
-                if continuous_trace {
-                    path.push(v_id.clone());
-                    for action in tla_action_seq.actions() {
-                        let json_value = action.to_action_json()?;
-                        trace.push(json_value.action_json_value());
-                    }
-                    trace!("id: {} {:?}", v_id, vec);
-                } else {
-                    // finish this trace and add it to database
-                    let trace_id = Uuid::new_v4();
-                    Self::add_trace_to_db(&mut trans, trace_id.to_string(), path, trace)?;
-
-                    // create a new trace
-                    path = vec![];
-                    trace = vec![];
-                    if i + 1 != path_vec.len() { // not the last one
-                        path.push(v_id);
-                        for action in tla_action_seq.states() {
-                            // a new trace, initialize state
-                            let json_value = action.to_action_json()?;
-                            trace.push(json_value.action_json_value());
-                        }
-                        for action in tla_action_seq.actions() {
-                            // the following actions
-                            let json_value = action.to_action_json()?;
-                            trace.push(json_value.action_json_value());
-                        }
-                    }
-                }
+        info!("To write traces to DB");
+        let temp_dir = {
+            let path_buf = PathBuf::from_str(path_db_output.as_str()).unwrap();
+            let path = path_buf.parent().unwrap();
+            if !(path.exists() && path.is_dir()) {
+                return Err(IOError("folder not exists".to_string()));
             }
-            let trace_id = Uuid::new_v4();
-            Self::add_trace_to_db(&mut trans, trace_id.to_string(), path, trace)?;
-        }
-
-        trans.commit()?;
-
-
-        if remove_intermediate {
-            let trans = db.new_trans(false, false)?;
-            trans.drop_intermediate_table()?;
-            trans.commit()?;
-        }
-
-        db.vacuum()?;
+            path.to_str().unwrap().to_string()
+        };
+        let db_input = TraceDBInterm::new(
+            path_db_input,
+            Some(temp_dir),
+            Some(20*1024*1024), // 10GB
+        )?;
+        let db_output: RefCell<TraceDB> = RefCell::new(TraceDB::new(path_db_output)?);
+        let traces: RefCell<Vec<(String, Vec<Value>)>> = RefCell::new(vec![]);
+        let num :RefCell<u64> = RefCell::new(0);
+        let f_write = || {
+            let mut traces_ref = traces.borrow_mut();
+            let db_ref = db_output.borrow();
+            let mut vec_trace = vec![];
+            std::mem::swap(&mut vec_trace, &mut traces_ref);
+            let mut num_ref = num.borrow_mut();
+            *num_ref += traces_ref.len() as u64;
+            info!("write {} traces", *num_ref);
+            db_ref.write_trace(vec_trace).unwrap();
+        };
+        let f = |id, v| {
+            let write = {
+                let mut traces_ref = traces.borrow_mut();
+                traces_ref.push((id, v));
+                traces_ref.len() == batch as usize
+            };
+            if write {
+                f_write();
+            }
+        };
+        db_input.trace(&f)?;
+        f_write();
         Ok(())
     }
 }

@@ -26,13 +26,12 @@ impl TraceReader {
     /// # Examples
     ///
     ///
-    pub fn read_action(
+    pub fn read_trace(
         path: String,
     ) -> Res<Vec<Arc<dyn ActionIncoming>>>
     {
-        let mut db = TraceDB::new(path)?;
-        let mut trans = db.new_trans(false, true)?;
-        let trace_vec = trans.trace()?;
+        let db = TraceDB::new(path)?;
+        let trace_vec = db.read_trace()?;
         let mut vec = vec![];
         for json_value in trace_vec {
             let incoming: Arc<dyn ActionIncoming> =
