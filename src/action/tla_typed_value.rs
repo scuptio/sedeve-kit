@@ -77,8 +77,8 @@ fn get_fcn_value(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<
     // this would be an enum value
     let use_enum = if vec.len() == 1 {
         let val = vec[0].0.clone();
-        if val.is_string() {
-            let vec: Vec<char> = val.to_string().chars().collect();
+        if let Value::String(s) = &val {
+            let vec: Vec<char> = s.chars().collect();
             let opt_char = vec.first();
             match opt_char {
                 Some(t) => { t.is_uppercase() }
