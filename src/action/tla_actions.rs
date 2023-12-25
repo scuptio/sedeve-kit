@@ -12,6 +12,7 @@ use crate::action::action_serde_json_value::ActionSerdeJsonValue;
 use crate::action::action_type::ActionType;
 use crate::action::res_serde::res_serde;
 use crate::action::tal_vars_parser::TLAVarsParser;
+use crate::action::tla_typed_value::get_typed_enum;
 use crate::action::tla_var_list_visitor::TLAVarListVisitor;
 
 // the action sequence defined in TLA+
@@ -151,24 +152,7 @@ impl TLAAction {
     pub fn to_action_json(&self) -> Res<ActionSerdeJsonValue> {
         let payload = {
             let mut payload = self.message.payload.clone();
-            let mut map = Map::new();
-            for n in self.message.name.iter().rev() {
-                let is_null = match &payload {
-                    Value::Null => {
-                        true
-                    }
-                    _ => {
-                        false
-                    }
-                };
-                if is_null {
-                    payload = Value::String(n.clone());
-                } else {
-                    map.insert(n.clone(), payload);
-                    payload = Value::Object(map);
-                    map = Map::new();
-                }
-            }
+            payload = get_typed_enum(self.message.name.clone(), payload);
             payload
         };
 
