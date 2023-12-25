@@ -75,28 +75,32 @@ fn get_fcn_value(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<
 
     // when the domain has only 1 string value with upper case letter
     // this would be an enum value
-    let use_enum = if vec.len() == 1 {
+    let enum_string = if vec.len() == 1 {
         let val = vec[0].0.clone();
         if let Value::String(s) = &val {
             let vec: Vec<char> = s.chars().collect();
             let opt_char = vec.first();
             match opt_char {
-                Some(t) => { t.is_uppercase() }
-                None => { false }
+                Some(t) => {
+                    if t.is_uppercase() {
+                        Some(s.clone())
+                    } else {
+                        None
+                    }
+                }
+                None => { None }
             }
         } else {
-            false
+            None
         }
     } else {
-        false
+        None
     };
-    let value = if use_enum {
-        let key = vec[0].0.to_string();
-        let enum_vec: Vec<String> = key.split(constant::ACTION_NAME_SEPARATOR)
+    let value = if let Some(es) = enum_string {
+        let enum_vec: Vec<String> = es.split(constant::ACTION_NAME_SEPARATOR)
             .map(|s| { s.to_string() })
             .collect();
         get_typed_enum(enum_vec, vec[0].1.clone())
-
     } else {
         mt_map_from_value(vec)?
     };
