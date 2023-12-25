@@ -6,7 +6,7 @@ use scupt_util::res::Res;
 use scupt_util::res_of::res_option;
 use serde_json::{Map, Value};
 
-use crate::action::tla_value_kind;
+use crate::action::{constant, tla_value_kind};
 
 pub fn get_typed_value(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<Value> {
     let mut value = value;
@@ -72,10 +72,59 @@ fn get_fcn_value(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<
         let value1 = get_typed_value(value, constant_dict_map)?;
         vec.push((domain1, value1))
     }
-    let value = mt_map_from_value(vec)?;
+
+    // when the domain has only 1 string value with upper case letter
+    // this would be an enum value
+    let use_enum = if vec.len() == 1 {
+        let val = vec[0].0.clone();
+        if val.is_string() {
+            let vec: Vec<char> = val.to_string().chars().collect();
+            let opt_char = vec.first();
+            match opt_char {
+                Some(t) => { t.is_uppercase() }
+                None => { false }
+            }
+        } else {
+            false
+        }
+    } else {
+        false
+    };
+    let value = if use_enum {
+        let key = vec[0].0.to_string();
+        let enum_vec: Vec<String> = key.split(constant::ACTION_NAME_SEPARATOR)
+            .map(|s| { s.to_string() })
+            .collect();
+        get_typed_enum(enum_vec, vec[0].1.clone())
+
+    } else {
+        mt_map_from_value(vec)?
+    };
     Ok(value)
 }
 
+pub fn get_typed_enum(vec:Vec<String>, value:Value) -> Value {
+    let mut ret = value;
+    let mut map = Map::new();
+    for n in vec.iter().rev() {
+        let is_null = match &ret {
+            Value::Null => {
+                true
+            }
+            _ => {
+                false
+            }
+        };
+        if is_null {
+            ret = Value::String(n.clone());
+        } else {
+            map.insert(n.clone(), ret);
+            ret = Value::Object(map);
+            map = Map::new();
+        }
+    }
+    ret
+}
 
 fn _get_array(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<Vec<Value>> {
     let array = match value {
