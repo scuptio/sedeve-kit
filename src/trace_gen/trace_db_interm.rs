@@ -133,7 +133,7 @@ impl TraceDBInterm {
             let mut stmt = res_sqlite(tran.prepare(sql))?;
             for path in batch {
                 let id = uuid::Uuid::new_v4().to_string();
-                for (i, action_id) in path.iter().enumerate() {
+                for (i, action_id) in path.iter().rev().enumerate() {
                     let r = stmt.execute((id.clone(), (i + 1) as i32, *action_id));
                     let _ = res_sqlite(r)?;
                 }
