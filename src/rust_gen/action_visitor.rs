@@ -68,8 +68,8 @@ impl ActionVisitor {
         let opt_n = node.child_by_field_name("automaton_definition");
         match opt_n {
             Some(n) => {
-                let automaton = self.visit_automation_definition(n)?;
-                return Ok(TypeDef::Automaton(automaton));
+                let automata = self.visit_automation_definition(n)?;
+                return Ok(TypeDef::Automaton(automata));
             }
             None => {}
         }

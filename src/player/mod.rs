@@ -1,6 +1,6 @@
 
 pub mod action_incoming;
-pub mod automaton;
+pub mod automata;
 pub mod dtm_server;
 pub mod dtm_client;
 

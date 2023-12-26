@@ -1,6 +1,6 @@
 [[bin]]
-name = "action_player"
-path = "src/action_player/bin/main.rs"
+name = "player"
+path = "src/player/bin/main.rs"
 
 [[bin]]
 name = "rust_gen"

@@ -1,4 +1,3 @@
-
 use scupt_util::res::Res;
 
 /// ActionIncoming trait for accessing a trace

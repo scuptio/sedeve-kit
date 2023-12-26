@@ -17,10 +17,10 @@ use tokio::time::sleep;
 use tracing::{error, trace};
 
 use crate::action::action_serde_json_string::ActionSerdeJsonString;
-use crate::action_player::action_incoming::ActionIncoming;
-use crate::action_player::dtm_player::TestOption;
-use crate::action_player::dtm_server_handler::DTMServerHandler;
-use crate::action_player::msg_ctrl::MessageControl;
+use crate::player::action_incoming::ActionIncoming;
+use crate::player::dtm_player::TestOption;
+use crate::player::dtm_server_handler::DTMServerHandler;
+use crate::player::msg_ctrl::MessageControl;
 
 type DTMNode = Node<
     MessageControl,

@@ -11,8 +11,8 @@ use tokio::runtime::Builder;
 use tokio::task::LocalSet;
 use tracing::{debug, error};
 
-use crate::action_player::action_incoming::ActionIncoming;
-use crate::action_player::dtm_server::DTMServer;
+use crate::player::action_incoming::ActionIncoming;
+use crate::player::dtm_server::DTMServer;
 
 /// Deterministic  Player
 pub struct DTMPlayer {

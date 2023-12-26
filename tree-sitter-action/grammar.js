@@ -4,7 +4,7 @@
 
 // keyword definition
 
-const control_automaton = 'automaton'
+const control_automaton = 'automata'
 const control_struct = 'struct'
 const control_enum = 'enum'
 const control_message = 'message'

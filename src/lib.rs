@@ -2,7 +2,7 @@
 #![feature(unboxed_closures)]
 
 pub mod rust_gen;
-pub mod action_player;
+pub mod player;
 pub mod trace_gen;
 
 pub mod define;
