@@ -3,14 +3,17 @@ use std::collections::HashMap;
 use std::time::Instant;
 
 use rusqlite::Connection;
+use scupt_util::message::MsgTrait;
 use scupt_util::res::Res;
 use scupt_util::res_of::{res_parse, res_sqlite};
 use serde_json::Value;
 use tracing::info;
 
+use crate::action::action_message::ActionMessage;
 use crate::action::tla_actions::TLAActionSeq;
 use crate::action::tla_typed_value::get_typed_value;
 use crate::trace_gen::action_graph::ActionGraph;
+use crate::trace_gen::read_json::read_from_dict_json;
 use crate::trace_gen::trace_db_interm::{Stage, TraceDBInterm};
 
 pub fn read_actions<F>(path:String, dict: &HashMap<String, Value>, fn_handle_action:&F)
@@ -27,6 +30,24 @@ pub fn read_actions<F>(path:String, dict: &HashMap<String, Value>, fn_handle_act
         fn_handle_action(value)?;
     }
     Ok(())
+}
+
+pub fn read_action_message<M: MsgTrait + 'static, F>(path_db: String, path_map: String)
+    where F: Fn(ActionMessage<M>)
+{
+    let map = read_from_dict_json(Some(path_map.clone())).unwrap();
+    let f = |v: Value| -> Res<()> {
+        let tla_action_seq = TLAActionSeq::from(v.clone())?;
+        for vec in [tla_action_seq.actions(), tla_action_seq.states()] {
+            for a in vec {
+                let j = a.to_action_json()?;
+                let s = j.to_action_message();
+                let _a: ActionMessage<M> = serde_json::from_str(s.to_string().unwrap().as_str()).unwrap();
+            }
+        }
+        Ok(())
+    };
+    read_actions(path_db.to_string(), &map, &f).unwrap();
 }
 
 fn read_action_batch<F>(
