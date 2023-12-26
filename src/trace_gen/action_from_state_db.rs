@@ -32,8 +32,12 @@ pub fn read_actions<F>(path:String, dict: &HashMap<String, Value>, fn_handle_act
     Ok(())
 }
 
-pub fn read_action_message<M: MsgTrait + 'static, F>(path_db: String, path_map: String)
-    where F: Fn(ActionMessage<M>)
+pub fn read_action_message<M: MsgTrait + 'static, F>(
+    path_db: String,
+    path_map: String,
+    f : &F
+) -> Res<()>
+    where F: Fn(ActionMessage<M>) -> Res<()>
 {
     let map = read_from_dict_json(Some(path_map.clone())).unwrap();
     let f = |v: Value| -> Res<()> {
@@ -42,12 +46,14 @@ pub fn read_action_message<M: MsgTrait + 'static, F>(path_db: String, path_map: 
             for a in vec {
                 let j = a.to_action_json()?;
                 let s = j.to_action_message();
-                let _a: ActionMessage<M> = serde_json::from_str(s.to_string().unwrap().as_str()).unwrap();
+                let m: ActionMessage<M> = serde_json::from_str(s.to_string().unwrap().as_str()).unwrap();
+                f(m)?;
             }
         }
         Ok(())
     };
     read_actions(path_db.to_string(), &map, &f).unwrap();
+    Ok(())
 }
 
 fn read_action_batch<F>(
