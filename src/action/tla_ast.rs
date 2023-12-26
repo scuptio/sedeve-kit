@@ -1,7 +1,7 @@
 use std::collections::HashMap;
-use scupt_util::mt_map::mt_map_from_value;
-use scupt_util::mt_set::mt_set_from_value;
 
+use scupt_util::mt_map::mt_map_from_vec;
+use scupt_util::mt_set::mt_set_from_vec;
 use scupt_util::res::Res;
 use serde_json::{Map, Number, Value};
 use tracing::debug;
@@ -66,7 +66,8 @@ fn tla_value_set_2_json(set: &Vec<TLAValue>, const_word_dict: &HashMap<String, V
         let v = tla_value_2_json(e, const_word_dict)?;
         vec.push(v);
     }
-    mt_set_from_value(vec)
+    let opt = mt_set_from_vec(vec);
+    Ok(opt.unwrap())
 }
 
 fn tla_value_record_2_json(record: &Vec<(String, TLAValue)>, const_word_dict: &HashMap<String, Value>) -> Res<Value> {
@@ -86,7 +87,8 @@ fn tla_value_map_2_json(map: &Vec<(TLAValue, TLAValue)>, const_word_dict: &HashM
         vec.push((key, val));
     }
     debug!("map: {:?}", vec);
-    mt_map_from_value(vec)
+    let opt = mt_map_from_vec(vec);
+    Ok(opt.unwrap())
 }
 
 fn tla_value_sequence_2_json(sequence: &Vec<TLAValue>, const_word_dict: &HashMap<String, Value>) -> Res<Value> {

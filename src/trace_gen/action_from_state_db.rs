@@ -48,7 +48,8 @@ pub fn read_action_message<M: MsgTrait + 'static, F>(
                 let s = j.to_action_message();
                 let m: serde_json::Result<ActionMessage<M>> = serde_json::from_str(s.to_string().unwrap().as_str());
                 if m.is_err() {
-                    eprintln!("{:?}", s)
+                    eprintln!("==== error action sequence ==== : \n{}", serde_json::to_string_pretty(&v).unwrap());
+                    eprintln!("==== error action ==== : \n{}", s.to_string().unwrap())
                 }
                 f(m.unwrap())?;
             }

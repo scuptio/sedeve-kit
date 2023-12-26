@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
     use serde_json::Value;
+
     use crate::action::constant;
     use crate::action::tla_typed_value::get_typed_value;
 
@@ -1203,6 +1204,8 @@ r###"
    }
 }
     "###;
+
+
     #[test]
     fn test_tla_typed_value() {
         let values = [S1, S2];
