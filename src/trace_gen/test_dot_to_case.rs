@@ -10,7 +10,7 @@ mod test {
 
     #[test]
     fn test_dot_to_case() {
-        let path_json = test_data_path("raft_map_const.json".to_string()).unwrap();
+        let path_json = test_data_path("map_const.json".to_string()).unwrap();
         let r_dict = read_from_dict_json(Some(path_json));
         let dict = match r_dict {
             Ok(dict) => { dict }

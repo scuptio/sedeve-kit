@@ -9,7 +9,7 @@ mod tests {
     #[test]
     fn test_parse_dot() {
         init_logger::logger_setup();
-        let path_json = test_data_path("raft_map_const.json".to_string()).unwrap();
+        let path_json = test_data_path("map_const.json".to_string()).unwrap();
         let dict = read_from_dict_json(Some(path_json)).unwrap();
         let path = test_data_path("toolbox_dump.dot".to_string()).unwrap();
         let r = parse_dot(path, dict);
