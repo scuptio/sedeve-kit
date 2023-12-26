@@ -46,8 +46,11 @@ pub fn read_action_message<M: MsgTrait + 'static, F>(
             for a in vec {
                 let j = a.to_action_json()?;
                 let s = j.to_action_message();
-                let m: ActionMessage<M> = serde_json::from_str(s.to_string().unwrap().as_str()).unwrap();
-                f(m)?;
+                let m: serde_json::Result<ActionMessage<M>> = serde_json::from_str(s.to_string().unwrap().as_str());
+                if m.is_err() {
+                    eprintln!("{:?}", s)
+                }
+                f(m.unwrap())?;
             }
         }
         Ok(())
