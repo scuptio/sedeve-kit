@@ -1,7 +1,8 @@
 use std::collections::HashMap;
+
 use scupt_util::error_type::ET;
-use scupt_util::mt_map::mt_map_from_value;
-use scupt_util::mt_set::mt_set_from_value;
+use scupt_util::mt_map::{mt_map_from_vec, mt_map_to_vec};
+use scupt_util::mt_set::{mt_set_from_vec, mt_set_to_vec};
 use scupt_util::res::Res;
 use scupt_util::res_of::res_option;
 use serde_json::{Map, Value};
@@ -102,7 +103,8 @@ fn get_fcn_value(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<
             .collect();
         get_typed_enum(enum_vec, vec[0].1.clone())
     } else {
-        mt_map_from_value(vec)?
+        let opt = mt_map_from_vec(vec);
+        opt.unwrap()
     };
     Ok(value)
 }
@@ -110,15 +112,8 @@ fn get_fcn_value(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<
 pub fn get_typed_enum(vec:Vec<String>, value:Value) -> Value {
     let mut ret = value;
     let mut map = Map::new();
-    for n in vec.iter().rev() {
-        let is_null = match &ret {
-            Value::Null => {
-                true
-            }
-            _ => {
-                false
-            }
-        };
+    for (i, n) in vec.iter().rev().enumerate() {
+        let is_null =  i == 0 && value_is_empty(& ret);
         if is_null {
             ret = Value::String(n.clone());
         } else {
@@ -128,6 +123,25 @@ pub fn get_typed_enum(vec:Vec<String>, value:Value) -> Value {
         }
     }
     ret
+}
+
+fn value_is_empty(value:&Value) -> bool {
+    match value {
+        Value::Null => { true }
+        Value::Bool(_) => { false }
+        Value::Number(_) => { false }
+        Value::String(_) => { false }
+        Value::Array(a) => { a.is_empty() }
+        Value::Object(m) => {
+            if let Some(vec) = mt_set_to_vec(value.clone()) {
+                vec.is_empty()
+            } else if let Some(vec) = mt_map_to_vec(value.clone()) {
+                vec.is_empty()
+            } else {
+                m.is_empty()
+            }
+        }
+    }
 }
 
 fn _get_array(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<Vec<Value>> {
@@ -149,7 +163,7 @@ fn get_tuple_value(value:Value, constant_dict_map:&HashMap<String, Value>) -> Re
 
 fn get_set_value(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<Value> {
     let array = _get_array(value, constant_dict_map)?;
-    mt_set_from_value(array)
+    Ok(mt_set_from_vec(array).unwrap())
 }
 
 fn get_record_value(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<Value> {
