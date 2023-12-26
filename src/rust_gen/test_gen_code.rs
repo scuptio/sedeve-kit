@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use scupt_util::init_logger::logger_setup_with_console;
+    use scupt_util::logger::logger_setup;
     use scupt_util::res::Res;
 
     use crate::rust_gen::action_visitor::ActionVisitor;
@@ -11,11 +11,11 @@ mod test {
     }
 
     fn _test_gen_code() -> Res<()> {
-        logger_setup_with_console();
+        logger_setup("debug");
         let action_text = r#"
 
 
-automaton handle_message {
+automata handle_message {
     input  handle_append_request(
         message:  RaftMessage,
         from: NodeId,

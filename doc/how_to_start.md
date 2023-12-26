@@ -59,7 +59,7 @@ The action types include:
 Use the [trace-gen](../src/trace_gen/bin/main.rs) to traversal dot file(like [this dot file](../src/data/toolbox_dump.dot)) 
 and dump all trace into a database(e.g., [sqlite DB file](../src/data/trace.db))
 The trace format is represented in JSON, similar to [this JSON file](../src/data/trace2.json)
-The [action incoming interface](../src/action_player/action_incoming.rs) can be used to read traces.
+The [action incoming interface](../src/player/action_incoming.rs) can be used to read traces.
 
 
 The trace_gen's command lines:
@@ -117,9 +117,9 @@ that verify the coherence between our source-level implementation and abstract-l
 
 The *anchor actions* include server macros:
 
-- *auto_init*:  Enable an automaton
+- *auto_init*:  Enable an automata
 
-- *auto_clear*:  Clear an automaton
+- *auto_clear*:  Clear an automata
 
 - *action_begin*:  Begin an action
 
@@ -153,11 +153,9 @@ The *anchor actions* include server macros:
 
 - *internal_end* : End an Internal action
 
+These macros are defined in [automata.rs](../src/player/automata).
 
-These macros are defined in [automaton.rs](../src/action_player/automaton.rs).
-
-
-An example using *anchor actions* could be found in [test_dtm_player.rs](../src/action_player/test_dtm_player.rs).
+An example using *anchor actions* could be found in [test_dtm_player.rs](../src/player/test_dtm_player.rs).
 
 
 
@@ -169,7 +167,8 @@ This tool set includes an Action language and a command-line tool.
 The Action language is a domain-specific language (DSL) defined by [grammar.js](../src/tree-sitter-action/grammar.js)
 It is used to guide the generation of Rust code for specification-driven testing. 
 The *Action* can be written in TLA+ specification files and are enclosed in comments marked by **(\*@Begin@** and **@End@\*)** .
-The [rust-gen](../src/rust_gen/bin/main.rs) tool can read automaton definitions from *Action*s and generate Rust code stubs.
+The [rust-gen](../src/rust_gen/bin/main.rs) tool can read automata definitions from *Action*s and generate Rust code
+stubs.
 
 Here is the rust_gen command line:
 

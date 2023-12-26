@@ -32,10 +32,10 @@ mod test {
     use crate::action::action_message::ActionMessage;
     use crate::action::action_type::ActionType;
     use crate::action::panic::set_panic_hook;
-    use crate::action_player::action_incoming::ActionIncoming;
-    use crate::action_player::automaton;
-    use crate::action_player::dtm_player::TestOption;
-    use crate::action_player::dtm_server::DTMServer;
+    use crate::player::action_incoming::ActionIncoming;
+    use crate::player::automata;
+    use crate::player::dtm_player::TestOption;
+    use crate::player::dtm_server::DTMServer;
 
     const AUTOMATON_NAME:&str ="TEST_AUTOMATON";
 

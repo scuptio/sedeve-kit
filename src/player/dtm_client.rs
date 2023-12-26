@@ -20,10 +20,10 @@ use tokio::sync::oneshot::Sender;
 use tokio::task::LocalSet;
 use tokio::time::sleep;
 
-use crate::action_player::async_action_driver::AsyncActionDriver;
-use crate::action_player::async_action_driver_impl::AsyncActionDriverImpl;
-use crate::action_player::dtm_client_handler::DTMClientHandler;
-use crate::action_player::msg_ctrl::MessageControl;
+use crate::player::async_action_driver::AsyncActionDriver;
+use crate::player::async_action_driver_impl::AsyncActionDriverImpl;
+use crate::player::dtm_client_handler::DTMClientHandler;
+use crate::player::msg_ctrl::MessageControl;
 
 type DTMClientNode = Node<
     MessageControl,

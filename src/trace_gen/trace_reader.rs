@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use scupt_util::res::Res;
 
-use crate::action_player::action_incoming::ActionIncoming;
-use crate::action_player::action_incoming_factory::ActionIncomingFactory;
+use crate::player::action_incoming::ActionIncoming;
+use crate::player::action_incoming_factory::ActionIncomingFactory;
 use crate::trace_gen::trace_db::TraceDB;
 
 pub struct TraceReader {}

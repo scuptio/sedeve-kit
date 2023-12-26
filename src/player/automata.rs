@@ -12,18 +12,20 @@ use scupt_util::res::Res;
 use scupt_util::res_of::res_io;
 use tokio::runtime::Builder;
 use tracing::error;
+
 use crate::action::action_message::ActionMessage;
 use crate::action::action_type::ActionType;
+use crate::player::async_action_driver::AsyncActionDriver;
+use crate::player::dtm_client::DTMClient;
 
-use crate::action_player::async_action_driver::AsyncActionDriver;
-use crate::action_player::dtm_client::DTMClient;
+pub type AT = ActionType;
 
-/// Clean an automaton setting
+/// Clean an automata setting
 pub fn automaton_clear(name: &str,) {
     action_driver_unset_gut(name)
 }
 
-/// Initialize an automaton setting
+/// Initialize an automata setting
 pub fn automaton_init(
     name: &str,
     client_id:NID,
@@ -54,7 +56,7 @@ pub async fn automaton_async_end_action<M: MsgTrait + 'static>(
     async_action_gut(automaton_name, action_type, message, false).await
 }
 
-/// Initialize an automaton.
+/// Initialize an automata.
 /// The automation name is `automaton_name`. And it connect to player whose node id(NID) is
 /// `player_id`, and network address(with string representation) is `player_addr`
 #[macro_export]
@@ -66,19 +68,19 @@ macro_rules! auto_init {
         $player_addr:expr
     ) => {
         {
-            automaton::automaton_init($automaton_name, $node_id, $player_id, $player_addr);
+            automata::automaton_init($automaton_name, $node_id, $player_id, $player_addr);
         }
     };
 }
 
-/// Clear an automaton setting
+/// Clear an automata setting
 #[macro_export]
 macro_rules! auto_clear {
     (
         $automaton_name:expr
     ) => {
         {
-            automaton::automaton_clear($automaton_name);
+            automata::automaton_clear($automaton_name);
         }
     };
 }
@@ -88,7 +90,7 @@ macro_rules! auto_clear {
 macro_rules! action_begin {
     ($automaton_name:expr, $action_type:expr, $message:expr) => {
         {
-            automaton::automaton_async_begin_action($automaton_name, $action_type, $message).await;
+            automata::automaton_async_begin_action($automaton_name, $action_type, $message).await;
         }
     };
 }
@@ -98,7 +100,7 @@ macro_rules! action_begin {
 macro_rules! action_end {
     ($automaton_name:expr, $action_type:expr, $message:expr) => {
         {
-            automaton::automaton_async_end_action($automaton_name, $action_type, $message).await;
+            automata::automaton_async_end_action($automaton_name, $action_type, $message).await;
         }
     };
 }
@@ -108,7 +110,7 @@ macro_rules! action_end {
 macro_rules! setup {
     ($automaton_name:expr,  $message:expr) => {
         {
-            automaton::automaton_async_end_action($automaton_name, ActionType::Setup, $message).await;
+            automata::automaton_async_end_action($automaton_name, automata::AT::Setup, $message).await;
         }
     };
 }
@@ -118,7 +120,7 @@ macro_rules! setup {
 macro_rules! check {
     ($automaton_name:expr,  $message:expr) => {
         {
-            automaton::automaton_async_end_action($automaton_name, ActionType::Check, $message).await;
+            automata::automaton_async_end_action($automaton_name, automata::AT::Check, $message).await;
         }
     };
 }
@@ -128,7 +130,7 @@ macro_rules! check {
 macro_rules! input {
     ($automaton_name:expr,  $message:expr) => {
         {
-            automaton::automaton_async_end_action($automaton_name, ActionType::Input, $message).await;
+            automata::automaton_async_end_action($automaton_name, automata::AT::Input, $message).await;
         }
     };
 }
@@ -138,7 +140,7 @@ macro_rules! input {
 macro_rules! output {
     ($automaton_name:expr,  $message:expr) => {
         {
-            automaton::automaton_async_begin_action($automaton_name, ActionType::Output, $message).await;
+            automata::automaton_async_begin_action($automaton_name, automata::AT::Output, $message).await;
         }
     };
 }
@@ -148,7 +150,7 @@ macro_rules! output {
 macro_rules! setup_begin {
     ($automaton_name:expr,  $message:expr) => {
         {
-            automaton::automaton_async_begin_action($automaton_name, ActionType::Setup, $message).await;
+            automata::automaton_async_begin_action($automaton_name, automata::AT::Setup, $message).await;
         }
     };
 }
@@ -158,7 +160,7 @@ macro_rules! setup_begin {
 macro_rules! setup_end {
     ($automaton_name:expr,  $message:expr) => {
         {
-            automaton::automaton_async_end_action($automaton_name, ActionType::Setup, $message).await;
+            automata::automaton_async_end_action($automaton_name, automata::AT::Setup, $message).await;
         }
     };
 }
@@ -168,7 +170,7 @@ macro_rules! setup_end {
 macro_rules! check_begin {
     ($automaton_name:expr,  $message:expr) => {
         {
-            automaton::automaton_async_begin_action($automaton_name, ActionType::Check, $message).await;
+            automata::automaton_async_begin_action($automaton_name, automata::AT::Check, $message).await;
         }
     };
 }
@@ -179,7 +181,7 @@ macro_rules! check_begin {
 macro_rules! check_end {
     ($automaton_name:expr,  $message:expr) => {
         {
-            automaton::automaton_async_end_action($automaton_name, ActionType::Check, $message).await;
+            automata::automaton_async_end_action($automaton_name, automata::AT::Check, $message).await;
         }
     };
 }
@@ -189,7 +191,7 @@ macro_rules! check_end {
 macro_rules! input_begin {
     ($automaton_name:expr,  $message:expr) => {
         {
-            automaton::automaton_async_begin_action($automaton_name, ActionType::Input, $message).await;
+            automata::automaton_async_begin_action($automaton_name, automata::AT::Input, $message).await;
         }
     };
 }
@@ -199,7 +201,7 @@ macro_rules! input_begin {
 macro_rules! input_end {
     ($automaton_name:expr,  $message:expr) => {
         {
-            automaton::automaton_async_end_action($automaton_name, ActionType::Input, $message).await;
+            automata::automaton_async_end_action($automaton_name, automata::AT::Input, $message).await;
         }
     };
 }
@@ -209,7 +211,7 @@ macro_rules! input_end {
 macro_rules! output_begin {
     ($automaton_name:expr,  $message:expr) => {
         {
-            automaton::automaton_async_begin_action($automaton_name, ActionType::Output, $message).await;
+            automata::automaton_async_begin_action($automaton_name, automata::AT::Output, $message).await;
         }
     };
 }
@@ -219,7 +221,7 @@ macro_rules! output_begin {
 macro_rules! output_end {
     ($automaton_name:expr,  $message:expr) => {
         {
-            automaton::automaton_async_end_action($automaton_name, ActionType::Output, $message).await;
+            automata::automaton_async_end_action($automaton_name, automata::AT::Output, $message).await;
         }
     };
 }
@@ -229,7 +231,7 @@ macro_rules! output_end {
 macro_rules! internal_begin {
     ($automaton_name:expr,  $message:expr) => {
         {
-            automaton::automaton_async_begin_action($automaton_name, ActionType::Internal, $message).await;
+            automata::automaton_async_begin_action($automaton_name, automata::AT::Internal, $message).await;
         }
     };
 }
@@ -240,7 +242,7 @@ macro_rules! internal_begin {
 macro_rules! internal_end {
     ($automaton_name:expr,  $message:expr) => {
         {
-            automaton::automaton_async_end_action($automaton_name, ActionType::Internal, $message).await;
+            automata::automaton_async_end_action($automaton_name, automata::AT::Internal, $message).await;
         }
     };
 }
@@ -250,7 +252,7 @@ macro_rules! internal_end {
 macro_rules! auto_enable {
     ($automaton_name:expr) => {
         {
-            automaton::automaton_enable($automaton_name)
+            automata::automaton_enable($automaton_name)
         }
     };
 }

@@ -75,7 +75,7 @@
         },
         {
           "type": "STRING",
-          "value": "automaton"
+          "value": "automata"
         }
       ]
     },
@@ -568,7 +568,7 @@
       "members": [
         {
           "type": "STRING",
-          "value": "automaton"
+          "value": "automata"
         },
         {
           "type": "FIELD",

@@ -8,7 +8,7 @@ use scupt_util::res_of::res_io;
 use serde_json::Value;
 
 use crate::action::trace::TraceJsonValue;
-use crate::action_player::action_incoming::ActionIncoming;
+use crate::player::action_incoming::ActionIncoming;
 
 pub struct ActionInputJson  {
     actions: Mutex<VecDeque<String>>,
@@ -77,9 +77,9 @@ mod test {
     use std::fs::read_to_string;
     use std::sync::Arc;
 
-    use crate::action_player::action_incoming::ActionIncoming;
-    use crate::action_player::action_input_json::ActionInputJson;
     use crate::data::path::test::test_data_path;
+    use crate::player::action_incoming::ActionIncoming;
+    use crate::player::action_input_json::ActionInputJson;
 
     #[test]
     fn test() {

@@ -28,11 +28,11 @@ use tracing::{debug, error, Instrument, trace, trace_span};
 use crate::action::action_serde_json_string::ActionSerdeJsonString;
 use crate::action::action_serde_json_value::ActionSerdeJsonValue;
 use crate::action::action_type::ActionType;
-use crate::action_player::action_executor::ActionExecutor;
-use crate::action_player::action_incoming::ActionIncoming;
-use crate::action_player::action_waiter::ActionPrefixWaiter;
-use crate::action_player::dtm_player::TestOption;
-use crate::action_player::msg_ctrl::MessageControl;
+use crate::player::action_executor::ActionExecutor;
+use crate::player::action_incoming::ActionIncoming;
+use crate::player::action_waiter::ActionPrefixWaiter;
+use crate::player::dtm_player::TestOption;
+use crate::player::msg_ctrl::MessageControl;
 
 enum DTMCmd {
     StartAction((Arc<dyn ActionIncoming>, oneshot::Sender<Res<()>>)),

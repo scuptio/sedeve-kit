@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::sync::Arc;
-use tokio::sync::{Mutex, Notify};
 
+use tokio::sync::{Mutex, Notify};
 
 #[derive(Clone)]
 pub struct ActionPrefixWaiter {

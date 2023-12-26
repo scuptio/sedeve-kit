@@ -14,7 +14,7 @@ The workflow for building a system using **sedeve-kit**
 
 ## Modeling the system
 
-[Use I/O automaton to model the system](doc/model_the_system.md)
+[Use I/O automata to model the system](doc/model_the_system.md)
 
 ## Mapping logical model to physical system
 [From design-level to code-level](doc/from_design_to_code.md)

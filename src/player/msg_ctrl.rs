@@ -4,8 +4,8 @@ use scupt_util::message::MsgTrait;
 use scupt_util::res::Res;
 use serde::Deserialize;
 use serde::Serialize;
-use crate::action::action_serde_json_string::ActionSerdeJsonString;
 
+use crate::action::action_serde_json_string::ActionSerdeJsonString;
 
 #[derive(
 Clone,

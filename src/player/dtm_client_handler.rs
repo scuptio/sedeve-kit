@@ -1,3 +1,4 @@
+use std::net::SocketAddr;
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -6,7 +7,7 @@ use scupt_net::handle_event::HandleEvent;
 use scupt_util::error_type::ET;
 use scupt_util::res::Res;
 use tracing::error;
-use std::net::SocketAddr;
+
 struct Handler {}
 
 pub struct DTMClientHandler {
