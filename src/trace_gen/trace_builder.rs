@@ -72,7 +72,7 @@ impl TraceBuilder {
             let mut vec_trace = vec![];
             std::mem::swap(&mut vec_trace, &mut traces_ref);
             let mut num_ref = num.borrow_mut();
-            *num_ref += traces_ref.len() as u64;
+            *num_ref += vec_trace.len() as u64;
             info!("write {} traces", *num_ref);
             db_ref.write_trace(vec_trace).unwrap();
         };
