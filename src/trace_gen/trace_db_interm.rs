@@ -227,6 +227,31 @@ impl TraceDBInterm {
         Ok(())
     }
 
+    pub fn state<F>(&self, f_handle_state:&F) -> Res<()>
+        where F:Fn(String, Vec<Value>)
+    {
+        let sql = r#"select id, state_json from action;"#;
+        let conn = self.conn.lock().unwrap();
+        let stmt_r = conn.prepare(sql);
+        let mut stmt = res_sqlite(stmt_r)?;
+        let mut rows = res_sqlite(stmt.query(()))?;
+        while let Some(row) = res_sqlite(rows.next())? {
+            let id:i64 = res_sqlite(row.get(0))?;
+            let state_json: String = res_sqlite(row.get(1))?;
+            let state_value: Value = res_parse(serde_json::from_str(state_json.as_str()))?;
+            let vec = match  state_value {
+                Value::Array(vec) => {
+                    vec
+                }
+                _  => {
+                    vec![state_value]
+                }
+            };
+            f_handle_state(id.to_string(), vec);
+        }
+        Ok(())
+    }
+
     pub fn trace<F>(&self, f_handle_trace: &F) -> Res<()>
         where F: Fn(String, Vec<Value>)
     {

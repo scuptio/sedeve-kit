@@ -17,7 +17,18 @@ pub struct TraceBuilder {
 
 }
 
+#[derive(Clone)]
+pub struct OptBuild {
+    pub initialize_setup:bool
+}
 
+impl Default for OptBuild {
+    fn default() -> Self {
+        Self {
+            initialize_setup: false,
+        }
+    }
+}
 impl TraceBuilder {
     /// This function converts TLA+ __action__ variables that have been dumped from the Toolbox and
     /// stored in the input SQLite database to serialized structs using serde_json. The resulting
@@ -36,9 +47,10 @@ impl TraceBuilder {
     ///
     pub fn build(
         db_input: String,
-        db_output: String
+        db_output: String,
+        opt_build: OptBuild
     ) -> Res<()> {
-        Self::build_gut(db_input, db_output, 10000)?;
+        Self::build_gut(db_input, db_output, 10000, opt_build)?;
         Ok(())
     }
 
@@ -47,6 +59,7 @@ impl TraceBuilder {
         path_db_input: String,
         path_db_output: String,
         batch: u64,
+        opt_build_trace: OptBuild
     ) -> Res<()>
     {
         info!("To write traces to DB");
@@ -66,6 +79,7 @@ impl TraceBuilder {
         let db_output: RefCell<TraceDB> = RefCell::new(TraceDB::new(path_db_output)?);
         let traces: RefCell<Vec<(String, Vec<Value>)>> = RefCell::new(vec![]);
         let num :RefCell<u64> = RefCell::new(0);
+
         let f_write = || {
             let mut traces_ref = traces.borrow_mut();
             let db_ref = db_output.borrow();
@@ -86,7 +100,12 @@ impl TraceBuilder {
                 f_write();
             }
         };
-        db_input.trace(&f)?;
+        let initialize_setup = opt_build_trace.initialize_setup;
+        if initialize_setup {
+            db_input.state(&f)?;
+        } else {
+            db_input.trace(&f)?;
+        }
         f_write();
         Ok(())
     }
