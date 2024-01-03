@@ -10,7 +10,7 @@ use crate::trace_gen::action_from_parse_dot::dot_action_to_db;
 use crate::trace_gen::action_from_state_db::graph_read_actions_from_state_db;
 use crate::trace_gen::action_graph::ActionGraph;
 use crate::trace_gen::graph_find_path::gen_new_vertex_id;
-use crate::trace_gen::trace_builder::TraceBuilder;
+use crate::trace_gen::trace_builder::{OptBuild, TraceBuilder};
 use crate::trace_gen::trace_db_interm::{Stage, TraceDBInterm};
 
 const PATH_WRITE_BATCH: usize = 1000;
@@ -32,7 +32,8 @@ pub fn gen_case(
     data_input: DataInput,
     data_output: String,
     dict: HashMap<String, Value>,
-    opt_intermediate_path:Option<String>
+    opt_intermediate_path:Option<String>,
+    initialize_setup:bool
 ) -> Res<()> {
     let intermediate = match opt_intermediate_path {
         Some(p) => { p }
@@ -70,7 +71,10 @@ pub fn gen_case(
 
 
     let inst = Instant::now();
-    TraceBuilder::build(intermediate, data_output)?;
+    let opt = OptBuild {
+        initialize_setup,
+    };
+    TraceBuilder::build(intermediate, data_output, opt)?;
 
     let duration = inst.elapsed();
     info!("Time elapsed to gen final trace, time costs: {:?}", duration);
