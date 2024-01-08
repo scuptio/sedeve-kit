@@ -221,6 +221,7 @@ mod test {
             let name = format!("node_{}", node_id);
             let opt = IOServiceOpt {
                 num_message_receiver: 1,
+                testing: true,
             };
             let service = IOService::<AppMsg>::new(node_id, name.clone(), opt, Notifier::new())?;
             Ok(Self {
