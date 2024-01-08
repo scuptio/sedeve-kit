@@ -62,6 +62,7 @@ impl DTMClient {
             client_id,
             task_name,
             handle,
+            false,
             stop_notify,
         )?;
         let (sender, receiver) = unbounded_channel();

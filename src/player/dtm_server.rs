@@ -51,13 +51,16 @@ impl DTMServer {
             node_id,
             client_ch_name,
             HandleEventDummy::default(),
+            false,
             stop_notify.clone())?;
         let node_sender = client_node.default_message_sender();
         let h = DTMServerHandler::new(node_id, node_sender, stop_notify.clone(), option);
         let player_node: DTMNode = DTMNode::new(
             node_id,
             name,
-            h.clone(), stop_notify.clone())?;
+            h.clone(),
+            false,
+            stop_notify.clone())?;
         Ok(Self {
             handler: Arc::new(h),
             player_node: Arc::new(player_node),
