@@ -4,6 +4,12 @@
 
 **S**p**e**cification-**D**riv**e**n De**ve**lopment **Kit**
 
+## The architecture
+
+![architecture](doc/architecture.png)
+
+## Workflow
+
 The workflow for building a system using **sedeve-kit**
 
 ![workflow](doc/workflow.png)
