@@ -4,7 +4,7 @@
 
 **S**p**e**cification-**D**riv**e**n De**ve**lopment **Kit**
 
-## The architecture
+## Architecture
 
 ![architecture](doc/architecture.png)
 
