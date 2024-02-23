@@ -14,7 +14,11 @@ To prevent these non-deterministic events, they can be defined as input actions 
 [Multiple level specification](multiple_level_spec.md) is employed to reduce the scale of the state space.
 ### Use the TLA+ model to generate trace
 
-#### 1. Use the TLA+ model(logical model) to generate the .dot file
+#### 1. Generate trace algorithm
+
+[Algorithm](generate_trace_algorithm.md)
+
+#### 2. Use the TLA+ model(logical model) to generate the .dot file
 
 $trace(A) = s_0, \pi_1, s_1, \pi_2, s_2, ...,  \pi_r, s_r$
 
