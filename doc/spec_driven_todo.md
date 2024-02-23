@@ -7,3 +7,4 @@
 
 3. The current [trace generation algorithm](generate_trace_algorithm.md) may be not efficent.
 
+4. Example repo to use the kit.
