@@ -335,7 +335,8 @@ struct __ActionDriver {
 impl __ActionDriver {
     fn new(
         client_id:NID,
-        server_id: NID, server_addr: SocketAddr,
+        server_id: NID,
+        server_addr: SocketAddr,
     ) -> Res<Self> {
         let r_build = Builder::new_current_thread()
             .enable_all()

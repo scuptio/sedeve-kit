@@ -23,5 +23,6 @@ mod test_dtm_player;
 
 mod action_waiter;
 mod sync_action_driver;
+mod sync_action_driver_impl;
 
 
