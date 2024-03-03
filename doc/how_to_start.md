@@ -1,6 +1,6 @@
 # How To Start
 
-## Write TLA+ Specification
+## Configure TLA+ toolbox
 
 Before writing a TLA+ specification, 
 you need to configure the [TLA+ toolbox](https://lamport.azurewebsites.net/tla/toolbox.html) to install additional dependent community modules.
@@ -8,6 +8,9 @@ you need to configure the [TLA+ toolbox](https://lamport.azurewebsites.net/tla/t
 Follow these steps to set it up:
 
 1. Download the [CommunityModules-dep.jar](https://github.com/scuptio/TLAPlusCommunityModules/releases)
+We developed  TLA+ modules 
+[StateDB](https://github.com/scuptio/TLAPlusCommunityModules/blob/master/modules/StateDB.tla), 
+[GenID](https://github.com/scuptio/TLAPlusCommunityModules/blob/master/modules/GenID.tla) .
 
 2. In tla+ toolbox, go to
 
@@ -17,19 +20,19 @@ Follow these steps to set it up:
 
 <img src="../doc/set_library_path_locations.png" width="50%" height="50%">
 
+## Write TLA+ specification
 
+In the TLA+ specification, we use 
+[InitAction](https://github.com/scuptio/tlaplus-specification/blob/main/spec/action.tla#L187) 
+and 
+[SetAction](https://github.com/scuptio/tlaplus-specification/blob/main/spec/action.tla#L209)
+to specify the action of [I/O automata](doc/model_the_system.md).
 
-## Run TLA+ model checker and generate a dump output (.dot) of the TLA+ model.
+## Run TLA+ model checker and generate state database(a sqlite database).
 
 1. Filling Model checker setting:
    
-   Specify constant value and Temporal formula 
-
-   Specify TLC command parameter:
-
-      Additional TLC Option -> Parameters -> TLC command line parameter ->
-
-      -dump dot _file_name_.dot
+   Specify constant value and Temporal formula
 
 2. Click then "Runs TLC on the model" Button
 
@@ -40,7 +43,7 @@ Follow these steps to set it up:
 ## Development by specification
 
 
-### Generate a trace from the .dot file that was dumped by the TLA+ toolbox.
+### Generate a trace from the sqlite state database that was output by the TLA+ toolbox.
 
 
 A trace is a finite sequence of actions. An action is a step of state transition. We define several action types based on their functionalities.
@@ -49,9 +52,9 @@ The action types include:
 
 | Action Type	  | Description of Action Type 	                                                                    |
 |---------------|-------------------------------------------------------------------------------------------------|
-| Setup         | Set up and initializes the state of a node                                                      |
-| Check         | Check the state correctness of a node, used for asserting invariants                            |
-| Input         | Represent a node receiving an input message, from a network endpoint or a terminal, for example |
+| Input Setup   | Set up and initializes the state of a node                                                      |
+| Input Check   | Check the state correctness of a node, used for asserting invariants                            |
+| Input Message | Represent a node receiving an input message, from a network endpoint or a terminal, for example |
 | Output        | Represent a node sending an output message, to a network endpoint or a terminal, for example    |
 | Internal      | Represent an internal event in a node                                                           |
 
@@ -65,17 +68,23 @@ The [action incoming interface](../src/player/action_incoming.rs) can be used to
 The trace_gen's command lines:
 
 ``` 
-Usage: trace_gen [OPTIONS] --dot-path <DOT_PATH>
+Usage: trace_gen [OPTIONS]
 
 Options:
   -d, --dot-path <DOT_PATH>
           Path of the TLA+ output .dot file
+  -s, --state-db-path <STATE_DB_PATH>
+          Path of the state sqlite DB file
   -o, --out-db-path <OUT_DB_PATH>
           Type name of the actions
+  -i, --intermediate-db-path <INTERMEDIATE_DB_PATH>
+          Type intermediate database path
   -m, --map-const-path <MAP_CONST_PATH>
           Path of the json file stores the constant value map
   -r, --remove-intermediate
           Remove the intermediate table that records TLA+ actions and trace paths after generating the trace
+  -e, --setup-initialize-state
+          Generate setup initialize state trace, default value is false
   -h, --help
           Print help
   -V, --version
@@ -98,7 +107,11 @@ The following command lines parse [toolbox_dump.dot](../src/data/toolbox_dump.do
 
 
 ```
-trace-gen --dot-path [PREFIX]/toolbox_dump.dot --out-db-path [PREFIX]/trace.db --map-const-path [PREFIX]/map_const.json 
+[PREFIX]/target/debug/trace_gen  \
+  --state-db-path [state_db_file_path] \
+  --out-db-path [output_db_file_path] \
+  --intermediate-db-path [intermediate_db_file_path] \
+  --map-const-path  [PREFIX]/const_map/2pc_map_const.json
 ```
 
 
@@ -189,3 +202,8 @@ Options:
 ### Add assert invariants to the testing source code
 
 During testing, we add invariants to assert the correctness of our assumptions.
+
+
+## Example
+[Two-Phase Commit Protocol(2PC)](https://en.wikipedia.org/wiki/Two-phase_commit_protocol) is a atomic commit protocol.
+The example of using this kit to develop 2PC could be found at [this repo](https://github.com/scuptio/example-2pc).
