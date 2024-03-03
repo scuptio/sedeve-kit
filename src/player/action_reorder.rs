@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use scupt_util::res::Res;
+use scupt_util::serde_json_value::SerdeJsonValue;
 use tokio::select;
 use tokio::sync::Mutex;
 use tokio::time::Duration;
@@ -35,9 +36,10 @@ impl  ActionReorder {
         let ok = select! {
             recv = r.recv() => {
                 self.dec_ref_num(action).await;
-                let a = recv?;
-                let j = a.to_action_serde_json_value()?;
-                assert!(j.eq(action));
+                let a_s = recv?;
+                let value:SerdeJsonValue = a_s.to_serde_json_value();
+                let a2 = ActionSerdeJsonValue::from_value(value.into_serde_json_value());
+                assert!(a2.eq(action));
                 true
             }
             _ = sleep(Duration::from_secs(self.seconds_timeout)) => {
@@ -49,7 +51,7 @@ impl  ActionReorder {
 
     pub async fn add_action(&self, action: &ActionSerdeJsonValue) -> Res<()> {
         let (s, _) = self.get_channel(action).await;
-        s.send(action.to_action_message())?;
+        s.send(action.to_serde_json_string())?;
         self.dec_ref_num(action).await;
         Ok(())
     }
@@ -59,13 +61,13 @@ impl  ActionReorder {
         let opt_recv = map.get(&action);
         match opt_recv {
             None => {
-                trace!("could not find {}", action.action_json_value_ref().to_string());
+                trace!("could not find {}", action.serde_json_value_ref().to_string());
                 let (s, r) = io_event_channel();
                 map.insert(action.clone(), (s.clone(), r.clone(), Arc::new(Mutex::new(1))));
                 (s, r)
             }
             Some((s, r, num)) => {
-                trace!("find existing {}", action.action_json_value_ref().to_string());
+                trace!("find existing {}", action.serde_json_value_ref().to_string());
                 let mut n = num.lock()
                     .instrument(trace_span!("num lock"))
                     .await;

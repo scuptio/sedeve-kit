@@ -7,6 +7,7 @@ use crate::action::constant;
 
 /// Action type definition
 #[derive(
+Copy,
 Clone,
 Serialize,
 Hash,

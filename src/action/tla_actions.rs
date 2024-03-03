@@ -124,11 +124,11 @@ impl TLAActionSeq {
         let mut states = vec![];
         let mut actions = vec![];
         for state in &self.states {
-            let v = state.to_action_json()?.action_json_value();
+            let v = state.to_action_json()?.serde_json_value_ref().clone();
             states.push(v);
         }
         for action in &self.actions {
-            let v = action.to_action_json()?.action_json_value();
+            let v = action.to_action_json()?.serde_json_value_ref().clone();
             actions.push(v);
         }
         Ok((self.id, self.id_prev,

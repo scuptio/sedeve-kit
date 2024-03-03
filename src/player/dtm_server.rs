@@ -10,13 +10,14 @@ use scupt_net::notifier::Notifier;
 use scupt_net::task::spawn_local_task;
 use scupt_util::node_id::NID;
 use scupt_util::res::Res;
+use scupt_util::serde_json_string::SerdeJsonString;
 use tokio::runtime::Runtime;
 use tokio::sync::oneshot;
 use tokio::task::LocalSet;
 use tokio::time::sleep;
 use tracing::{error, trace};
 
-use crate::action::action_serde_json_string::ActionSerdeJsonString;
+
 use crate::player::action_incoming::ActionIncoming;
 use crate::player::dtm_player::TestOption;
 use crate::player::dtm_server_handler::DTMServerHandler;
@@ -28,7 +29,7 @@ type DTMNode = Node<
 >;
 
 type ClientNode = Node<
-    ActionSerdeJsonString,
+    SerdeJsonString,
     HandleEventDummy,
 >;
 

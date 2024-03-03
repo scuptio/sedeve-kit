@@ -162,7 +162,7 @@ mod test {
             let mut queue = self.queue.lock().unwrap();
             let opt_m = queue.pop_front();
             match opt_m {
-                Some(m) => { Ok(m.to_serde_json_string()?.to_string()?) }
+                Some(m) => { Ok(m.to_serde_json_string()?.to_string()) }
                 None => { Err(ET::EOF) }
             }
         }

@@ -12,8 +12,6 @@ use scupt_util::res::Res;
 use scupt_util::res_of::res_io;
 use tokio::runtime::Builder;
 use tracing::error;
-
-use crate::action::action_message::ActionMessage;
 use crate::action::action_type::ActionType;
 use crate::player::async_action_driver::AsyncActionDriver;
 use crate::player::dtm_client::DTMClient;
@@ -307,18 +305,16 @@ async fn async_action_gut<M: MsgTrait + 'static>(
         }
     };
     let driver = driver._input.clone();
-    let action = ActionMessage::from_message(action_type, message);
-    let action_s = action.to_serde_json_string().unwrap();
+    let s = serde_json::to_string(message.payload_ref()).unwrap();
     let r = if begin {
-        driver.begin_action(action_s).await
+        driver.begin_action(action_type, message.source(), message.dest(), s).await
     } else {
-        driver.end_action(action_s).await
+        driver.end_action(action_type, message.source(), message.dest(), s).await
     };
     match r {
         Ok(_) => {}
         Err(e) => {
-            error!("send action {:?} , is begin: {}, error: {}.",
-                action.to_serde_json_string().unwrap(), begin, e);
+            error!("send action, {:?} , is begin: {}, error: {}.", message, begin, e);
         }
     }
 }

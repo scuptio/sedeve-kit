@@ -3,9 +3,10 @@ mod test {
     use bincode::{Decode, Encode};
     use scupt_util::message::{Message, MsgTrait};
     use scupt_util::node_id::NID;
+    use scupt_util::serde_json_string::SerdeJsonString;
     use serde::{Deserialize, Serialize};
-    use crate::action::action_serde_json_string::ActionSerdeJsonString;
     use crate::action::action_message::ActionMessage;
+    use crate::action::action_serde_json_value::ActionSerdeJsonValue;
     use crate::action::action_type::ActionType;
     use crate::action::trace::{Trace, TraceJsonValue};
 
@@ -101,11 +102,11 @@ mod test {
 
         let trace_json_value = r.unwrap();
         for (_n, v) in trace_json_value.actions.iter().enumerate() {
-            let action_json_string = ActionSerdeJsonString::from_json_value(v);
-            let r  = action_json_string.to_action_serde_json_value();
-            assert!(r.is_ok());
-            let action_json_value = r.unwrap();
-            let json_value = action_json_value.action_json_value_ref();
+            let action_json_string = SerdeJsonString::from_json_value(v);
+            let action_json_value  = ActionSerdeJsonValue::from_value(
+                action_json_string.to_serde_json_value().into_serde_json_value());
+
+            let json_value = action_json_value.serde_json_value_ref();
             let message :ActionMessage<TestMessage> = serde_json::from_str(v.to_string().as_str()).unwrap();
             assert_eq!(message.source_node_id().unwrap(), action_json_value.source_node_id().unwrap());
             assert_eq!(message.source_node_id().unwrap(), action_json_value.dest_node_id().unwrap());

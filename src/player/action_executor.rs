@@ -60,7 +60,7 @@ impl ActionExecutor {
 
     pub async fn expect_node_sync(&self, action: &ActionSerdeJsonValue) -> Res<bool> {
         let action_type = action.action_type()?;
-        let msg = action.action_json_value_ref();
+        let msg = action.serde_json_value_ref();
         match action_type {
             ActionType::Input |
             ActionType::Setup |
