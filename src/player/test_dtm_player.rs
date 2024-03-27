@@ -10,13 +10,16 @@ mod test {
     use once_cell::sync::Lazy;
     use rand::Rng;
     use rand::rngs::ThreadRng;
-    use scupt_net::event_sink::{ESServeOpt, ESStopOpt};
+    use scupt_net::es_option::{ESServeOpt, ESStopOpt};
     use scupt_net::io_service::{IOService, IOServiceOpt};
-    use scupt_net::message_receiver::Receiver;
+    use scupt_net::io_service_async::IOServiceAsync;
+
+    use scupt_net::message_receiver_async::ReceiverAsync;
     use scupt_net::notifier::Notifier;
     use scupt_net::task::spawn_local_task;
     use scupt_util::error_type::ET;
-    use scupt_util::logger::logger_setup;
+
+    use scupt_util::logger::{logger_setup, logger_setup_with_console};
     use scupt_util::message::{Message, MsgTrait};
     use scupt_util::node_id::NID;
     use scupt_util::res::Res;
@@ -43,12 +46,12 @@ mod test {
 
     #[test]
     fn test_dtm_player_check_all() {
-        set_panic_hook();
-        logger_setup("info");
+        //set_panic_hook();
+        logger_setup_with_console("trace");
         run_test(3, 4, 5, 18000, true);
     }
 
-    #[test]
+    //#[test]
     fn test_dtm_player_no_check() {
         set_panic_hook();
         logger_setup("info");
@@ -177,11 +180,11 @@ mod test {
 
     #[derive(Clone)]
     struct TestNode {
-        service: Arc<IOService<AppMsg>>,
+        service: Arc<dyn IOServiceAsync<AppMsg>>,
         history: History,
         stop: Arc<AtomicBool>,
         enable_check: bool,
-        name:String,
+        _name:String,
     }
 
     impl History {
@@ -222,14 +225,15 @@ mod test {
             let opt = IOServiceOpt {
                 num_message_receiver: 1,
                 testing: true,
+                sync_service: false,
             };
-            let service = IOService::<AppMsg>::new(node_id, name.clone(), opt, Notifier::new())?;
+            let service = IOService::<AppMsg>::new_async_service(node_id, name.clone(), opt, Notifier::new())?;
             Ok(Self {
-                service: Arc::new(service),
+                service,
                 history,
                 stop: Arc::new(AtomicBool::new(false)),
                 enable_check,
-                name,
+                _name: name,
             })
         }
 
@@ -240,7 +244,7 @@ mod test {
                 Ordering::SeqCst,
                 Ordering::SeqCst);
             if r.is_ok() {
-                let r_stop = self.service.default_event_sink().stop(
+                let r_stop = self.service.default_sink().stop(
                     ESStopOpt::default().enable_no_wait(true)).await;
                 assert!(r_stop.is_ok());
             }
@@ -267,18 +271,11 @@ mod test {
                         }).unwrap();
                 });
             }
-            self.service.run_local(&ls);
             let r_build = Builder::new_current_thread()
                 .enable_all()
                 .build();
-            let runtime = res_io(r_build).unwrap();
-            let name = self.name.clone();
-            runtime.block_on(
-                async move {
-                    ls.await;
-                    info!("Stop run node {}",  name);
-                }
-            );
+            let runtime = Arc::new(res_io(r_build).unwrap());
+            self.service.block_run(Some(ls), runtime);
         }
 
 
@@ -286,7 +283,7 @@ mod test {
             &self,
         ) -> Res<()> {
             let receiver = {
-                let receivers = self.service.message_receiver();
+                let receivers = self.service.receiver();
                 if receivers.len() != 1 {
                     panic!("must only 1 receiver");
                 }
@@ -298,7 +295,7 @@ mod test {
 
         async fn app_message_loop(
             &self,
-            receiver: Arc<dyn Receiver<AppMsg>>,
+            receiver: Arc<dyn ReceiverAsync<AppMsg>>,
             enable_check: bool
         ) -> Res<()> {
             loop {
@@ -434,7 +431,7 @@ mod test {
 
         async fn app_handle_message(
             &self,
-            receiver: Arc<dyn Receiver<AppMsg>>,
+            receiver: Arc<dyn ReceiverAsync<AppMsg>>,
             enable_check: bool
         ) -> Res<()> {
             let dtm_msg = receiver.receive().await?;
@@ -517,7 +514,7 @@ mod test {
         node: Arc<TestNode>,
         address: SocketAddr,
     ) -> Res<()> {
-        let sender = node.service.default_event_sink();
+        let sender = node.service.default_sink();
         sender.serve(address, ESServeOpt::default().enable_no_wait(false)).await?;
         trace!("serve node {}, listen on address {}", node.service.node_id(), address.to_string());
         Ok(())

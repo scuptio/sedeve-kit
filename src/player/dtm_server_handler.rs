@@ -5,10 +5,10 @@ use std::process::exit;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use scupt_net::endpoint::Endpoint;
+use scupt_net::endpoint_async::EndpointAsync;
 use scupt_net::handle_event::HandleEvent;
 use scupt_net::message_incoming::MessageIncoming;
-use scupt_net::message_sender::Sender;
+use scupt_net::message_sender_async::SenderAsync;
 use scupt_net::notifier::Notifier;
 use scupt_net::opt_send::OptSend;
 use scupt_net::task::spawn_local_task;
@@ -43,7 +43,7 @@ struct Handler {
     output_action_sequential:bool,
     trace_in_one_sequence:bool,
     notify: Notifier,
-    node_sender: Arc<dyn Sender<SerdeJsonString>>,
+    node_sender: Arc<dyn SenderAsync<SerdeJsonString>>,
     executor: Arc<ActionExecutor>,
     channel_s: Arc<mpsc::UnboundedSender<DTMCmd>>,
     channel_r: Arc<Mutex<mpsc::UnboundedReceiver<DTMCmd>>>,
@@ -58,7 +58,7 @@ pub struct DTMServerHandler {
 impl  DTMServerHandler {
     pub fn new(
         node_id:NID,
-        node_sender: Arc<dyn Sender<SerdeJsonString>>,
+        node_sender: Arc<dyn SenderAsync<SerdeJsonString>>,
         notify:Notifier,
         option:TestOption,
     ) -> DTMServerHandler {
@@ -156,7 +156,7 @@ impl  DTMServerHandler {
         notify:Notifier,
         input: Arc<dyn ActionIncoming>,
         executor: Arc<ActionExecutor>,
-        sender: Arc<dyn Sender<SerdeJsonString>>,
+        sender: Arc<dyn SenderAsync<SerdeJsonString>>,
         output_action_sequential:bool,
         per_node_trace:bool,
         seconds_timeout:u64
@@ -295,7 +295,7 @@ impl  DTMServerHandler {
         notify:Notifier,
         trace: Vec<(ActionSerdeJsonValue, u64)>,
         executor: Arc<ActionExecutor>,
-        sender: Arc<dyn Sender<SerdeJsonString>>,
+        sender: Arc<dyn SenderAsync<SerdeJsonString>>,
         output_action_sequential:bool,
         seconds_timeout:u64,
         waiter: ActionPrefixWaiter,
@@ -407,13 +407,13 @@ impl  DTMServerHandler {
     }
 
     async fn handle_message_request_response(
-        &self, ep:&Endpoint,
+        &self, ep:&dyn EndpointAsync<MessageControl>,
         channel:&mut UnboundedReceiver<Message<MessageControl>>,
         sender:&UnboundedSender<Message<MessageControl>>,
         tasks:&mut Vec<JoinHandle<Option<Res<()>>>>,
     ) -> Res<()> {
         select! {
-            r_req = ep.recv::<MessageControl>()  => {
+            r_req = ep.recv()  => {
                 match r_req {
                     Ok(m) => {
                         let s = sender.clone();
@@ -465,11 +465,11 @@ impl  DTMServerHandler {
         Ok(())
     }
 
-    async fn message_loop(&self, ep:Endpoint) -> Res<()> {
+    async fn message_loop(&self, ep:&dyn EndpointAsync<MessageControl>) -> Res<()> {
         let mut tasks = vec![];
         let (s, mut r) = mpsc::unbounded_channel();
         let ret = loop {
-            let r = self.handle_message_request_response(&ep, & mut r, &s, &mut tasks).await;
+            let r = self.handle_message_request_response(ep, & mut r, &s, &mut tasks).await;
             match r {
                 Ok(()) => {
 
@@ -505,9 +505,9 @@ impl MessageIncoming<MessageControl> for DTMServerHandler {
 }
 
 #[async_trait]
-impl HandleEvent for DTMServerHandler {
-    async fn on_accepted(&self, endpoint: Endpoint) -> Res<()> {
-        let r = self.message_loop(endpoint).await;
+impl HandleEvent<MessageControl> for DTMServerHandler {
+    async fn on_accepted(&self, endpoint: Arc<dyn EndpointAsync<MessageControl>>) -> Res<()> {
+        let r = self.message_loop(&*endpoint).await;
         match r {
             Ok(()) => { Err(ET::EOF) }
             Err(e) => { Err(e) }
@@ -517,7 +517,7 @@ impl HandleEvent for DTMServerHandler {
     async fn on_connected(
         &self,
         _: SocketAddr,
-        _: Res<Endpoint>,
+        _: Res<Arc<dyn EndpointAsync<MessageControl>>>,
     ) -> Res<()> {
         Ok(())
     }

@@ -5,8 +5,8 @@ use std::sync::Mutex as StdMutex;
 use std::time::Duration;
 
 use scc::HashMap;
-use scupt_net::endpoint::Endpoint;
-use scupt_net::event_sink::ESConnectOpt;
+use scupt_net::endpoint_async::EndpointAsync;
+use scupt_net::es_option::ESConnectOpt;
 use scupt_net::node::Node;
 use scupt_net::notifier::Notifier;
 use scupt_net::task::spawn_local_task;
@@ -143,7 +143,7 @@ impl DTMClient {
 }
 
 impl _ClientContext {
-    async fn connect_to_dtm_player(&self) -> Res<Endpoint> {
+    async fn connect_to_dtm_player(&self) -> Res<Arc<dyn EndpointAsync<MessageControl>>> {
         loop {
             let r_connect = self.node.default_event_sink().connect(
                 self.dtm_server_node_id,
@@ -182,18 +182,18 @@ impl _ClientContext {
 
         loop {
             self.handle_message(
-                &endpoint1, &mut receiver1, &resp_senders1,
-                &endpoint2, &mut receiver2, &resp_senders2).await?;
+                & *endpoint1, &mut receiver1, &resp_senders1,
+                & *endpoint2, &mut receiver2, &resp_senders2).await?;
         }
     }
 
 
     async fn handle_message(
         &self,
-        endpoint1:&Endpoint,
+        endpoint1:&dyn EndpointAsync<MessageControl>,
         incoming1:&mut AsyncReceiver<(Message<MessageControl>, AsyncOneshotSender<Message<MessageControl>>)>,
         resp_senders1: &HashMap<String, AsyncOneshotSender<Message<MessageControl>>>,
-        endpoint2:&Endpoint,
+        endpoint2:&dyn EndpointAsync<MessageControl>,
         incoming2:&mut AsyncReceiver<(Message<MessageControl>, SyncSender<Message<MessageControl>>)>,
         resp_senders2 : &HashMap<String, SyncSender<Message<MessageControl>>>,
     ) -> Res<()> {
@@ -215,10 +215,10 @@ impl _ClientContext {
 
     async fn handle_recv_response<S>(
         &self,
-        endpoint:&Endpoint,
+        endpoint:&dyn EndpointAsync<MessageControl>,
         resp_senders : &HashMap<String, S>,
     ) -> Res<(NID, NID, MessageControl, S)> {
-        let r_m = endpoint.recv::<MessageControl>().await;
+        let r_m = endpoint.recv().await;
         let (from, to, m) = match r_m {
             Ok(m) => {
                 (m.source(), m.dest(), m.payload())
@@ -240,7 +240,7 @@ impl _ClientContext {
 
     async fn handle_recv_response_async(
         &self,
-        endpoint:&Endpoint,
+        endpoint:&dyn EndpointAsync<MessageControl>,
         resp_senders : &HashMap<String, AsyncOneshotSender<Message<MessageControl>>>,
     ) -> Res<()> {
         let (from, to, m, sender) =
@@ -253,7 +253,7 @@ impl _ClientContext {
 
     async fn handle_recv_response_sync(
         &self,
-        endpoint:&Endpoint,
+        endpoint:&dyn EndpointAsync<MessageControl>,
         resp_senders : &HashMap<String, SyncSender<Message<MessageControl>>>,
     ) -> Res<()> {
         let (from, to, m, sender) =
@@ -265,7 +265,7 @@ impl _ClientContext {
 
     async fn handle_incoming_request<S:Debug>(
         &self,
-        endpoint:&Endpoint,
+        endpoint:&dyn EndpointAsync<MessageControl>,
         incoming:&mut AsyncReceiver<(Message<MessageControl>, S)>,
         resp_senders : &HashMap<String, S>,
     ) -> Res<()> {

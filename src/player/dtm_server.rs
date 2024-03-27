@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
-use scupt_net::event_sink::{ESConnectOpt, ESServeOpt, ESStopOpt};
+use scupt_net::es_option::{ESConnectOpt, ESServeOpt, ESStopOpt};
 use scupt_net::handle_event::HandleEventDummy;
 use scupt_net::node::Node;
 use scupt_net::notifier::Notifier;
@@ -54,7 +54,7 @@ impl DTMServer {
             HandleEventDummy::default(),
             false,
             stop_notify.clone())?;
-        let node_sender = client_node.default_message_sender();
+        let node_sender = client_node.default_message_sender_async();
         let h = DTMServerHandler::new(node_id, node_sender, stop_notify.clone(), option);
         let player_node: DTMNode = DTMNode::new(
             node_id,
