@@ -13,12 +13,11 @@ mod test {
     use scupt_net::es_option::{ESServeOpt, ESStopOpt};
     use scupt_net::io_service::{IOService, IOServiceOpt};
     use scupt_net::io_service_async::IOServiceAsync;
-
     use scupt_net::message_receiver_async::ReceiverAsync;
     use scupt_net::notifier::Notifier;
     use scupt_net::task::spawn_local_task;
+    use scupt_net::task_trace;
     use scupt_util::error_type::ET;
-
     use scupt_util::logger::{logger_setup, logger_setup_with_console};
     use scupt_util::message::{Message, MsgTrait};
     use scupt_util::node_id::NID;
@@ -51,7 +50,7 @@ mod test {
         run_test(3, 4, 5, 18000, true);
     }
 
-    //#[test]
+    #[test]
     fn test_dtm_player_no_check() {
         set_panic_hook();
         logger_setup("info");
@@ -105,10 +104,11 @@ mod test {
             let id = k.clone();
             let addr = v.clone();
             let history = history.clone();
-            let thd = thread::spawn(move || {
+            let builder = thread::Builder::new().name(format!("node_{}", id));
+            let thd = builder.spawn(move || {
                 let r = run_node(id, addr, history, enable_check);
                 assert!(r.is_ok());
-            });
+            }).unwrap();
             thd_nodes.push(thd);
         }
 
@@ -226,6 +226,7 @@ mod test {
                 num_message_receiver: 1,
                 testing: true,
                 sync_service: false,
+                port_debug: Some(3001),
             };
             let service = IOService::<AppMsg>::new_async_service(node_id, name.clone(), opt, Notifier::new())?;
             Ok(Self {
@@ -355,6 +356,7 @@ mod test {
             Ok(())
         }
 
+        #[async_backtrace::framed]
         async fn app_task_run(
             &self,
             from: NID,
@@ -363,7 +365,7 @@ mod test {
             task_ops: Vec<u64>,
             enable_check: bool,
         ) -> Res<()> {
-
+            let _ = task_trace!();
             {
                 let m = Message::new(
                     AppMsg::TaskNew { task_id, task_ops: task_ops.clone() },
@@ -400,12 +402,15 @@ mod test {
             Ok(())
         }
 
+
+        #[async_backtrace::framed]
         async fn app_task_stop(
             &self,
             from: NID,
             to: NID,
             enable_check: bool,
         ) -> Res<()> {
+            let _ = task_trace!();
             trace!("app task stop {} ", to);
             let msg = Message::new(
                 AppMsg::TaskStop,
@@ -429,11 +434,13 @@ mod test {
             self.history.add_action_to_history(action)
         }
 
+        #[async_backtrace::framed]
         async fn app_handle_message(
             &self,
             receiver: Arc<dyn ReceiverAsync<AppMsg>>,
             enable_check: bool
         ) -> Res<()> {
+            let _ = task_trace!();
             let dtm_msg = receiver.receive().await?;
             let s = self.clone();
             task::spawn_local(async move {
@@ -442,13 +449,14 @@ mod test {
             Ok(())
         }
 
+        #[async_backtrace::framed]
         async fn handle_task_ops(
             &self,
-
             task_id: u64,
             op_ids: Vec<u64>,
             enable_check: bool,
         ) -> Res<()> {
+            let _ = task_trace!();
             trace!("handle action begin {}", task_id);
             for op_id in op_ids {
                 self.handle_task_op( task_id, op_id, enable_check)
@@ -457,13 +465,14 @@ mod test {
             Ok(())
         }
 
+        #[async_backtrace::framed]
         async fn handle_task_op(
             &self,
-
             id: u64,
             op_id: u64,
             enable_check: bool,
         ) -> Res<()> {
+            let _ = task_trace!();
             let node_id = self.service.node_id();
             let m = Message::new(
                 AppMsg::TaskOP { task_id: id, task_op: op_id },
@@ -500,9 +509,12 @@ mod test {
         {
             let addr = address.clone();
             let n = node.clone();
-            local.spawn_local(async move {
+            let f_serve = async move {
                 let r = serve_node(n, addr).await;
                 assert!(r.is_ok());
+            };
+            local.spawn_local(async move {
+                spawn_local_task(Notifier::new(), "serve_node", f_serve)
             });
         }
         node.run_test_app(Some(local));
@@ -562,7 +574,7 @@ mod test {
             let addr = address.clone();
             let node_addr = node_address.clone();
             let s = dtm_server.clone();
-            local.spawn_local(async move {
+            let f = async move {
                 let r = serve_simulator(s, addr, node_addr, action_input).await;
                 match r {
                     Ok(()) => {}
@@ -570,12 +582,14 @@ mod test {
                         error!("error serve player {}", e.to_string());
                     }
                 }
+            };
+            local.spawn_local(async move {
+                spawn_local_task(Notifier::new(), "serve_simulator", f)
             });
         }
-
         {
             let s = dtm_server.clone();
-            local.spawn_local(async move {
+            let f = async move {
                 let _ = stop.notified().await;
                 if enable_check {
                     history.check_history(action_list);
@@ -585,6 +599,9 @@ mod test {
                     Ok(()) => {}
                     Err(e) => { error!("stop player error {}", e.to_string()); }
                 }
+            };
+            local.spawn_local(async move {
+                spawn_local_task(Notifier::new(), "check_history", f)
             });
         }
         dtm_server.run(Some(local), runtime);

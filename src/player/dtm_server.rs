@@ -8,6 +8,7 @@ use scupt_net::handle_event::HandleEventDummy;
 use scupt_net::node::Node;
 use scupt_net::notifier::Notifier;
 use scupt_net::task::spawn_local_task;
+use scupt_net::task_trace;
 use scupt_util::node_id::NID;
 use scupt_util::res::Res;
 use scupt_util::serde_json_string::SerdeJsonString;
@@ -16,7 +17,6 @@ use tokio::sync::oneshot;
 use tokio::task::LocalSet;
 use tokio::time::sleep;
 use tracing::{error, trace};
-
 
 use crate::player::action_incoming::ActionIncoming;
 use crate::player::dtm_player::TestOption;
@@ -133,9 +133,11 @@ impl DTMServer {
         Ok(())
     }
 
+    #[async_backtrace::framed]
     pub async fn start_dtm_test(
         &self,
         input: Arc<dyn ActionIncoming>) -> Res<oneshot::Receiver<Res<()>>> {
+        let _ = task_trace!();
         self.handler.begin_run_test(input).await
     }
 

@@ -5,6 +5,7 @@ use std::process::exit;
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use scupt_net;
 use scupt_net::endpoint_async::EndpointAsync;
 use scupt_net::handle_event::HandleEvent;
 use scupt_net::message_incoming::MessageIncoming;
@@ -12,6 +13,7 @@ use scupt_net::message_sender_async::SenderAsync;
 use scupt_net::notifier::Notifier;
 use scupt_net::opt_send::OptSend;
 use scupt_net::task::spawn_local_task;
+use scupt_net::task_trace;
 use scupt_util::error_type::ET;
 use scupt_util::message::Message;
 use scupt_util::node_id::NID;
@@ -25,7 +27,6 @@ use tokio::task::JoinHandle;
 use tokio::time::Duration;
 use tokio::time::sleep;
 use tracing::{debug, error, Instrument, trace, trace_span};
-
 
 use crate::action::action_serde_json_value::ActionSerdeJsonValue;
 use crate::action::action_type::ActionType;
@@ -96,7 +97,9 @@ impl  DTMServerHandler {
         }
     }
 
+    #[async_backtrace::framed]
     pub async fn begin_run_test(&self, input: Arc<dyn ActionIncoming>) -> Res<oneshot::Receiver<Res<()>>> {
+        let _ = task_trace!();
         let (s, r) = oneshot::channel::<Res<()>>();
         self.send_dtm_cmd(DTMCmd::StartAction((input, s)))?;
         Ok(r)
