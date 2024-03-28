@@ -12,7 +12,7 @@ use uuid::Uuid;
 use scupt_util::serde_json_string::SerdeJsonString;
 
 use crate::action::action_serde_json_value::ActionSerdeJsonValue;
-use crate::action::action_type::ActionType;
+use crate::action::action_type::{ActionBeginEnd, ActionType};
 use crate::player::async_action_driver::AsyncActionDriver;
 use crate::player::msg_ctrl::MessageControl;
 
@@ -37,14 +37,20 @@ impl AsyncActionDriverImpl {
 
 #[async_trait]
 impl AsyncActionDriver for AsyncActionDriverImpl {
-    async fn begin_action(&self, action_type:ActionType, source:NID, dest:NID, payload_json:String) -> Res<()> {
+    async fn action(
+        &self,
+        action_type:ActionType,
+        action_begin_end: ActionBeginEnd,
+        source:NID, dest:NID, payload_json:String) -> Res<()> {
         let action = ActionSerdeJsonValue::from_json(action_type, source, dest, payload_json)?.to_serde_json_string();
-        self.inner.async_begin_action(action).await
-    }
-
-    async fn end_action(&self,  action_type:ActionType, source:NID, dest:NID, payload_json:String) -> Res<()> {
-        let action = ActionSerdeJsonValue::from_json(action_type, source, dest, payload_json)?.to_serde_json_string();
-        self.inner.async_end_action(action).await
+        match action_begin_end {
+            ActionBeginEnd::Begin => {
+                self.inner.async_begin_action(action).await
+            }
+            ActionBeginEnd::End => {
+                self.inner.async_end_action(action).await
+            }
+        }
     }
 }
 

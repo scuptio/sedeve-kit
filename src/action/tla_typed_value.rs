@@ -7,7 +7,42 @@ use scupt_util::res::Res;
 use scupt_util::res_of::res_option;
 use serde_json::{Map, Value};
 
-use crate::action::{constant, tla_value_kind};
+use crate::action::constant;
+
+
+/* Type code for values. */
+const BOOL_VALUE: u32 = 0;
+const INT_VALUE:u32 = BOOL_VALUE + 1;
+const REAL_VALUE:u32 = INT_VALUE + 1;
+const STRING_VALUE:u32 = REAL_VALUE + 1;
+const RECORD_VALUE:u32 = STRING_VALUE + 1;
+const SET_ENUM_VALUE:u32 = RECORD_VALUE + 1;
+const SET_PRED_VALUE:u32 = SET_ENUM_VALUE + 1;
+const TUPLE_VALUE:u32 = SET_PRED_VALUE + 1;
+const FCN_LAMBDA_VALUE:u32 = TUPLE_VALUE + 1;
+const FCN_RCD_VALUE:u32 = FCN_LAMBDA_VALUE + 1;
+const OP_LAMBDA_VALUE:u32 = FCN_RCD_VALUE + 1;
+const OP_RCD_VALUE:u32 = OP_LAMBDA_VALUE + 1;
+const METHOD_VALUE:u32 = OP_RCD_VALUE + 1;
+const SET_OF_FCNS_VALUE:u32 = METHOD_VALUE + 1;
+const SET_OF_RCDS_VALUE:u32 = SET_OF_FCNS_VALUE + 1;
+const SET_OF_TUPLES_VALUE:u32 = SET_OF_RCDS_VALUE + 1;
+const SUBSET_VALUE:u32 = SET_OF_TUPLES_VALUE + 1;
+const SET_DIFF_VALUE:u32 = SUBSET_VALUE + 1;
+const SET_CAP_VALUE:u32 = SET_DIFF_VALUE + 1;
+const SET_CUP_VALUE:u32 = SET_CAP_VALUE + 1;
+const UNION_VALUE:u32 = SET_CUP_VALUE + 1;
+const MODEL_VALUE:u32 = UNION_VALUE + 1;
+#[allow(dead_code)]
+const USER_VALUE:u32 = MODEL_VALUE + 1;
+#[allow(dead_code)]
+const INTER_VAL_VALUE:u32 = USER_VALUE + 1;
+#[allow(dead_code)]
+const UNDEF_VALUE:u32 = INTER_VAL_VALUE + 1;
+#[allow(dead_code)]
+const LAZY_VALUE:u32 = UNDEF_VALUE + 1;
+#[allow(dead_code)]
+const DUMMY_VALUE:u32 = LAZY_VALUE + 1;
 
 pub fn get_typed_value(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<Value> {
     let mut value = value;
@@ -16,35 +51,35 @@ pub fn get_typed_value(value:Value, constant_dict_map:&HashMap<String, Value>) -
     let object = res_option(map.remove("object"))?;
     let kind_t = res_option(kind.as_u64())? as u32;
     let value = match kind_t {
-        tla_value_kind::BOOL_VALUE |
-        tla_value_kind::INT_VALUE |
-        tla_value_kind::REAL_VALUE=> {
+        BOOL_VALUE |
+        INT_VALUE |
+        REAL_VALUE=> {
             object
         }
-        tla_value_kind::STRING_VALUE |
-        tla_value_kind::MODEL_VALUE  => {
+        STRING_VALUE |
+        MODEL_VALUE  => {
             let s = object.as_str().unwrap().to_string();
             match constant_dict_map.get(&s) {
                 Some(v) => { v.clone() }
                 None => { object }
             }
         }
-        tla_value_kind::TUPLE_VALUE => {
+        TUPLE_VALUE => {
             get_tuple_value(object, constant_dict_map)?
         }
-        tla_value_kind::SET_CAP_VALUE |
-        tla_value_kind::SET_CUP_VALUE |
-        tla_value_kind::SET_ENUM_VALUE |
-        tla_value_kind::SET_OF_FCNS_VALUE |
-        tla_value_kind::SET_OF_RCDS_VALUE |
-        tla_value_kind::SET_OF_TUPLES_VALUE => {
+        SET_CAP_VALUE |
+        SET_CUP_VALUE |
+        SET_ENUM_VALUE |
+        SET_OF_FCNS_VALUE |
+        SET_OF_RCDS_VALUE |
+        SET_OF_TUPLES_VALUE => {
             get_set_value(object, constant_dict_map)?
         }
-        tla_value_kind::RECORD_VALUE => {
+        RECORD_VALUE => {
             get_record_value(object, constant_dict_map)?
         }
-        tla_value_kind::FCN_RCD_VALUE |
-        tla_value_kind::FCN_LAMBDA_VALUE
+        FCN_RCD_VALUE |
+        FCN_LAMBDA_VALUE
         => {
             get_fcn_value(object, constant_dict_map)?
         }

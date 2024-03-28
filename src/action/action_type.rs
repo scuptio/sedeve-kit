@@ -1,3 +1,4 @@
+use num_derive::FromPrimitive;
 use bincode::{Decode, Encode};
 use scupt_util::message::{Message, MsgTrait};
 use serde::{Deserialize, Serialize};
@@ -5,8 +6,19 @@ use crate::action::action_message::ActionMessage;
 use crate::action::constant;
 
 
+pub const C_ACTION_BEGIN: u64 = 0;
+pub const C_ACTION_END: u64 = 1;
+
+pub const C_ACTION_SETUP: u64 = 0;
+pub const C_ACTION_CHECK: u64 = 1;
+pub const C_ACTION_INPUT: u64 = 2;
+pub const C_ACTION_OUTPUT: u64 = 3;
+pub const C_ACTION_INTERNAL: u64 = 4;
+
+
 /// Action type definition
 #[derive(
+FromPrimitive,
 Copy,
 Clone,
 Serialize,
@@ -20,19 +32,37 @@ Encode,
 )]
 pub enum ActionType {
     /// Set up and initializes the state of a node
-    Setup,
+    Setup  = 0,
 
     /// Check the state correctness of a node, used for asserting invariants
-    Check,
+    Check = 1,
 
     /// Represent a node receiving an input message, from a network endpoint or a terminal, for example
-    Input,
+    Input = 2,
 
     /// Represent a node sending an output message, to a network endpoint or a terminal, for example
-    Output,
+    Output = 3,
 
     /// Represent an internal event in a node
-    Internal,
+    Internal = 4,
+}
+
+#[derive(
+FromPrimitive,
+Copy,
+Clone,
+Serialize,
+Hash,
+PartialEq,
+Eq,
+Debug,
+Deserialize,
+Decode,
+Encode,
+)]
+pub enum ActionBeginEnd {
+    Begin = 0,
+    End = 1,
 }
 
 impl ActionType {

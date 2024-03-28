@@ -35,7 +35,6 @@ mod test {
     use crate::action::action_type::ActionType;
     use crate::action::panic::set_panic_hook;
     use crate::player::action_incoming::ActionIncoming;
-    use crate::player::automata;
     use crate::player::dtm_player::TestOption;
     use crate::player::dtm_server::DTMServer;
 

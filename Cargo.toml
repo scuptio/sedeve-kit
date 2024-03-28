@@ -23,6 +23,9 @@ documentation = "https://github.com/scuptio/sedeve-kit/README.md"
 readme = "README.md"
 license = "Apache-2.0"
 
+[build-dependencies]
+cbindgen = "0.26.0"
+
 [dependencies]
 tree-sitter-action = { path = "tree-sitter-action" }
 tree-sitter-dot = { path = "tree-sitter-dot" }
@@ -59,5 +62,9 @@ serde_bytes = "0.11.7"
 console-subscriber = "0.2.0"
 async-backtrace = "0.2.7"
 once_cell = "1.19.0"
+num = "0.4"
+num-derive = "0.4"
+num-traits = "0.2"
+
 
 
