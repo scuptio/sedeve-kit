@@ -6,29 +6,29 @@ use scupt_util::res::Res;
 use tokio::sync::{mpsc, Mutex};
 use tracing::trace;
 
-use crate::action::action_serde_json_string::ActionSerdeJsonString;
+use scupt_util::serde_json_string::SerdeJsonString;
 
 #[derive(Clone)]
 pub struct ActionReceiver {
     sequence: Arc<AtomicU64>,
-    receiver: Arc<Mutex<mpsc::UnboundedReceiver<ActionSerdeJsonString>>>,
+    receiver: Arc<Mutex<mpsc::UnboundedReceiver<SerdeJsonString>>>,
 }
 
 #[derive(Clone)]
 pub struct ActionSender {
     sequence: Arc<AtomicU64>,
-    sender: mpsc::UnboundedSender<ActionSerdeJsonString>,
+    sender: mpsc::UnboundedSender<SerdeJsonString>,
 }
 
 impl  ActionSender {
-    fn new(sender: mpsc::UnboundedSender<ActionSerdeJsonString>) -> Self {
+    fn new(sender: mpsc::UnboundedSender<SerdeJsonString>) -> Self {
         Self {
             sequence: Default::default(),
             sender,
         }
     }
 
-    pub fn send(&self, event: ActionSerdeJsonString) -> Res<()> {
+    pub fn send(&self, event: SerdeJsonString) -> Res<()> {
         let mut _n = 0;
         let n = self.sequence.fetch_add(1, Ordering::SeqCst);
         trace!("send event {:?} {}", event, n);
@@ -43,14 +43,14 @@ impl  ActionSender {
 }
 
 impl  ActionReceiver {
-    fn new(receiver: mpsc::UnboundedReceiver<ActionSerdeJsonString>) -> Self {
+    fn new(receiver: mpsc::UnboundedReceiver<SerdeJsonString>) -> Self {
         Self {
             sequence: Default::default(),
             receiver: Arc::new(Mutex::new(receiver)),
         }
     }
 
-    pub async fn recv(&self) -> Res<ActionSerdeJsonString> {
+    pub async fn recv(&self) -> Res<SerdeJsonString> {
         let mut recv = self.receiver.lock().await;
         let opt_event = recv.recv().await;
         match opt_event {
@@ -65,6 +65,6 @@ impl  ActionReceiver {
 }
 
 pub fn io_event_channel() -> (ActionSender, ActionReceiver) {
-    let (s, r) = mpsc::unbounded_channel::<ActionSerdeJsonString>();
+    let (s, r) = mpsc::unbounded_channel::<SerdeJsonString>();
     (ActionSender::new(s), ActionReceiver::new(r))
 }

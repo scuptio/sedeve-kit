@@ -2,11 +2,12 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use scupt_net::endpoint::Endpoint;
+use scupt_net::endpoint_async::EndpointAsync;
 use scupt_net::handle_event::HandleEvent;
 use scupt_util::error_type::ET;
 use scupt_util::res::Res;
 use tracing::error;
+use crate::player::msg_ctrl::MessageControl;
 
 struct Handler {}
 
@@ -31,15 +32,15 @@ impl Clone for DTMClientHandler {
 }
 
 #[async_trait]
-impl HandleEvent for DTMClientHandler {
-    async fn on_accepted(&self, _: Endpoint) -> Res<()> {
+impl HandleEvent<MessageControl> for DTMClientHandler {
+    async fn on_accepted(&self, _: Arc<dyn EndpointAsync<MessageControl>>) -> Res<()> {
         panic!("not possible");
     }
 
     async fn on_connected(
         &self,
         _address: SocketAddr,
-        result_endpoint: Res<Endpoint>,
+        result_endpoint: Res<Arc<dyn EndpointAsync<MessageControl>>>,
     ) -> Res<()> {
         match result_endpoint {
             Ok(_) => {}

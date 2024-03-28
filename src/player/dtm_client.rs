@@ -1,11 +1,12 @@
+use std::fmt::Debug;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::sync::Mutex as StdMutex;
 use std::time::Duration;
 
 use scc::HashMap;
-use scupt_net::endpoint::Endpoint;
-use scupt_net::event_sink::ESConnectOpt;
+use scupt_net::endpoint_async::EndpointAsync;
+use scupt_net::es_option::ESConnectOpt;
 use scupt_net::node::Node;
 use scupt_net::notifier::Notifier;
 use scupt_net::task::spawn_local_task;
@@ -15,20 +16,26 @@ use scupt_util::node_id::NID;
 use scupt_util::res::Res;
 use tokio::runtime::Runtime;
 use tokio::select;
-use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
-use tokio::sync::oneshot::Sender;
+use tokio::sync::mpsc::{unbounded_channel};
+use tokio::sync::oneshot::Sender as AsyncOneshotSender;
 use tokio::task::LocalSet;
 use tokio::time::sleep;
+use tokio::sync::mpsc::UnboundedSender as AsyncSender;
+use tokio::sync::mpsc::UnboundedReceiver as AsyncReceiver;
+use std::sync::mpsc::Sender as SyncSender;
 
 use crate::player::async_action_driver::AsyncActionDriver;
 use crate::player::async_action_driver_impl::AsyncActionDriverImpl;
 use crate::player::dtm_client_handler::DTMClientHandler;
 use crate::player::msg_ctrl::MessageControl;
+use crate::player::sync_action_driver::SyncActionDriver;
+use crate::player::sync_action_driver_impl::SyncActionDriverImpl;
 
 type DTMClientNode = Node<
     MessageControl,
     DTMClientHandler
 >;
+
 
 struct _ClientContext {
     node_id:NID,
@@ -36,8 +43,10 @@ struct _ClientContext {
     dtm_server_addr: SocketAddr,
     node: DTMClientNode,
     // sender/receiver would redirect send message to message loop task
-    sender: UnboundedSender<(Message<MessageControl>, Sender<Message<MessageControl>>)>,
-    receiver: StdMutex<Option<UnboundedReceiver<(Message<MessageControl>, Sender<Message<MessageControl>>)>>>,
+    async_sender: AsyncSender<(Message<MessageControl>, AsyncOneshotSender<Message<MessageControl>>)>,
+    async_receiver: StdMutex<Option<AsyncReceiver<(Message<MessageControl>, AsyncOneshotSender<Message<MessageControl>>)>>>,
+    sync_sender: AsyncSender<(Message<MessageControl>, SyncSender<Message<MessageControl>>)>,
+    sync_receiver: StdMutex<Option<AsyncReceiver<(Message<MessageControl>, SyncSender<Message<MessageControl>>)>>>,
 }
 
 #[derive(Clone)]
@@ -65,29 +74,45 @@ impl DTMClient {
             false,
             stop_notify,
         )?;
-        let (sender, receiver) = unbounded_channel();
+        let (async_sender, async_receiver) = unbounded_channel();
+        let (sync_sender, sync_receiver) = unbounded_channel();
+
         Ok(Self {
             context: Arc::new(_ClientContext {
                 node_id: client_id,
                 dtm_server_node_id: server_id,
                 dtm_server_addr: server_addr,
                 node,
-                sender,
-                receiver:StdMutex::new(Some(receiver))
+                async_sender,
+                async_receiver:StdMutex::new(Some(async_receiver)),
+                sync_sender,
+                sync_receiver: StdMutex::new(Some(sync_receiver)),
             }),
         })
     }
 
 
-    fn sender(&self) -> Res<UnboundedSender<(Message<MessageControl>, Sender<Message<MessageControl>>)>> {
-        Ok(self.context.sender.clone())
+    fn async_sender(&self) -> Res<AsyncSender<(Message<MessageControl>, AsyncOneshotSender<Message<MessageControl>>)>> {
+        Ok(self.context.async_sender.clone())
+    }
+
+    fn sync_sender(&self) -> Res<AsyncSender<(Message<MessageControl>, SyncSender<Message<MessageControl>>)>> {
+        Ok(self.context.sync_sender.clone())
     }
 
     pub fn new_async_driver(&self) -> Res<Arc<dyn AsyncActionDriver>> {
         let driver = Arc::new(AsyncActionDriverImpl::new(
             self.context.node_id,
             self.context.dtm_server_node_id,
-            self.sender()?));
+            self.async_sender()?));
+        Ok(driver)
+    }
+
+    pub fn new_sync_driver(&self) -> Res<Arc<dyn SyncActionDriver>> {
+        let driver = Arc::new(SyncActionDriverImpl::new(
+            self.context.node_id,
+            self.context.dtm_server_node_id,
+            self.sync_sender()?));
         Ok(driver)
     }
 
@@ -118,7 +143,7 @@ impl DTMClient {
 }
 
 impl _ClientContext {
-    async fn connect_to_dtm_player(&self) -> Res<Endpoint> {
+    async fn connect_to_dtm_player(&self) -> Res<Arc<dyn EndpointAsync<MessageControl>>> {
         loop {
             let r_connect = self.node.default_event_sink().connect(
                 self.dtm_server_node_id,
@@ -137,43 +162,63 @@ impl _ClientContext {
     }
 
     async fn dtm_client_message_loop(&self) -> Res<()> {
-        let mut r = {
+        let mut receiver1 = {
             let mut opt_r = None;
-            let mut g = self.receiver.lock().unwrap();
+            let mut g = self.async_receiver.lock().unwrap();
             std::mem::swap(&mut (*g), &mut opt_r);
             opt_r.unwrap()
         };
 
-        let endpoint = self.connect_to_dtm_player().await?;
-        let resp_senders = HashMap::new();
+        let mut receiver2 = {
+            let mut opt_r = None;
+            let mut g = self.sync_receiver.lock().unwrap();
+            std::mem::swap(&mut (*g), &mut opt_r);
+            opt_r.unwrap()
+        };
+        let endpoint1 = self.connect_to_dtm_player().await?;
+        let endpoint2 = self.connect_to_dtm_player().await?;
+        let resp_senders1 = HashMap::new();
+        let resp_senders2 = HashMap::new();
+
         loop {
-            self.handle_message(&endpoint,  &mut r, &resp_senders).await?;
+            self.handle_message(
+                & *endpoint1, &mut receiver1, &resp_senders1,
+                & *endpoint2, &mut receiver2, &resp_senders2).await?;
         }
     }
 
 
     async fn handle_message(
         &self,
-        endpoint:&Endpoint,
-        incoming:&mut UnboundedReceiver<(Message<MessageControl>, Sender<Message<MessageControl>>)>,
-        resp_senders : &HashMap<String, Sender<Message<MessageControl>>>,
+        endpoint1:&dyn EndpointAsync<MessageControl>,
+        incoming1:&mut AsyncReceiver<(Message<MessageControl>, AsyncOneshotSender<Message<MessageControl>>)>,
+        resp_senders1: &HashMap<String, AsyncOneshotSender<Message<MessageControl>>>,
+        endpoint2:&dyn EndpointAsync<MessageControl>,
+        incoming2:&mut AsyncReceiver<(Message<MessageControl>, SyncSender<Message<MessageControl>>)>,
+        resp_senders2 : &HashMap<String, SyncSender<Message<MessageControl>>>,
     ) -> Res<()> {
         select! {
-            r1 = self.handle_recv_response(endpoint, resp_senders) => {
+            r1 = self.handle_recv_response_async(endpoint1, resp_senders1) => {
                 r1
             },
-            r2 = self.handle_incoming_request(endpoint, incoming, resp_senders) => {
+            r2 = self.handle_incoming_request(endpoint1, incoming1, resp_senders1) => {
                 r2
+            }
+            r3 = self.handle_recv_response_sync(endpoint2, resp_senders2) => {
+                r3
+            },
+            r4 = self.handle_incoming_request(endpoint2, incoming2, resp_senders2) => {
+                r4
             }
         }
     }
 
-    async fn handle_recv_response(
+    async fn handle_recv_response<S>(
         &self,
-        endpoint:&Endpoint,
-        resp_senders : &HashMap<String, Sender<Message<MessageControl>>>,
-    ) -> Res<()> {
-        let r_m = endpoint.recv::<MessageControl>().await;
+        endpoint:&dyn EndpointAsync<MessageControl>,
+        resp_senders : &HashMap<String, S>,
+    ) -> Res<(NID, NID, MessageControl, S)> {
+        let r_m = endpoint.recv().await;
         let (from, to, m) = match r_m {
             Ok(m) => {
                 (m.source(), m.dest(), m.payload())
@@ -189,16 +234,40 @@ impl _ClientContext {
             }
             None => { panic!("error, no such message, id:{}", id); }
         };
+
+        Ok((from, to, m, sender))
+    }
+
+    async fn handle_recv_response_async(
+        &self,
+        endpoint:&dyn EndpointAsync<MessageControl>,
+        resp_senders : &HashMap<String, AsyncOneshotSender<Message<MessageControl>>>,
+    ) -> Res<()> {
+        let (from, to, m, sender) =
+            self.handle_recv_response(endpoint, resp_senders).await?;
         let mm = Message::new(m, to, from);
         let _ = sender.send(mm);
         Ok(())
     }
 
-    async fn handle_incoming_request(
+
+    async fn handle_recv_response_sync(
         &self,
-        endpoint:&Endpoint,
-        incoming:&mut UnboundedReceiver<(Message<MessageControl>, Sender<Message<MessageControl>>)>,
-        resp_senders : &HashMap<String, Sender<Message<MessageControl>>>,
+        endpoint:&dyn EndpointAsync<MessageControl>,
+        resp_senders : &HashMap<String, SyncSender<Message<MessageControl>>>,
+    ) -> Res<()> {
+        let (from, to, m, sender) =
+            self.handle_recv_response(endpoint, resp_senders).await?;
+        let mm = Message::new(m, to, from);
+        let _ = sender.send(mm);
+        Ok(())
+    }
+
+    async fn handle_incoming_request<S:Debug>(
+        &self,
+        endpoint:&dyn EndpointAsync<MessageControl>,
+        incoming:&mut AsyncReceiver<(Message<MessageControl>, S)>,
+        resp_senders : &HashMap<String, S>,
     ) -> Res<()> {
         let opt_in = incoming.recv().await;
         match opt_in {

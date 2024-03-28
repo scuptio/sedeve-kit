@@ -3,14 +3,16 @@ use bincode::Encode;
 use scupt_util::message::{Message, MsgTrait};
 use scupt_util::node_id::NID;
 use scupt_util::res::Res;
+use scupt_util::serde_json_string::SerdeJsonString;
 use serde::Deserialize;
 use serde::Serialize;
-use crate::action::action_serde_json_string::ActionSerdeJsonString;
+
 use crate::action::action_type::ActionType;
 use crate::action::res_serde::res_serde;
 
 
 /// Action message definition
+/// Name must be consistent with ActionType
 #[derive(
 Clone,
 Serialize,
@@ -113,9 +115,9 @@ impl <Payload: MsgTrait + 'static>ActionMessage<Payload> {
     }
 
     /// Serde this action message to a JSON string
-    pub fn to_serde_json_string(&self) -> Res<ActionSerdeJsonString> {
+    pub fn to_serde_json_string(&self) -> Res<SerdeJsonString> {
         let r = serde_json::to_string(self);
         let s = res_serde(r)?;
-        Ok(ActionSerdeJsonString::new(s))
+        Ok(SerdeJsonString::new(s))
     }
 }

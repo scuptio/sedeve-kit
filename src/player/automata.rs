@@ -5,18 +5,19 @@ use std::thread::JoinHandle;
 
 use lazy_static::lazy_static;
 use scc::HashIndex;
+use scupt_net::io_service::IOService;
 use scupt_net::notifier::Notifier;
 use scupt_util::message::{Message, MsgTrait};
 use scupt_util::node_id::NID;
 use scupt_util::res::Res;
 use scupt_util::res_of::res_io;
+use scupt_util::serde_json_string::SerdeJsonString;
 use tokio::runtime::Builder;
 use tracing::error;
-
-use crate::action::action_message::ActionMessage;
 use crate::action::action_type::ActionType;
 use crate::player::async_action_driver::AsyncActionDriver;
 use crate::player::dtm_client::DTMClient;
+use crate::player::sync_action_driver::SyncActionDriver;
 
 pub type AT = ActionType;
 
@@ -306,19 +307,17 @@ async fn async_action_gut<M: MsgTrait + 'static>(
             return;
         }
     };
-    let driver = driver._input.clone();
-    let action = ActionMessage::from_message(action_type, message);
-    let action_s = action.to_serde_json_string().unwrap();
+    let driver = driver._input_async.clone();
+    let s = serde_json::to_string(message.payload_ref()).unwrap();
     let r = if begin {
-        driver.begin_action(action_s).await
+        driver.begin_action(action_type, message.source(), message.dest(), s).await
     } else {
-        driver.end_action(action_s).await
+        driver.end_action(action_type, message.source(), message.dest(), s).await
     };
     match r {
         Ok(_) => {}
         Err(e) => {
-            error!("send action {:?} , is begin: {}, error: {}.",
-                action.to_serde_json_string().unwrap(), begin, e);
+            error!("send action, {:?} , is begin: {}, error: {}.", message, begin, e);
         }
     }
 }
@@ -331,15 +330,17 @@ unsafe impl Send for __ActionDriver {}
 struct __ActionDriver {
     _thd: Arc<Mutex<Option<JoinHandle<()>>>>,
     _dtm_client: Arc<DTMClient>,
-    _input: Arc<dyn AsyncActionDriver>,
-    _notify: Notifier,
+    _input_async: Arc<dyn AsyncActionDriver>,
+    _input_sync:Arc<dyn SyncActionDriver>,
+    _server:Arc<Mutex<Option<IOService<SerdeJsonString>>>>
 }
 
 
 impl __ActionDriver {
     fn new(
         client_id:NID,
-        server_id: NID, server_addr: SocketAddr,
+        server_id: NID,
+        server_addr: SocketAddr,
     ) -> Res<Self> {
         let r_build = Builder::new_current_thread()
             .enable_all()
@@ -358,16 +359,18 @@ impl __ActionDriver {
                 c.run(None, runtime);
             };
             let thd = thread::Builder::new()
-                .name(format!("dtm-client").to_string())
+                .name("dtm-client".to_string())
                 .spawn(f);
             thd.unwrap()
         };
         let async_driver = cli.new_async_driver()?;
+        let sync_driver = cli.new_sync_driver()?;
         let s = Self {
             _thd: Arc::new(Mutex::new(Some(thd))),
             _dtm_client: Arc::new(cli),
-            _input: async_driver,
-            _notify: notifier,
+            _input_async: async_driver,
+            _input_sync: sync_driver,
+            _server: Arc::new(Mutex::new(None)),
         };
         Ok(s)
     }

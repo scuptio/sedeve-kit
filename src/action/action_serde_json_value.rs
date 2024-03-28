@@ -1,25 +1,61 @@
 use std::hash::{Hash, Hasher};
+use std::ops::{Deref, DerefMut};
+
 
 use scupt_util::error_type::ET;
 use scupt_util::message::{Message, MsgTrait};
 use scupt_util::node_id::NID;
 use scupt_util::res::Res;
 use scupt_util::res_of::res_option;
-use serde_json::Value;
-use scupt_util::sj_value_ref::SJValueRef;
-use crate::action::action_serde_json_string::ActionSerdeJsonString;
+use serde_json::{json, Value};
+
 use crate::action::action_type::ActionType;
 use crate::action::action_message::ActionMessage;
 use crate::action::constant::{MESSAGE_FIELD_DEST, MESSAGE_FIELD_SOURCE};
 use crate::action::res_serde::res_serde;
 use crate::action::serde_json_util::json_util_map_get_value;
+use scupt_util::serde_json_value::SerdeJsonValue;
 
 #[derive(Clone, Debug)]
 pub struct ActionSerdeJsonValue {
-    json : Value,
+    value: SerdeJsonValue
+}
+
+
+impl Deref for ActionSerdeJsonValue {
+    type Target = SerdeJsonValue;
+
+    fn deref(&self) -> &SerdeJsonValue {
+        &self.value
+    }
+}
+
+impl DerefMut for ActionSerdeJsonValue {
+    fn deref_mut(&mut self) -> &mut SerdeJsonValue {
+        &mut self.value
+    }
 }
 
 impl ActionSerdeJsonValue {
+    pub fn from_value(value:Value) -> Self {
+        Self {
+            value:SerdeJsonValue::new(value),
+        }
+    }
+
+    pub fn from_json(
+        action_type: ActionType,
+        source:NID,
+        dest:NID,
+        json_payload:String,
+    ) -> Res<Self> {
+        let v:Value = Message::<()>::build_json_value(json_payload, source, dest)?;
+        let json = json!({
+            action_type.to_string():
+            v
+        });
+        Self::from_json_value(json)
+    }
     pub fn from_message<M:MsgTrait + 'static>(
         action_type:ActionType,
         message:Message<M>
@@ -32,23 +68,12 @@ impl ActionSerdeJsonValue {
 
     pub fn from_json_value(json: Value) -> Res<Self> {
         Ok(Self {
-            json,
+            value:SerdeJsonValue::new(json),
         })
     }
 
-    pub fn to_action_message(&self) -> ActionSerdeJsonString {
-        ActionSerdeJsonString::new( self.json.to_string())
-    }
-
-    pub fn action_json_value_ref(&self) -> &Value {
-        &self.json
-    }
-
-    pub fn action_json_value(self) -> Value {
-        self.json
-    }
     pub fn message_payload_json_value(&self) -> Res<&Value> {
-        let opt = self.json.as_object();
+        let opt = self.value.serde_json_value_ref().as_object();
         let map = res_option(opt)?;
         for (_k, v) in map.iter() {
             return Ok(v)
@@ -57,7 +82,7 @@ impl ActionSerdeJsonValue {
     }
 
     pub fn action_type(&self) -> Res<ActionType> {
-        let map = res_option(self.json.as_object())?;
+        let map = res_option(self.value.serde_json_value_ref().as_object())?;
         for k in map.keys() {
             return Ok(ActionType::from_serde_action_type(k.as_str()))
         }
@@ -79,7 +104,7 @@ impl ActionSerdeJsonValue {
     fn handle_object_key_value<F, R>(&self, f:F) -> Res<R>
         where F:Fn(&String, &Value) ->Res<R>
     {
-        let map = res_option(self.json.as_object())?;
+        let map = res_option(self.value.serde_json_value_ref().as_object())?;
         if map.len() != 1 {
             return Err(ET::SerdeError("json format error".to_string()));
         }
@@ -99,18 +124,17 @@ impl ActionSerdeJsonValue {
 
 impl Hash for ActionSerdeJsonValue {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        let v = SJValueRef::from(&self.json);
-        v.hash(state);
+        self.value.hash(state);
     }
 }
 
 impl PartialEq for ActionSerdeJsonValue {
     fn eq(&self, other: &Self) -> bool {
-        SJValueRef::from(&self.json).eq(&SJValueRef::from(&other.json))
+        self.value.eq(&other.value)
     }
 
     fn ne(&self, other: &Self) -> bool {
-        !self.eq(other)
+        !self.value.eq(&other.value)
     }
 }
 impl Eq for ActionSerdeJsonValue {

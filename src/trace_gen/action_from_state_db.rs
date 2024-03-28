@@ -45,11 +45,11 @@ pub fn read_action_message<M: MsgTrait + 'static, F>(
         for vec in [tla_action_seq.actions(), tla_action_seq.states()] {
             for a in vec {
                 let j = a.to_action_json()?;
-                let s = j.to_action_message();
-                let m: serde_json::Result<ActionMessage<M>> = serde_json::from_str(s.to_string().unwrap().as_str());
+                let s = j.to_serde_json_string();
+                let m: serde_json::Result<ActionMessage<M>> = serde_json::from_str(s.to_string().as_str());
                 if m.is_err() {
                     eprintln!("==== error action sequence ==== : \n{}", serde_json::to_string_pretty(&v).unwrap());
-                    eprintln!("==== error action ==== : \n{}", s.to_string().unwrap())
+                    eprintln!("==== error action ==== : \n{}", s.to_string())
                 }
                 f(m.unwrap())?;
             }

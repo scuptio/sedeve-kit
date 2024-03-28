@@ -79,12 +79,10 @@ mod test {
         println!("{:?}", &tla_action_seq);
         for action in tla_action_seq.actions {
             let action_json_value = action.to_action_json().unwrap();
-            let action_json_string = action_json_value.to_action_message();
+            let action_json_string = action_json_value.to_serde_json_string();
             println!("{:?}", action_json_string);
-            action_json_value.to_action_message();
-            let r = action_json_string.to_string();
-            assert!(r.is_ok());
-            let json_string = r.unwrap();
+            action_json_value.to_serde_json_string();
+            let json_string = action_json_string.to_string();
             let r = ActionMessage::<TestML1>::from_json_string(json_string.clone());
             assert!(r.is_ok());
             let action_message = r.unwrap();
