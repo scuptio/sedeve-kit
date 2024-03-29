@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(
-  echo
-  VERSION 1.0
-  LANGUAGES CXX)
+    echo
+    VERSION 1.0
+    LANGUAGES CXX
+)
 
 
 
