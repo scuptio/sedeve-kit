@@ -7,49 +7,99 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#define ENABLE_DTM
 
-#include <cstdlib>
 #include <cstring>
 #include <iostream>
-#include "asio.hpp"
+#include <boost/json.hpp>
+#include <boost/asio.hpp>
+#include "sedeve_kit.h"
 
-using asio::ip::tcp;
 
-enum { max_length = 1024 };
+const char *AUTO_ECHO = "echo";
 
-int main(int argc, char* argv[])
-{
-  try
-  {
-    if (argc != 3)
-    {
-      std::cerr << "Usage: blocking_tcp_echo_client <host> <port>\n";
-      return 1;
+using boost::asio::io_context;
+using boost::asio::connect;
+using boost::asio::ip::tcp;
+using boost::json::value;
+using boost::json::value_to;
+using std::string;
+
+enum {
+    max_length = 1024
+};
+
+int main(int argc, char *argv[]) {
+    try {
+        if (argc != 4) {
+            std::cerr << "Usage: blocking_tcp_echo_client <host> <port> <node_id>\n";
+            return 1;
+        }
+
+        io_context io_context;
+
+        tcp::socket s(io_context);
+        tcp::resolver resolver(io_context);
+
+        auto node_id = uint64_t(argv[3]);
+
+        {
+            value action_connect = {"type", "connect"};
+            auto json_connect = value_to<std::string>(action_connect);
+            OUTPUT_ACTION(AUTO_ECHO, node_id, node_id, json_connect.c_str());
+        }
+        connect(s, resolver.resolve(argv[1], argv[2]));
+
+        std::cout << "Enter message: ";
+        char request[max_length];
+        std::cin.getline(request, max_length);
+        size_t request_length = std::strlen(request);
+
+#ifdef ENABLE_DTM
+        {
+            string message(request, request_length);
+            value action_send_to_server = {
+                        {"type", "send_to_server"},
+                        {"message", message}
+            };
+            auto json_send_to_server = value_to<std::string>(action_send_to_server);
+            OUTPUT_ACTION(AUTO_ECHO, node_id, node_id, json_send_to_server.c_str());
+        }
+#else
+        asio::write(s, asio::buffer(request, request_length));
+#endif
+
+        char reply[max_length];
+        size_t reply_length = 0;
+#ifdef ENABLE_DTM
+        {
+            uint64_t source = 0;
+            uint64_t dest = 0;
+            uint64_t length = 0;
+            auto ret = automata_read_input(AUTO_ECHO, &source, &dest, reply, max_length, &length);
+            if (ret != 0) {
+                return -1;
+            }
+            reply_length = length;
+            string message(request, reply_length);
+            value action_send_to_server = {
+                    {"type", "send_to_server"},
+                    {"message", message}
+            };
+            auto json_send_to_server = value_to<std::string>(action_send_to_server);
+            OUTPUT_ACTION(AUTO_ECHO, node_id, node_id, json_send_to_server.c_str());
+        }
+#else
+        reply_length = asio::read(s,
+            asio::buffer(reply, max_length));
+#endif
+        std::cout << "Reply is: ";
+        std::cout.write(reply, reply_length);
+        std::cout << "\n";
+    }
+    catch (std::exception &e) {
+        std::cerr << "Exception: " << e.what() << "\n";
     }
 
-    asio::io_context io_context;
-
-    tcp::socket s(io_context);
-    tcp::resolver resolver(io_context);
-    asio::connect(s, resolver.resolve(argv[1], argv[2]));
-
-    std::cout << "Enter message: ";
-    char request[max_length];
-    std::cin.getline(request, max_length);
-    size_t request_length = std::strlen(request);
-    asio::write(s, asio::buffer(request, request_length));
-
-    char reply[max_length];
-    size_t reply_length = asio::read(s,
-        asio::buffer(reply, request_length));
-    std::cout << "Reply is: ";
-    std::cout.write(reply, reply_length);
-    std::cout << "\n";
-  }
-  catch (std::exception& e)
-  {
-    std::cerr << "Exception: " << e.what() << "\n";
-  }
-
-  return 0;
+    return 0;
 }

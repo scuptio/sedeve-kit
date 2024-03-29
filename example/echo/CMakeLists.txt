@@ -6,10 +6,16 @@ project(
     LANGUAGES CXX
 )
 
-
-
 include_directories(
     third_party/asio-1.28.0/include
+    ../../out/include
+)
+
+
+link_directories(
+    ../../out/lib
+    ../../target/debug
+    ../../target/release
 )
 
 add_executable(
@@ -22,5 +28,13 @@ add_executable(
     echo_server.cpp
 )
 
+target_link_libraries(
+    echo_server
+    sedeve_kit
+)
 
-
+target_link_libraries(
+    echo_client
+    sedeve_kit
+    boost_json
+)

@@ -1,12 +1,22 @@
 use std::ffi::{c_char, CStr};
 use crate::action::action_type::{ActionBeginEnd, ActionType};
-use crate::player::automata::automaton_action_str;
+use crate::dtm::automata::automaton_action_str;
 use num::FromPrimitive;
 
-
+#[no_mangle]
+pub extern "C" fn automata_read_input(
+    _name:*const c_char,
+    _output_source_node_id:* mut u64,
+    _output_dest_node_id:* mut u64,
+    _output_buf_output_action_json:*mut c_char,
+    _buf_len:u64,
+    _output_len:*mut u64
+) -> u64 {
+    return 0
+}
 
 #[no_mangle]
-pub extern "C" fn action(
+pub extern "C" fn automata_action(
     _name:*const c_char,
     _action_type:u64,
     _action_begin_end:u64,

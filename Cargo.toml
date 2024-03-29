@@ -8,8 +8,12 @@ path = "src/rust_gen/bin/main.rs"
 
 [[bin]]
 name = "trace_gen"
-path = "src/trace_gen/bin/main.rs"
+path = "src/trace_gen/main.rs"
 
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["staticlib", "lib"]
 
 [package]
 name = "sedeve-kit"

@@ -9,9 +9,9 @@ use scupt_util::res::Res;
 use scupt_util::res_of::{res_io, res_parse};
 use serde::{Deserialize, Serialize};
 
-use sedeve_kit::player::action_incoming_factory::ActionIncomingFactory;
-use sedeve_kit::player::dtm_player::DTMPlayer;
-use sedeve_kit::trace_gen::trace_db::TraceDB;
+use sedeve_kit::dtm::action_incoming_factory::ActionIncomingFactory;
+use sedeve_kit::dtm::dtm_player::DTMPlayer;
+use sedeve_kit::trace::trace_db::TraceDB;
 
 /// action definition to Rust code template
 #[derive(Parser, Debug)]

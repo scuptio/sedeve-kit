@@ -1,10 +1,11 @@
 #![feature(const_trait_impl)]
 #![feature(unboxed_closures)]
-pub mod rust_gen;
-pub mod player;
-pub mod trace_gen;
+
+pub mod dtm;
+pub mod trace;
 pub mod define;
 pub mod action;
+pub mod act_dsl;
 mod test;
 mod data;
 mod binding;

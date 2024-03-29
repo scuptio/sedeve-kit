@@ -8,70 +8,71 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
+#define ENABLE_DTM
+
 #include <cstdlib>
 #include <iostream>
 #include <thread>
 #include <utility>
-#include <asio/ts/buffer.hpp>
-#include <asio/ts/internet.hpp>
+#include <boost/json.hpp>
+#include <boost/asio.hpp>
+#include "sedeve_kit.h"
 
-using asio::ip::tcp;
+const char *AUTO_ECHO = "AUTO_ECHO";
+
+using boost::asio::ip::tcp;
+using boost::asio::buffer;
+using boost::asio::stream_errc::eof;
+using boost::system::error_code;
+using boost::asio::io_context;
 
 const int max_length = 1024;
 
-void session(tcp::socket sock)
-{
-  try
-  {
-    for (;;)
-    {
-      char data[max_length];
 
-      std::error_code error;
-      size_t length = sock.read_some(asio::buffer(data), error);
-      if (error == asio::stream_errc::eof)
-        break; // Connection closed cleanly by peer.
-      else if (error)
-        throw std::system_error(error); // Some other error.
+void session(tcp::socket sock) {
+    try {
+        for (;;) {
+            char data[max_length];
 
-      asio::write(sock, asio::buffer(data, length));
+            error_code error;
+            size_t length = sock.read_some(buffer(data), error);
+            if (error == eof)
+                break; // Connection closed cleanly by peer.
+            else if (error)
+                throw std::system_error(error); // Some other error.
+
+            write(sock, buffer(data, length));
+        }
     }
-  }
-  catch (std::exception& e)
-  {
-    std::cerr << "Exception in thread: " << e.what() << "\n";
-  }
+    catch (std::exception &e) {
+        std::cerr << "Exception in thread: " << e.what() << "\n";
+    }
 }
 
-void server(asio::io_context& io_context, unsigned short port)
-{
-  tcp::acceptor a(io_context, tcp::endpoint(tcp::v4(), port));
-  for (;;)
-  {
-    tcp::socket sock(io_context);
-    a.accept(sock);
-    std::thread(session, std::move(sock)).detach();
-  }
+[[noreturn]] void server(io_context &io_context, unsigned short port, uint64_t node_id) {
+    INPUT_ACTION(AUTO_ECHO, node_id, node_id, "SERVER_START");
+    tcp::acceptor a(io_context, tcp::endpoint(tcp::v4(), port));
+    for (;;) {
+        tcp::socket sock(io_context);
+        a.accept(sock);
+        std::thread(session, std::move(sock)).detach();
+    }
 }
 
-int main(int argc, char* argv[])
-{
-  try
-  {
-    if (argc != 2)
-    {
-      std::cerr << "Usage: blocking_tcp_echo_server <port>\n";
-      return 1;
+int main(int argc, char *argv[]) {
+    try {
+        if (argc != 3) {
+            std::cerr << "Usage: blocking_tcp_echo_server <port> <id>\n";
+            return 1;
+        }
+
+        io_context io_context;
+
+        server(io_context, std::atoi(argv[1]), uint64_t(std::atoi(argv[2])));
+    }
+    catch (std::exception &e) {
+        std::cerr << "Exception: " << e.what() << "\n";
     }
 
-    asio::io_context io_context;
-
-    server(io_context, std::atoi(argv[1]));
-  }
-  catch (std::exception& e)
-  {
-    std::cerr << "Exception: " << e.what() << "\n";
-  }
-
-  return 0;
+    return 0;
 }
