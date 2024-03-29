@@ -23,17 +23,17 @@ use tokio::time::sleep;
 use tokio::sync::mpsc::UnboundedSender as AsyncSender;
 use tokio::sync::mpsc::UnboundedReceiver as AsyncReceiver;
 use std::sync::mpsc::Sender as SyncSender;
+use scupt_net::handle_event::HandleEventDummy;
 
 use crate::dtm::async_action_driver::AsyncActionDriver;
 use crate::dtm::async_action_driver_impl::AsyncActionDriverImpl;
-use crate::dtm::dtm_client_handler::DTMClientHandler;
 use crate::dtm::msg_ctrl::MessageControl;
 use crate::dtm::sync_action_driver::SyncActionDriver;
 use crate::dtm::sync_action_driver_impl::SyncActionDriverImpl;
 
 type DTMClientNode = Node<
     MessageControl,
-    DTMClientHandler
+    HandleEventDummy
 >;
 
 
@@ -66,7 +66,7 @@ impl DTMClient {
         server_addr: SocketAddr,
         stop_notify: Notifier,
     ) -> Res<Self> {
-        let handle = DTMClientHandler::new();
+        let handle = HandleEventDummy::default();
         let node = DTMClientNode::new(
             client_id,
             task_name,

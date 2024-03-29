@@ -50,6 +50,20 @@ pub async fn automaton_action_async<M: MsgTrait + 'static>(
     async_action_gut(automaton_name, action_type, action_begin_end, message).await
 }
 
+pub fn automaton_input_action(
+    _automaton_name: &str,
+) {
+    let opt = __DRIVERS.get(&_automaton_name.to_string());
+    let driver = match opt {
+        Some(e) => { Arc::new(e.get().clone()) }
+        None => {
+            return;
+        }
+    };
+    let _driver = driver._driver_sync.clone();
+
+
+}
 pub fn automaton_action_str(
     _automaton_name: &str,
     _action_type: ActionType,
@@ -408,6 +422,7 @@ unsafe impl Send for __ActionDriver {}
 struct __ActionDriver {
     _thd: Arc<Mutex<Option<JoinHandle<()>>>>,
     _dtm_client: Arc<DTMClient>,
+    //_input_sync:Arc<dyn ReceiverSync<SerdeJsonString>>,
     _driver_async: Arc<dyn AsyncActionDriver>,
     _driver_sync:Arc<dyn SyncActionDriver>,
     _server:Arc<Mutex<Option<IOService<SerdeJsonString>>>>
@@ -443,9 +458,11 @@ impl __ActionDriver {
         };
         let async_driver = cli.new_async_driver()?;
         let sync_driver = cli.new_sync_driver()?;
+
         let s = Self {
             _thd: Arc::new(Mutex::new(Some(thd))),
             _dtm_client: Arc::new(cli),
+            // _input_sync: Arc::new(todo!()),
             _driver_async: async_driver,
             _driver_sync: sync_driver,
             _server: Arc::new(Mutex::new(None)),

@@ -20,21 +20,26 @@ link_directories(
 
 add_executable(
     echo_client
+    inst_context.cpp
     echo_client.cpp
 )
 
 add_executable(
     echo_server
+    inst_context.cpp
     echo_server.cpp
 )
 
 target_link_libraries(
     echo_server
     sedeve_kit
+    boost_json
+    boost_thread
 )
 
 target_link_libraries(
     echo_client
     sedeve_kit
     boost_json
+    boost_thread
 )
