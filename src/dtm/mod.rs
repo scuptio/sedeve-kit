@@ -15,7 +15,6 @@ mod action_channel;
 mod msg_ctrl;
 mod action_reorder;
 mod dtm_server_handler;
-mod dtm_client_handler;
 mod async_action_driver_impl;
 mod action_input_json;
 mod action_driver;

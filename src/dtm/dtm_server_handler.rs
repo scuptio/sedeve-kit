@@ -410,16 +410,17 @@ impl  DTMServerHandler {
     }
 
     async fn handle_message_request_response(
-        &self, ep:&dyn EndpointAsync<MessageControl>,
-        channel:&mut UnboundedReceiver<Message<MessageControl>>,
-        sender:&UnboundedSender<Message<MessageControl>>,
+        &self,
+        endpoint_incoming:&dyn EndpointAsync<MessageControl>,
+        response_receiver:&mut UnboundedReceiver<Message<MessageControl>>,
+        response_sender:&UnboundedSender<Message<MessageControl>>,
         tasks:&mut Vec<JoinHandle<Option<Res<()>>>>,
     ) -> Res<()> {
         select! {
-            r_req = ep.recv()  => {
+            r_req = endpoint_incoming.recv()  => {
                 match r_req {
                     Ok(m) => {
-                        let s = sender.clone();
+                        let s = response_sender.clone();
                         let n = self.handler.notify.clone();
                         let _self = self.clone();
                         let task = spawn_local_task(
@@ -436,10 +437,11 @@ impl  DTMServerHandler {
                     }
                 };
             }
-            opt_resp = channel.recv() => {
+            opt_resp = response_receiver.recv() => {
                 match opt_resp {
                     Some(m) => {
-                        ep.send(m).await?
+                        // send response message to client
+                        endpoint_incoming.send(m).await?
                     }
                     None => {
                         return Err(ET::EOF);
@@ -468,11 +470,11 @@ impl  DTMServerHandler {
         Ok(())
     }
 
-    async fn message_loop(&self, ep:&dyn EndpointAsync<MessageControl>) -> Res<()> {
+    async fn message_loop(&self, endpoint_incoming:&dyn EndpointAsync<MessageControl>) -> Res<()> {
         let mut tasks = vec![];
         let (s, mut r) = mpsc::unbounded_channel();
         let ret = loop {
-            let r = self.handle_message_request_response(ep, & mut r, &s, &mut tasks).await;
+            let r = self.handle_message_request_response(endpoint_incoming, & mut r, &s, &mut tasks).await;
             match r {
                 Ok(()) => {
 

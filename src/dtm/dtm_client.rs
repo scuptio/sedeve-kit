@@ -24,6 +24,9 @@ use tokio::sync::mpsc::UnboundedSender as AsyncSender;
 use tokio::sync::mpsc::UnboundedReceiver as AsyncReceiver;
 use std::sync::mpsc::Sender as SyncSender;
 use scupt_net::handle_event::HandleEventDummy;
+use scupt_net::io_service::{IOService, IOServiceOpt};
+use scupt_net::io_service_sync::IOServiceSync;
+use scupt_util::serde_json_string::SerdeJsonString;
 
 use crate::dtm::async_action_driver::AsyncActionDriver;
 use crate::dtm::async_action_driver_impl::AsyncActionDriverImpl;
@@ -31,17 +34,21 @@ use crate::dtm::msg_ctrl::MessageControl;
 use crate::dtm::sync_action_driver::SyncActionDriver;
 use crate::dtm::sync_action_driver_impl::SyncActionDriverImpl;
 
-type DTMClientNode = Node<
+type PlayerNodeClient = Node<
     MessageControl,
     HandleEventDummy
 >;
 
+type TestedNodeServer = IOService<
+    SerdeJsonString
+>;
 
 struct _ClientContext {
     node_id:NID,
     dtm_server_node_id: NID,
     dtm_server_addr: SocketAddr,
-    node: DTMClientNode,
+    player_node_client: PlayerNodeClient,
+    tested_node_server:Arc<dyn IOServiceSync<SerdeJsonString>>,
     // sender/receiver would redirect send message to message loop task
     async_sender: AsyncSender<(Message<MessageControl>, AsyncOneshotSender<Message<MessageControl>>)>,
     async_receiver: StdMutex<Option<AsyncReceiver<(Message<MessageControl>, AsyncOneshotSender<Message<MessageControl>>)>>>,
@@ -67,13 +74,26 @@ impl DTMClient {
         stop_notify: Notifier,
     ) -> Res<Self> {
         let handle = HandleEventDummy::default();
-        let node = DTMClientNode::new(
+        let player_node_client = PlayerNodeClient::new(
             client_id,
-            task_name,
-            handle,
+            task_name.clone(),
+            handle.clone(),
             false,
-            stop_notify,
+            stop_notify.clone(),
         )?;
+        let opt = IOServiceOpt {
+            num_message_receiver: 1,
+            testing: false,
+            sync_service: true,
+            port_debug: None,
+        };
+        let tested_node_server = IOService::new_sync_service(
+            client_id,
+            task_name.clone(),
+            opt,
+            stop_notify.clone()
+        )?;
+
         let (async_sender, async_receiver) = unbounded_channel();
         let (sync_sender, sync_receiver) = unbounded_channel();
 
@@ -82,7 +102,8 @@ impl DTMClient {
                 node_id: client_id,
                 dtm_server_node_id: server_id,
                 dtm_server_addr: server_addr,
-                node,
+                player_node_client,
+                tested_node_server,
                 async_sender,
                 async_receiver:StdMutex::new(Some(async_receiver)),
                 sync_sender,
@@ -116,6 +137,7 @@ impl DTMClient {
         Ok(driver)
     }
 
+
     pub fn run(&self, opt_ls: Option<LocalSet>, runtime: Arc<Runtime>) {
         let local_set = match opt_ls {
             Some(ls) => { ls }
@@ -123,7 +145,7 @@ impl DTMClient {
         };
         let c = self.context.clone();
         let f = async move {
-            let n = c.node.stop_notify().clone();
+            let n = c.player_node_client.stop_notify().clone();
             let j = spawn_local_task(
                 n,
                 "dtm client message loop",
@@ -134,7 +156,7 @@ impl DTMClient {
             let _ = j.unwrap().await;
         };
         local_set.spawn_local(f);
-        self.context.node.block_run(Some(local_set), runtime);
+        self.context.player_node_client.block_run(Some(local_set), runtime);
     }
 
     pub fn close(&self) {
@@ -145,7 +167,7 @@ impl DTMClient {
 impl _ClientContext {
     async fn connect_to_dtm_player(&self) -> Res<Arc<dyn EndpointAsync<MessageControl>>> {
         loop {
-            let r_connect = self.node.default_event_sink().connect(
+            let r_connect = self.player_node_client.default_event_sink().connect(
                 self.dtm_server_node_id,
                 self.dtm_server_addr,
                 ESConnectOpt::default().enable_return_endpoint(true),
@@ -282,6 +304,6 @@ impl _ClientContext {
     }
 
     pub fn close(&self) {
-        self.node.stop_notify().notify_all();
+        self.player_node_client.stop_notify().notify_all();
     }
 }

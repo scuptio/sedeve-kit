@@ -23,20 +23,20 @@ use crate::dtm::dtm_player::TestOption;
 use crate::dtm::dtm_server_handler::DTMServerHandler;
 use crate::dtm::msg_ctrl::MessageControl;
 
-type DTMTestbedNode = Node<
+type PlayerNodeServer = Node<
     MessageControl,
     DTMServerHandler,
 >;
 
-type ClientOfTestedNode = Node<
+type TestedNodeClient = Node<
     SerdeJsonString,
     HandleEventDummy,
 >;
 
 pub struct DTMServer {
     handler: Arc<DTMServerHandler>,
-    player_node: Arc<DTMTestbedNode>,
-    client_node: Arc<ClientOfTestedNode>,
+    player_node: Arc<PlayerNodeServer>,
+    client_node: Arc<TestedNodeClient>,
 }
 
 
@@ -48,7 +48,7 @@ impl DTMServer {
                option:TestOption,
     ) -> Res<Self> {
         let client_ch_name = format!("{}_client_channel", name);
-        let client_node = ClientOfTestedNode::new(
+        let client_node = TestedNodeClient::new(
             node_id,
             client_ch_name,
             HandleEventDummy::default(),
@@ -56,7 +56,7 @@ impl DTMServer {
             stop_notify.clone())?;
         let node_sender = client_node.default_message_sender_async();
         let h = DTMServerHandler::new(node_id, node_sender, stop_notify.clone(), option);
-        let player_node: DTMTestbedNode = DTMTestbedNode::new(
+        let player_node: PlayerNodeServer = PlayerNodeServer::new(
             node_id,
             name,
             h.clone(),
