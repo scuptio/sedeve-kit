@@ -24,10 +24,6 @@ use tokio::sync::mpsc::UnboundedSender as AsyncSender;
 use tokio::sync::mpsc::UnboundedReceiver as AsyncReceiver;
 use std::sync::mpsc::Sender as SyncSender;
 use scupt_net::handle_event::HandleEventDummy;
-use scupt_net::io_service::{IOService, IOServiceOpt};
-use scupt_net::io_service_sync::IOServiceSync;
-use scupt_util::serde_json_string::SerdeJsonString;
-
 use crate::dtm::async_action_driver::AsyncActionDriver;
 use crate::dtm::async_action_driver_impl::AsyncActionDriverImpl;
 use crate::dtm::msg_ctrl::MessageControl;
@@ -39,16 +35,12 @@ type PlayerNodeClient = Node<
     HandleEventDummy
 >;
 
-type TestedNodeServer = IOService<
-    SerdeJsonString
->;
 
 struct _ClientContext {
     node_id:NID,
     dtm_server_node_id: NID,
     dtm_server_addr: SocketAddr,
     player_node_client: PlayerNodeClient,
-    tested_node_server:Arc<dyn IOServiceSync<SerdeJsonString>>,
     // sender/receiver would redirect send message to message loop task
     async_sender: AsyncSender<(Message<MessageControl>, AsyncOneshotSender<Message<MessageControl>>)>,
     async_receiver: StdMutex<Option<AsyncReceiver<(Message<MessageControl>, AsyncOneshotSender<Message<MessageControl>>)>>>,
@@ -81,19 +73,6 @@ impl DTMClient {
             false,
             stop_notify.clone(),
         )?;
-        let opt = IOServiceOpt {
-            num_message_receiver: 1,
-            testing: false,
-            sync_service: true,
-            port_debug: None,
-        };
-        let tested_node_server = IOService::new_sync_service(
-            client_id,
-            task_name.clone(),
-            opt,
-            stop_notify.clone()
-        )?;
-
         let (async_sender, async_receiver) = unbounded_channel();
         let (sync_sender, sync_receiver) = unbounded_channel();
 
@@ -103,7 +82,6 @@ impl DTMClient {
                 dtm_server_node_id: server_id,
                 dtm_server_addr: server_addr,
                 player_node_client,
-                tested_node_server,
                 async_sender,
                 async_receiver:StdMutex::new(Some(async_receiver)),
                 sync_sender,

@@ -20,9 +20,10 @@ constexpr static const uint64_t C_ACTION_INTERNAL = 4;
 
 extern "C" {
 
-uint64_t automata_read_input(const char *_name,
+int32_t automata_next_action(const char *_name,
                              uint64_t *_output_source_node_id,
                              uint64_t *_output_dest_node_id,
+                             uint64_t *_output_action_type,
                              char *_output_buf_output_action_json,
                              uint64_t _buf_len,
                              uint64_t *_output_len);
