@@ -12,7 +12,7 @@ using std::pair;
 using std::shared_ptr;
 
 
-const char *AUTO_ECHO = "AUTO_ECHO";
+static const char *AUTO_ECHO = "AUTO_ECHO";
 
 struct message {
     string type;

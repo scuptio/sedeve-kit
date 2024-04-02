@@ -13,10 +13,10 @@
 #include <iostream>
 #include <boost/json.hpp>
 #include <boost/asio.hpp>
+#include "inst_context.h"
 #include "sedeve_kit.h"
 
 
-const char *AUTO_ECHO = "echo";
 
 using boost::asio::io_context;
 using boost::asio::connect;
@@ -42,7 +42,6 @@ int main(int argc, char *argv[]) {
         tcp::resolver resolver(io_context);
 
         auto node_id = uint64_t(argv[3]);
-
         {
             value action_connect = {"type", "connect"};
             auto json_connect = value_to<std::string>(action_connect);
@@ -76,7 +75,8 @@ int main(int argc, char *argv[]) {
             uint64_t source = 0;
             uint64_t dest = 0;
             uint64_t length = 0;
-            auto ret = automata_read_input(AUTO_ECHO, &source, &dest, reply, max_length, &length);
+            uint64_t action_type = 0;
+            auto ret = automata_next_action(AUTO_ECHO, &source, &dest, &action_type, reply, max_length, &length);
             if (ret != 0) {
                 return -1;
             }
