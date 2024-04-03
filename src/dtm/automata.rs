@@ -117,7 +117,7 @@ macro_rules! auto_init {
         $player_addr:expr
     ) => {
         {
-            $crate::dtm::automata:automata_init_setup($automata_name, $node_id, $player_id, $player_addr);
+            $crate::dtm::automata::automata_init_setup($automata_name, $node_id, $player_id, $player_addr);
         }
     };
 }
@@ -129,7 +129,7 @@ macro_rules! auto_clear {
         $automata_name:expr
     ) => {
         {
-            $crate::dtm::automata:automata_clearr($automata_name);
+            $crate::dtm::automata::automata_clear($automata_name);
         }
     };
 }
