@@ -22,7 +22,11 @@ using boost::asio::io_context;
 using boost::asio::connect;
 using boost::asio::ip::tcp;
 using boost::json::value;
+using boost::json::serialize;
 using boost::json::value_to;
+using boost::asio::write;
+using boost::asio::read;
+using boost::asio::buffer;
 using std::string;
 
 enum {
@@ -40,13 +44,15 @@ int main(int argc, char *argv[]) {
 
         tcp::socket s(io_context);
         tcp::resolver resolver(io_context);
+        
 
         auto node_id = uint64_t(argv[3]);
+        /*
         {
             value action_connect = {"type", "connect"};
-            auto json_connect = value_to<std::string>(action_connect);
+            std::string json_connect =  boost::json::serialize(action_connect);
             OUTPUT_ACTION(AUTO_ECHO, node_id, node_id, json_connect.c_str());
-        }
+        }*/
         connect(s, resolver.resolve(argv[1], argv[2]));
 
         std::cout << "Enter message: ";
@@ -65,7 +71,7 @@ int main(int argc, char *argv[]) {
             OUTPUT_ACTION(AUTO_ECHO, node_id, node_id, json_send_to_server.c_str());
         }
 #else
-        asio::write(s, asio::buffer(request, request_length));
+        write(s, buffer(request, request_length));
 #endif
 
         char reply[max_length];
@@ -90,15 +96,25 @@ int main(int argc, char *argv[]) {
             OUTPUT_ACTION(AUTO_ECHO, node_id, node_id, json_send_to_server.c_str());
         }
 #else
-        reply_length = asio::read(s,
-            asio::buffer(reply, max_length));
+        reply_length = read(s,
+            buffer(reply, max_length));
 #endif
         std::cout << "Reply is: ";
         std::cout.write(reply, reply_length);
         std::cout << "\n";
     }
     catch (std::exception &e) {
-        std::cerr << "Exception: " << e.what() << "\n";
+        std::string what = e.what();
+        auto node_id = uint64_t(argv[3]);
+        if (what == "connect: Connection refused") {
+            value connection_refused = {
+                        {"type", "connect_to_server_result"},
+                        {"ok", false}
+            };
+            string json_connection_refused = serialize(connection_refused);
+            INPUT_ACTION(AUTO_ECHO, node_id, node_id, json_connection_refused.c_str());
+        }
+        std::cerr << "Exception: " << what << "\n";
     }
 
     return 0;
