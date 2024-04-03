@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
             uint64_t dest = 0;
             uint64_t length = 0;
             uint64_t action_type = 0;
-            auto ret = automata_next_action(AUTO_ECHO, &source, &dest, &action_type, reply, max_length, &length);
+            auto ret = automata_next_input(AUTO_ECHO, &source, &dest, &action_type, reply, max_length, &length);
             if (ret != 0) {
                 return -1;
             }
