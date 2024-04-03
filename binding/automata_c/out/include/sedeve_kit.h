@@ -2,6 +2,21 @@
 
 #include "_sedeve_kit.h"
 
+constexpr static const uint64_t C_ACTION_BEGIN = 0;
+
+constexpr static const uint64_t C_ACTION_END = 1;
+
+constexpr static const uint64_t C_ACTION_SETUP = 0;
+
+constexpr static const uint64_t C_ACTION_CHECK = 1;
+
+constexpr static const uint64_t C_ACTION_INPUT = 2;
+
+constexpr static const uint64_t C_ACTION_OUTPUT = 3;
+
+constexpr static const uint64_t C_ACTION_INTERNAL = 4;
+
+
 #ifdef ENABLE_DTM
 
 #define INPUT_ACTION(name, source, dest, action) { automata_action(name, C_ACTION_END, C_ACTION_INPUT, source, dest, action); }

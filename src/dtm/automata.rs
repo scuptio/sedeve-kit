@@ -18,20 +18,14 @@ use scupt_util::serde_json_string::SerdeJsonString;
 use tokio::runtime::Builder;
 use tracing::error;
 use crate::action::action_serde_json_value::ActionSerdeJsonValue;
-
 use crate::action::action_type::{ActionBeginEnd, ActionType};
 use crate::dtm::async_action_driver::AsyncActionDriver;
 use crate::dtm::dtm_client::DTMClient;
 use crate::dtm::sync_action_driver::SyncActionDriver;
 
-/// Clean an automata setting
-pub fn automaton_clear(name: &str,) {
-    action_driver_unset_gut(name)
-}
-
 
 /// Initialize an automata setting
-pub fn automaton_init(
+pub fn automata_init_setup(
     name: &str,
     client_id:NID,
     server_id: NID,
@@ -40,24 +34,23 @@ pub fn automaton_init(
     action_driver_setup_gut(name, client_id, server_id, server_addr, false);
 }
 
+/// Clean an automata setting
+pub fn automata_clear(name: &str,) {
+    action_driver_unset_gut(name)
+}
+
+
 /// Is an automation named `name` enable
-pub fn automaton_enable(name:&str) -> bool {
+pub fn automata_enable(name:&str) -> bool {
     __DRIVERS.contains(name)
 }
 
-/// A-synchronize begin an action
-pub async fn automaton_action_async<M: MsgTrait + 'static>(
-    automaton_name: &str,
-    action_type: ActionType,
-    action_begin_end: ActionBeginEnd,
-    message: Message<M>) {
-    async_action_gut(automaton_name, action_type, action_begin_end, message).await
-}
 
-pub fn automaton_next_input_action(
-    _automaton_name: &str
+/// Automata read next input action
+pub fn automata_next_input(
+    _automata_name: &str
 ) -> Res<(NID, NID, ActionType, String)> {
-    let opt = __DRIVERS.get(&_automaton_name.to_string());
+    let opt = __DRIVERS.get(&_automata_name.to_string());
     let driver = match opt {
         Some(e) => { Arc::new(e.get().clone()) }
         None => {
@@ -77,14 +70,14 @@ pub fn automaton_next_input_action(
     return Ok((source, dest, action_type, message));
 }
 
-pub fn automaton_action_str(
-    _automaton_name: &str,
+pub fn automata_send_action_to_player(
+    _automata_name: &str,
     _action_type: ActionType,
     _action_begin_end: ActionBeginEnd,
     _source:NID,
     _dest:NID,
     _message: &str) {
-    let opt = __DRIVERS.get(&_automaton_name.to_string());
+    let opt = __DRIVERS.get(&_automata_name.to_string());
     let driver = match opt {
         Some(e) => { Arc::new(e.get().clone()) }
         None => {
@@ -102,19 +95,29 @@ pub fn automaton_action_str(
     }
 }
 
+
+/// A-synchronize begin an action
+pub async fn automata_action_async<M: MsgTrait + 'static>(
+    automata_name: &str,
+    action_type: ActionType,
+    action_begin_end: ActionBeginEnd,
+    message: Message<M>) {
+    async_action_gut(automata_name, action_type, action_begin_end, message).await
+}
+
 /// Initialize an automata.
-/// The automation name is `automaton_name`. And it connects to player whose node id(NID) is
+/// The automation name is `automata_name`. And it connects to player whose node id(NID) is
 /// `player_id`, and network address(with string representation) is `player_addr`
 #[macro_export]
 macro_rules! auto_init {
     (
-        $automaton_name:expr,
+        $automata_name:expr,
         $node_id:expr,
         $player_id:expr,
         $player_addr:expr
     ) => {
         {
-            $crate::dtm::automata::automaton_init($automaton_name, $node_id, $player_id, $player_addr);
+            $crate::dtm::automata:automata_init_setup($automata_name, $node_id, $player_id, $player_addr);
         }
     };
 }
@@ -123,10 +126,10 @@ macro_rules! auto_init {
 #[macro_export]
 macro_rules! auto_clear {
     (
-        $automaton_name:expr
+        $automata_name:expr
     ) => {
         {
-            $crate::dtm::automata::automaton_clear($automaton_name);
+            $crate::dtm::automata:automata_clearr($automata_name);
         }
     };
 }
@@ -134,10 +137,10 @@ macro_rules! auto_clear {
 /// Begin an action
 #[macro_export]
 macro_rules! action_begin {
-    ($automaton_name:expr, $action_type:expr, $message:expr) => {
+    ($automata_name:expr, $action_type:expr, $message:expr) => {
         {
-            $crate::dtm::automata::automaton_action_async(
-                $automaton_name,
+            $crate::dtm::automata::automata_action_async(
+                $automata_name,
                 $action_type,
                 $crate::action::action_type::ActionBeginEnd::Begin,
                 $message).await;
@@ -148,10 +151,10 @@ macro_rules! action_begin {
 /// End an action
 #[macro_export]
 macro_rules! action_end {
-    ($automaton_name:expr, $action_type:expr, $message:expr) => {
+    ($automata_name:expr, $action_type:expr, $message:expr) => {
         {
-            $crate::dtm::automata::automaton_action_async(
-                $automaton_name,
+            $crate::dtm::automata::automata_action_async(
+                $automata_name,
                 $action_type,
                 $crate::action::action_type::ActionBeginEnd::End,
                 $message).await;
@@ -162,10 +165,10 @@ macro_rules! action_end {
 /// End a Setup action , alias of `setup_end`
 #[macro_export]
 macro_rules! setup {
-    ($automaton_name:expr,  $message:expr) => {
+    ($automata_name:expr,  $message:expr) => {
         {
             $crate::action_end!(
-                $automaton_name,
+                $automata_name,
                 $crate::action::action_type::ActionType::Setup,
                 $message
             )
@@ -176,10 +179,10 @@ macro_rules! setup {
 /// End a Check action , alias of `check_end`
 #[macro_export]
 macro_rules! check {
-    ($automaton_name:expr,  $message:expr) => {
+    ($automata_name:expr,  $message:expr) => {
         {
-            $crate::dtm::automata::automaton_action_async(
-                $automaton_name,
+            $crate::dtm::automata::automata_action_async(
+                $automata_name,
                 false,
                 $crate::action::action_type::ActionType::Check,
                 $message).await;
@@ -190,10 +193,10 @@ macro_rules! check {
 /// End an Input action , alias of `input_end`
 #[macro_export]
 macro_rules! input {
-    ($automaton_name:expr,  $message:expr) => {
+    ($automata_name:expr,  $message:expr) => {
         {
             $crate::action_end!(
-                $automaton_name,
+                $automata_name,
                 $crate::action::action_type::ActionType::Input,
                 $message
             )
@@ -204,10 +207,10 @@ macro_rules! input {
 /// End an Output action , alias of `output_end`
 #[macro_export]
 macro_rules! output {
-    ($automaton_name:expr,  $message:expr) => {
+    ($automata_name:expr,  $message:expr) => {
         {
             $crate::action_begin!(
-                $automaton_name,
+                $automata_name,
                 $crate::action::action_type::ActionType::Output,
                 $message
             )
@@ -218,10 +221,10 @@ macro_rules! output {
 /// Begin a Setup action
 #[macro_export]
 macro_rules! setup_begin {
-    ($automaton_name:expr,  $message:expr) => {
+    ($automata_name:expr,  $message:expr) => {
         {
             $crate::action_begin!(
-                $automaton_name,
+                $automata_name,
                 $crate::action::action_type::ActionType::Setup,
                 $message
             )
@@ -232,10 +235,10 @@ macro_rules! setup_begin {
 /// End a Setup action
 #[macro_export]
 macro_rules! setup_end {
-    ($automaton_name:expr,  $message:expr) => {
+    ($automata_name:expr,  $message:expr) => {
         {
             $crate::action_end!(
-                $automaton_name,
+                $automata_name,
                 $crate::action::action_type::ActionType::Setup,
                 $message
             )
@@ -246,10 +249,10 @@ macro_rules! setup_end {
 /// Begin a Check action
 #[macro_export]
 macro_rules! check_begin {
-    ($automaton_name:expr,  $message:expr) => {
+    ($automata_name:expr,  $message:expr) => {
         {
              $crate::action_begin!(
-                $automaton_name,
+                $automata_name,
                 $crate::action::action_type::ActionType::Check,
                 $message
             )
@@ -261,10 +264,10 @@ macro_rules! check_begin {
 /// End a Check action
 #[macro_export]
 macro_rules! check_end {
-    ($automaton_name:expr,  $message:expr) => {
+    ($automata_name:expr,  $message:expr) => {
         {
             $crate::action_end!(
-                $automaton_name,
+                $automata_name,
                 $crate::action::action_type::ActionType::Check,
                 $message
             )
@@ -275,10 +278,10 @@ macro_rules! check_end {
 /// Begin an Input action
 #[macro_export]
 macro_rules! input_begin {
-    ($automaton_name:expr,  $message:expr) => {
+    ($automata_name:expr,  $message:expr) => {
         {
             $crate::action_begin!(
-                $automaton_name,
+                $automata_name,
                 $crate::action::action_type::ActionType::Input,
                 $message
             )
@@ -289,10 +292,10 @@ macro_rules! input_begin {
 /// End an Input action
 #[macro_export]
 macro_rules! input_end {
-    ($automaton_name:expr,  $message:expr) => {
+    ($automata_name:expr,  $message:expr) => {
         {
             $crate::action_end!(
-                $automaton_name,
+                $automata_name,
                 $crate::action::action_type::ActionType::Input,
                 $message
             )
@@ -303,10 +306,10 @@ macro_rules! input_end {
 /// Begin an Output action
 #[macro_export]
 macro_rules! output_begin {
-    ($automaton_name:expr,  $message:expr) => {
+    ($automata_name:expr,  $message:expr) => {
         {
             $crate::action_begin!(
-                $automaton_name,
+                $automata_name,
                 $crate::action::action_type::ActionType::Output,
                 $message
             )
@@ -317,10 +320,10 @@ macro_rules! output_begin {
 /// End an Output action
 #[macro_export]
 macro_rules! output_end {
-    ($automaton_name:expr,  $message:expr) => {
+    ($automata_name:expr,  $message:expr) => {
         {
             $crate::action_end!(
-                $automaton_name,
+                $automata_name,
                 $crate::action::action_type::ActionType::Output,
                 $message
             )
@@ -331,10 +334,10 @@ macro_rules! output_end {
 /// Begin an Internal action
 #[macro_export]
 macro_rules! internal_begin {
-    ($automaton_name:expr,  $message:expr) => {
+    ($automata_name:expr,  $message:expr) => {
         {
             $crate::action_begin!(
-                $automaton_name,
+                $automata_name,
                 $crate::action::action_type::ActionType::Internal,
                 $message
             )
@@ -346,10 +349,10 @@ macro_rules! internal_begin {
 /// End an Internal action
 #[macro_export]
 macro_rules! internal_end {
-    ($automaton_name:expr,  $message:expr) => {
+    ($automata_name:expr,  $message:expr) => {
         {
             $crate::action_end!(
-                $automaton_name,
+                $automata_name,
                 $crate::action::action_type::ActionType::Internal,
                 $message
             )
@@ -360,9 +363,9 @@ macro_rules! internal_end {
 /// Is an automation enable
 #[macro_export]
 macro_rules! auto_enable {
-    ($automaton_name:expr) => {
+    ($automata_name:expr) => {
         {
-            $crate::dtm::automata::automaton_enable($automaton_name)
+            $crate::dtm::automata::automata_enable($automata_name)
         }
     };
 }
@@ -405,12 +408,12 @@ fn action_driver_setup_gut(
 }
 
 async fn async_action_gut<M: MsgTrait + 'static>(
-    automaton_name: &str,
+    automata_name: &str,
     action_type: ActionType,
     action_begin_end: ActionBeginEnd,
     message: Message<M>
 ) {
-    let opt = __DRIVERS.get_async(&automaton_name.to_string()).await;
+    let opt = __DRIVERS.get_async(&automata_name.to_string()).await;
     let driver = match opt {
         Some(e) => { Arc::new(e.get().clone()) }
         None => {

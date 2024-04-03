@@ -7,15 +7,14 @@ project(
 )
 
 include_directories(
-    third_party/asio-1.28.0/include
-    ../../out/include
+    ../../binding/automata_c/out/include
 )
 
 
 link_directories(
-    ../../out/lib
-    ../../target/debug
-    ../../target/release
+    ../../binding/automata_c/out/lib
+    ../../binding/automata_c/target/debug
+    ../../binding/automata_c/target/release
 )
 
 add_executable(
@@ -32,14 +31,14 @@ add_executable(
 
 target_link_libraries(
     echo_server
-    sedeve_kit
+    automata_c
     boost_json
     boost_thread
 )
 
 target_link_libraries(
     echo_client
-    sedeve_kit
+    automata_c
     boost_json
     boost_thread
 )

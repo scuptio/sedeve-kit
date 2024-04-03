@@ -1,0 +1,17 @@
+[package]
+name = "automata_c"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+path = "src/lib.rs"
+crate-type = ["staticlib", "lib"]
+
+[build-dependencies]
+cbindgen = "0.26.0"
+
+[dependencies]
+num = "0.4.1"
+sedeve-kit = {path = "../../" }
+scupt-util = { git = "https://github.com/scuptio/scupt-util.git" }
