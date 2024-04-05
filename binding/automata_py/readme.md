@@ -1,4 +1,7 @@
-
+Install venv
+```
+apt install python3.10-venv
+```
 
 To build this package, first install requirements:
 

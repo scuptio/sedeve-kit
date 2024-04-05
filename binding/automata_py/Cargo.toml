@@ -9,7 +9,7 @@ name = "automata_py"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = "0.20.0"
+pyo3 = { version = "0.21.1", features = ["extension-module"] }
 num = "0.4.1"
 sedeve-kit = {path = "../../" }
 scupt-util = { git = "https://github.com/scuptio/scupt-util.git" }
