@@ -10,7 +10,6 @@ pub struct TraceReader {}
 
 
 impl TraceReader {
-
     /// Reads F-exec from the given file path SQLite DB and returns them as a vector of
     /// `Arc<dyn ActionIncoming<Input, Output, Internal>>`.
     ///

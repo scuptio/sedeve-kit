@@ -1,8 +1,9 @@
-use scupt_util::res::Res;
 use std::collections::HashMap;
-use serde_json::Value;
 use std::fs::read_to_string;
+
 use scupt_util::error_type::ET;
+use scupt_util::res::Res;
+use serde_json::Value;
 
 pub fn read_from_dict_json(opt_path: Option<String>) -> Res<HashMap<String, Value>> {
     let path = match opt_path {

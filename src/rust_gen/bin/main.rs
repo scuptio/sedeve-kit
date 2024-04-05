@@ -1,7 +1,8 @@
 use std::path::{Path, PathBuf};
 
-use sedeve_kit::act_dsl::action2rust::action_to_rust;
 use clap::Parser;
+
+use sedeve_kit::act_dsl::action2rust::action_to_rust;
 
 /// action definition to Rust code template
 #[derive(Parser, Debug)]

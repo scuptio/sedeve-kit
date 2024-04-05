@@ -9,42 +9,41 @@ use serde_json::{Map, Value};
 
 use crate::action::constant;
 
-
 /* Type code for values. */
 const BOOL_VALUE: u32 = 0;
-const INT_VALUE:u32 = BOOL_VALUE + 1;
-const REAL_VALUE:u32 = INT_VALUE + 1;
-const STRING_VALUE:u32 = REAL_VALUE + 1;
-const RECORD_VALUE:u32 = STRING_VALUE + 1;
-const SET_ENUM_VALUE:u32 = RECORD_VALUE + 1;
-const SET_PRED_VALUE:u32 = SET_ENUM_VALUE + 1;
-const TUPLE_VALUE:u32 = SET_PRED_VALUE + 1;
-const FCN_LAMBDA_VALUE:u32 = TUPLE_VALUE + 1;
-const FCN_RCD_VALUE:u32 = FCN_LAMBDA_VALUE + 1;
-const OP_LAMBDA_VALUE:u32 = FCN_RCD_VALUE + 1;
-const OP_RCD_VALUE:u32 = OP_LAMBDA_VALUE + 1;
-const METHOD_VALUE:u32 = OP_RCD_VALUE + 1;
-const SET_OF_FCNS_VALUE:u32 = METHOD_VALUE + 1;
-const SET_OF_RCDS_VALUE:u32 = SET_OF_FCNS_VALUE + 1;
-const SET_OF_TUPLES_VALUE:u32 = SET_OF_RCDS_VALUE + 1;
-const SUBSET_VALUE:u32 = SET_OF_TUPLES_VALUE + 1;
-const SET_DIFF_VALUE:u32 = SUBSET_VALUE + 1;
-const SET_CAP_VALUE:u32 = SET_DIFF_VALUE + 1;
-const SET_CUP_VALUE:u32 = SET_CAP_VALUE + 1;
-const UNION_VALUE:u32 = SET_CUP_VALUE + 1;
-const MODEL_VALUE:u32 = UNION_VALUE + 1;
+const INT_VALUE: u32 = BOOL_VALUE + 1;
+const REAL_VALUE: u32 = INT_VALUE + 1;
+const STRING_VALUE: u32 = REAL_VALUE + 1;
+const RECORD_VALUE: u32 = STRING_VALUE + 1;
+const SET_ENUM_VALUE: u32 = RECORD_VALUE + 1;
+const SET_PRED_VALUE: u32 = SET_ENUM_VALUE + 1;
+const TUPLE_VALUE: u32 = SET_PRED_VALUE + 1;
+const FCN_LAMBDA_VALUE: u32 = TUPLE_VALUE + 1;
+const FCN_RCD_VALUE: u32 = FCN_LAMBDA_VALUE + 1;
+const OP_LAMBDA_VALUE: u32 = FCN_RCD_VALUE + 1;
+const OP_RCD_VALUE: u32 = OP_LAMBDA_VALUE + 1;
+const METHOD_VALUE: u32 = OP_RCD_VALUE + 1;
+const SET_OF_FCNS_VALUE: u32 = METHOD_VALUE + 1;
+const SET_OF_RCDS_VALUE: u32 = SET_OF_FCNS_VALUE + 1;
+const SET_OF_TUPLES_VALUE: u32 = SET_OF_RCDS_VALUE + 1;
+const SUBSET_VALUE: u32 = SET_OF_TUPLES_VALUE + 1;
+const SET_DIFF_VALUE: u32 = SUBSET_VALUE + 1;
+const SET_CAP_VALUE: u32 = SET_DIFF_VALUE + 1;
+const SET_CUP_VALUE: u32 = SET_CAP_VALUE + 1;
+const UNION_VALUE: u32 = SET_CUP_VALUE + 1;
+const MODEL_VALUE: u32 = UNION_VALUE + 1;
 #[allow(dead_code)]
-const USER_VALUE:u32 = MODEL_VALUE + 1;
+const USER_VALUE: u32 = MODEL_VALUE + 1;
 #[allow(dead_code)]
-const INTER_VAL_VALUE:u32 = USER_VALUE + 1;
+const INTER_VAL_VALUE: u32 = USER_VALUE + 1;
 #[allow(dead_code)]
-const UNDEF_VALUE:u32 = INTER_VAL_VALUE + 1;
+const UNDEF_VALUE: u32 = INTER_VAL_VALUE + 1;
 #[allow(dead_code)]
-const LAZY_VALUE:u32 = UNDEF_VALUE + 1;
+const LAZY_VALUE: u32 = UNDEF_VALUE + 1;
 #[allow(dead_code)]
-const DUMMY_VALUE:u32 = LAZY_VALUE + 1;
+const DUMMY_VALUE: u32 = LAZY_VALUE + 1;
 
-pub fn get_typed_value(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<Value> {
+pub fn get_typed_value(value: Value, constant_dict_map: &HashMap<String, Value>) -> Res<Value> {
     let mut value = value;
     let map = res_option(value.as_object_mut())?;
     let kind = res_option(map.remove("kind"))?;
@@ -53,11 +52,11 @@ pub fn get_typed_value(value:Value, constant_dict_map:&HashMap<String, Value>) -
     let value = match kind_t {
         BOOL_VALUE |
         INT_VALUE |
-        REAL_VALUE=> {
+        REAL_VALUE => {
             object
         }
         STRING_VALUE |
-        MODEL_VALUE  => {
+        MODEL_VALUE => {
             let s = object.as_str().unwrap().to_string();
             match constant_dict_map.get(&s) {
                 Some(v) => { v.clone() }
@@ -84,22 +83,22 @@ pub fn get_typed_value(value:Value, constant_dict_map:&HashMap<String, Value>) -
             get_fcn_value(object, constant_dict_map)?
         }
         _ => {
-            return Err(ET::NoneOption)
+            return Err(ET::NoneOption);
         }
     };
     Ok(value)
 }
 
-fn get_fcn_value(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<Value> {
+fn get_fcn_value(value: Value, constant_dict_map: &HashMap<String, Value>) -> Res<Value> {
     let map = match value {
-        Value::Object(m) => {m}
+        Value::Object(m) => { m }
         _ => { return Err(ET::NoneOption); }
     };
 
     let mut vec = vec![];
     for (_k, v) in map {
         let mut kv = match v {
-            Value::Object(m) => {m}
+            Value::Object(m) => { m }
             _ => { return Err(ET::NoneOption); }
         };
         let domain = res_option(kv.remove("domain"))?;
@@ -144,11 +143,11 @@ fn get_fcn_value(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<
     Ok(value)
 }
 
-pub fn get_typed_enum(vec:Vec<String>, value:Value) -> Value {
+pub fn get_typed_enum(vec: Vec<String>, value: Value) -> Value {
     let mut ret = value;
     let mut map = Map::new();
     for (i, n) in vec.iter().rev().enumerate() {
-        let is_null =  i == 0 && value_is_empty(& ret);
+        let is_null = i == 0 && value_is_empty(&ret);
         if is_null {
             ret = Value::String(n.clone());
         } else {
@@ -160,7 +159,7 @@ pub fn get_typed_enum(vec:Vec<String>, value:Value) -> Value {
     ret
 }
 
-fn value_is_empty(value:&Value) -> bool {
+fn value_is_empty(value: &Value) -> bool {
     match value {
         Value::Null => { true }
         Value::Bool(_) => { false }
@@ -179,7 +178,7 @@ fn value_is_empty(value:&Value) -> bool {
     }
 }
 
-fn _get_array(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<Vec<Value>> {
+fn _get_array(value: Value, constant_dict_map: &HashMap<String, Value>) -> Res<Vec<Value>> {
     let array = match value {
         Value::Array(v) => { v }
         _ => { return Err(ET::NoneOption); }
@@ -191,17 +190,18 @@ fn _get_array(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<Vec
     }
     Ok(vec)
 }
-fn get_tuple_value(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<Value> {
+
+fn get_tuple_value(value: Value, constant_dict_map: &HashMap<String, Value>) -> Res<Value> {
     let array = _get_array(value, constant_dict_map)?;
     Ok(Value::Array(array))
 }
 
-fn get_set_value(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<Value> {
+fn get_set_value(value: Value, constant_dict_map: &HashMap<String, Value>) -> Res<Value> {
     let array = _get_array(value, constant_dict_map)?;
     Ok(mt_set_from_vec(array).unwrap())
 }
 
-fn get_record_value(value:Value, constant_dict_map:&HashMap<String, Value>) -> Res<Value> {
+fn get_record_value(value: Value, constant_dict_map: &HashMap<String, Value>) -> Res<Value> {
     let map = match value {
         Value::Object(m) => m,
         _ => { return Err(ET::NoneOption); }

@@ -1,5 +1,3 @@
-
-
 use scupt_util::error_type::ET;
 use scupt_util::res::Res;
 use scupt_util::res_of::{res_option, res_parse};

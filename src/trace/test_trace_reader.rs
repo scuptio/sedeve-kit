@@ -1,4 +1,3 @@
-
 #[cfg(test)]
 mod tests {
     use scupt_util::init_logger::logger_setup;
@@ -15,7 +14,7 @@ mod tests {
         let mut n = 0;
         for a in vec.iter() {
             while let Ok(_s) = a.next() {
-                n+=1;
+                n += 1;
             }
         }
         assert_eq!(vec_len, 701);

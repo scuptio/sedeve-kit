@@ -1,10 +1,9 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ffi::CString;
-
 use std::sync::Mutex;
-use lazy_static::lazy_static;
 
+use lazy_static::lazy_static;
 use rusqlite::{Connection, OptionalExtension};
 use rusqlite::ffi::{sqlite3_mprintf, sqlite3_temp_directory};
 use scupt_util::res::Res;
@@ -35,8 +34,8 @@ lazy_static! {
 impl TraceDBInterm {
     pub fn new(
         path: String,
-        temp_path:Option<String>,
-        cache_size:Option<u64>
+        temp_path: Option<String>,
+        cache_size: Option<u64>,
     ) -> Res<Self> {
         if let Some(temp) = temp_path {
             let mut guard = TEMP_PATH.lock().unwrap();
@@ -227,8 +226,8 @@ impl TraceDBInterm {
         Ok(())
     }
 
-    pub fn state<F>(&self, f_handle_state:&F) -> Res<()>
-        where F:Fn(String, Vec<Value>)
+    pub fn state<F>(&self, f_handle_state: &F) -> Res<()>
+        where F: Fn(String, Vec<Value>)
     {
         let sql = r#"select id, state_json from action;"#;
         let conn = self.conn.lock().unwrap();
@@ -236,14 +235,14 @@ impl TraceDBInterm {
         let mut stmt = res_sqlite(stmt_r)?;
         let mut rows = res_sqlite(stmt.query(()))?;
         while let Some(row) = res_sqlite(rows.next())? {
-            let id:i64 = res_sqlite(row.get(0))?;
+            let id: i64 = res_sqlite(row.get(0))?;
             let state_json: String = res_sqlite(row.get(1))?;
             let state_value: Value = res_parse(serde_json::from_str(state_json.as_str()))?;
-            let vec = match  state_value {
+            let vec = match state_value {
                 Value::Array(vec) => {
                     vec
                 }
-                _  => {
+                _ => {
                     vec![state_value]
                 }
             };

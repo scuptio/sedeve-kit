@@ -5,7 +5,6 @@ use std::process::exit;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-
 use scupt_net::endpoint_async::EndpointAsync;
 use scupt_net::handle_event::HandleEvent;
 use scupt_net::message_incoming::MessageIncoming;
@@ -41,8 +40,8 @@ enum DTMCmd {
 }
 
 struct Handler {
-    output_action_sequential:bool,
-    trace_in_one_sequence:bool,
+    output_action_sequential: bool,
+    trace_in_one_sequence: bool,
     notify: Notifier,
     node_sender: Arc<dyn SenderAsync<SerdeJsonString>>,
     executor: Arc<ActionExecutor>,
@@ -52,16 +51,16 @@ struct Handler {
 
 pub struct DTMServerHandler {
     handler: Arc<Handler>,
-    seconds_timeout:u64,
-    node_id:NID,
+    seconds_timeout: u64,
+    node_id: NID,
 }
 
-impl  DTMServerHandler {
+impl DTMServerHandler {
     pub fn new(
-        node_id:NID,
+        node_id: NID,
         node_sender: Arc<dyn SenderAsync<SerdeJsonString>>,
-        notify:Notifier,
-        option:TestOption,
+        notify: Notifier,
+        option: TestOption,
     ) -> DTMServerHandler {
         let (s, r) = mpsc::unbounded_channel::<
             DTMCmd>();
@@ -73,7 +72,7 @@ impl  DTMServerHandler {
             node_sender,
             executor: Arc::new(ActionExecutor::new(
                 option.wait_both_begin_and_end_action,
-                option.seconds_wait_message_timeout
+                option.seconds_wait_message_timeout,
             )),
             channel_s: Arc::new(s),
             channel_r: Arc::new(Mutex::new(r)),
@@ -138,7 +137,7 @@ impl  DTMServerHandler {
             notify, input, executor, sender,
             self.handler.output_action_sequential,
             !self.handler.trace_in_one_sequence,
-            seconds_timeout
+            seconds_timeout,
         ).await;
         match &r {
             Ok(()) => {}
@@ -155,14 +154,14 @@ impl  DTMServerHandler {
 
     #[async_backtrace::framed]
     async fn loop_read_input_action(
-        server_node_id:NID,
-        notify:Notifier,
+        server_node_id: NID,
+        notify: Notifier,
         input: Arc<dyn ActionIncoming>,
         executor: Arc<ActionExecutor>,
         sender: Arc<dyn SenderAsync<SerdeJsonString>>,
-        output_action_sequential:bool,
-        per_node_trace:bool,
-        seconds_timeout:u64
+        output_action_sequential: bool,
+        per_node_trace: bool,
+        seconds_timeout: u64,
     ) -> Res<()> {
         let waiter = ActionPrefixWaiter::new();
         if !per_node_trace {
@@ -202,10 +201,10 @@ impl  DTMServerHandler {
                 join.push(j);
             }
             for j in join {
-                let opt_r  = j?.await;
+                let opt_r = j?.await;
                 match opt_r {
-                    Ok(_) => {},
-                    Err(e) => { error!("join handle node trace {:?}", e)}
+                    Ok(_) => {}
+                    Err(e) => { error!("join handle node trace {:?}", e) }
                 }
             }
         }
@@ -214,26 +213,26 @@ impl  DTMServerHandler {
 
     fn handle_input_action<F>(
         input: Arc<dyn ActionIncoming>,
-        f:&mut F,
+        f: &mut F,
     ) -> Res<()>
-    where  F: FnMut(ActionSerdeJsonValue, u64) -> Res<()>
+        where F: FnMut(ActionSerdeJsonValue, u64) -> Res<()>
     {
         let mut index = 0;
         loop {
             let res_action = input.next();
-            let action:String;
+            let action: String;
             match res_action {
                 Ok(a) => { action = a }
                 Err(e) => {
                     if e == ET::EOF {
                         break;
                     } else {
-                        return Err(e)
+                        return Err(e);
                     }
                 }
             };
-            let r  = serde_json::from_str(action.as_str());
-            let value:Value = match r {
+            let r = serde_json::from_str(action.as_str());
+            let value: Value = match r {
                 Ok(r) => { r }
                 Err(e) => { return Err(ET::SerdeError(e.to_string())); }
             };
@@ -249,8 +248,8 @@ impl  DTMServerHandler {
     fn input_to_per_node_trace(
         input: Arc<dyn ActionIncoming>,
     ) -> Res<HashMap<NID, Vec<(ActionSerdeJsonValue, u64)>>> {
-        let mut map : HashMap<NID, Vec<(ActionSerdeJsonValue, u64)>> = HashMap::new();
-        let mut f = |v:ActionSerdeJsonValue, index:u64| -> Res<()> {
+        let mut map: HashMap<NID, Vec<(ActionSerdeJsonValue, u64)>> = HashMap::new();
+        let mut f = |v: ActionSerdeJsonValue, index: u64| -> Res<()> {
             let action_type = v.action_type()?;
 
             let nid = match action_type {
@@ -282,8 +281,8 @@ impl  DTMServerHandler {
     fn input_to_one_trace(
         input: Arc<dyn ActionIncoming>,
     ) -> Res<Vec<(ActionSerdeJsonValue, u64)>> {
-        let mut vec : Vec<(ActionSerdeJsonValue, u64)> = Vec::new();
-        let mut f = |v:ActionSerdeJsonValue, index:u64| -> Res<()> {
+        let mut vec: Vec<(ActionSerdeJsonValue, u64)> = Vec::new();
+        let mut f = |v: ActionSerdeJsonValue, index: u64| -> Res<()> {
             vec.push((v, index));
             Ok(())
         };
@@ -293,28 +292,28 @@ impl  DTMServerHandler {
 
     #[async_backtrace::framed]
     async fn handle_trace(
-        dtm_server_node_id:NID,
-        node_id : Option<NID>,
-        notify:Notifier,
+        dtm_server_node_id: NID,
+        node_id: Option<NID>,
+        notify: Notifier,
         trace: Vec<(ActionSerdeJsonValue, u64)>,
         executor: Arc<ActionExecutor>,
         sender: Arc<dyn SenderAsync<SerdeJsonString>>,
-        output_action_sequential:bool,
-        seconds_timeout:u64,
+        output_action_sequential: bool,
+        seconds_timeout: u64,
         waiter: ActionPrefixWaiter,
-        tasks:&mut Vec<JoinHandle<Option<Res<()>>>>,
+        tasks: &mut Vec<JoinHandle<Option<Res<()>>>>,
     ) -> Res<()> {
         let mut seq_no_node = 0;
 
         // store node id when finding the first input action
-        let mut found_input_action : HashSet<NID> = HashSet::new();
+        let mut found_input_action: HashSet<NID> = HashSet::new();
 
         // get the max index in trace
         let max_index = match trace.last() {
             Some((_, index)) => {
                 assert!(*index > 0);
                 *index - 1
-            },
+            }
             None => 0
         };
         for (value, seq_no) in trace {
@@ -333,9 +332,9 @@ impl  DTMServerHandler {
 
             let action_type = value.action_type()?;
             let need_send_message_to_node = if
-                action_type == ActionType::Input
-                    || action_type == ActionType::Setup
-                    || action_type == ActionType::Check
+            action_type == ActionType::Input
+                || action_type == ActionType::Setup
+                || action_type == ActionType::Check
             {
                 if action_type == ActionType::Input {
                     let dest_nid = value.dest_node_id()?;
@@ -346,7 +345,7 @@ impl  DTMServerHandler {
                 if action_type == ActionType::Internal {
                     let nid = value.source_node_id()?;
                     // send message to node when only there are no previous input actions.
-                    ! found_input_action.contains(&nid)
+                    !found_input_action.contains(&nid)
                 } else {
                     false
                 }
@@ -354,7 +353,7 @@ impl  DTMServerHandler {
 
             if need_send_message_to_node {
                 waiter.wait_finish_prefix(index).await;
-                let  value = value.serde_json_value_ref();
+                let value = value.serde_json_value_ref();
                 let json_value = ActionSerdeJsonValue::from_json_value(value.clone())?;
                 let dest_node_id = json_value.dest_node_id()?;
                 let action_message = SerdeJsonString::from_json_value(
@@ -366,7 +365,7 @@ impl  DTMServerHandler {
                     .await?;
             }
             let w = waiter.clone();
-            if action_type == ActionType::Output && !output_action_sequential{
+            if action_type == ActionType::Output && !output_action_sequential {
                 let e = executor.clone();
                 let n = notify.clone();
                 let s = value.to_serde_json_string().to_string();
@@ -411,10 +410,10 @@ impl  DTMServerHandler {
 
     async fn handle_message_request_response(
         &self,
-        endpoint_incoming:&dyn EndpointAsync<MessageControl>,
-        response_receiver:&mut UnboundedReceiver<Message<MessageControl>>,
-        response_sender:&UnboundedSender<Message<MessageControl>>,
-        tasks:&mut Vec<JoinHandle<Option<Res<()>>>>,
+        endpoint_incoming: &dyn EndpointAsync<MessageControl>,
+        response_receiver: &mut UnboundedReceiver<Message<MessageControl>>,
+        response_sender: &UnboundedSender<Message<MessageControl>>,
+        tasks: &mut Vec<JoinHandle<Option<Res<()>>>>,
     ) -> Res<()> {
         select! {
             r_req = endpoint_incoming.recv()  => {
@@ -453,32 +452,30 @@ impl  DTMServerHandler {
     }
 
     async fn handle_one_message(&self,
-                                source:NID,
-                                dest:NID,
-                                message:MessageControl,
-                                channel:UnboundedSender<Message<MessageControl>>) -> Res<()> {
+                                source: NID,
+                                dest: NID,
+                                message: MessageControl,
+                                channel: UnboundedSender<Message<MessageControl>>) -> Res<()> {
         match message {
             MessageControl::ActionReq { id, action, begin } => {
                 let v = action.to_serde_json_value();
                 let action_json = ActionSerdeJsonValue::from_value(v.into_serde_json_value());
                 self.handler.executor.expect_action_in_trace(source, dest, id, action_json, begin, channel).await?;
             }
-            MessageControl::ActionACK { id : _ }=> {
+            MessageControl::ActionACK { id: _ } => {
                 panic!("error message")
             }
         }
         Ok(())
     }
 
-    async fn message_loop(&self, endpoint_incoming:&dyn EndpointAsync<MessageControl>) -> Res<()> {
+    async fn message_loop(&self, endpoint_incoming: &dyn EndpointAsync<MessageControl>) -> Res<()> {
         let mut tasks = vec![];
         let (s, mut r) = mpsc::unbounded_channel();
         let ret = loop {
-            let r = self.handle_message_request_response(endpoint_incoming, & mut r, &s, &mut tasks).await;
+            let r = self.handle_message_request_response(endpoint_incoming, &mut r, &s, &mut tasks).await;
             match r {
-                Ok(()) => {
-
-                }
+                Ok(()) => {}
                 Err(e) => {
                     break Err(e);
                 }

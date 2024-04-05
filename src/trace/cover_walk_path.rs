@@ -204,7 +204,7 @@ mod tests {
                     hash_map.insert(i, vec);
                 }
             }
-            _ => { return Err(ET::TODO) }
+            _ => { return Err(ET::TODO); }
         }
 
         Ok(hash_map)

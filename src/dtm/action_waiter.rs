@@ -13,7 +13,7 @@ pub struct ActionPrefixWaiter {
 pub struct WaiterInner {
     // expect start from 0
     finish_prefix: u64,
-    set : HashSet<u64>,
+    set: HashSet<u64>,
 }
 
 
@@ -26,7 +26,7 @@ impl ActionPrefixWaiter {
     }
 
     // index expect start from 0
-    pub async fn wait_finish_prefix(&self, index:u64) {
+    pub async fn wait_finish_prefix(&self, index: u64) {
         let mut guard = self.values.lock().await;
         loop {
             if guard.finish_prefix(index) {
@@ -39,7 +39,7 @@ impl ActionPrefixWaiter {
         }
     }
 
-    pub async fn finish_one(&self, index:u64) {
+    pub async fn finish_one(&self, index: u64) {
         let mut guard = self.values.lock().await;
         guard.finish_one(index);
         self.notify.notify_waiters();
@@ -49,16 +49,16 @@ impl ActionPrefixWaiter {
 impl WaiterInner {
     fn new() -> Self {
         Self {
-            finish_prefix:0,
-            set : HashSet::new()
+            finish_prefix: 0,
+            set: HashSet::new(),
         }
     }
 
-    fn finish_prefix(&self, index:u64) -> bool {
-       self.finish_prefix >= index
+    fn finish_prefix(&self, index: u64) -> bool {
+        self.finish_prefix >= index
     }
 
-    fn finish_one(&mut self, index:u64) {
+    fn finish_one(&mut self, index: u64) {
         if self.finish_prefix == index {
             self.finish_prefix += 1;
             while self.continue_next_one() {};

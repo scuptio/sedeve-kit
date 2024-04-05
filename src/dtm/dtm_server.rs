@@ -45,7 +45,7 @@ impl DTMServer {
     pub fn new(node_id: NID,
                name: String,
                stop_notify: Notifier,
-               option:TestOption,
+               option: TestOption,
     ) -> Res<Self> {
         let client_ch_name = format!("{}_client_channel", name);
         let client_node = TestedNodeClient::new(

@@ -5,9 +5,7 @@ use scupt_util::res::Res;
 use crate::dtm::action_incoming::ActionIncoming;
 use crate::dtm::action_input_json::ActionInputJson;
 
-pub struct ActionIncomingFactory{
-
-}
+pub struct ActionIncomingFactory {}
 
 
 /// Factory class to build ActionIncoming

@@ -1,4 +1,3 @@
-
 #[cfg(test)]
 mod test {
     use uuid::Uuid;
@@ -20,7 +19,7 @@ mod test {
         db_to_trace("state.db".to_string(), output_db_path, true, 1830);
     }
 
-    fn db_to_trace(input:String, output:String, setup_initialize:bool, expected_size:usize) {
+    fn db_to_trace(input: String, output: String, setup_initialize: bool, expected_size: usize) {
         let path_json = test_data_path("map_const.json".to_string()).unwrap();
         let r_dict = read_from_dict_json(Some(path_json));
         let dict = match r_dict {
@@ -33,7 +32,7 @@ mod test {
                  output.clone(),
                  dict,
                  None,
-                 setup_initialize
+                 setup_initialize,
         ).unwrap();
         let vec = TraceReader::read_trace(output).unwrap();
         assert_eq!(vec.len(), expected_size);

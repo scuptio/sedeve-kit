@@ -96,7 +96,6 @@ pub fn adj_add_new_edge<T: Eq + Hash + Clone + Ord>(
 pub fn adj_remove_edge<T: Eq + Hash + Clone + Ord>(
     adj: &mut HashMap<T, Vec<T>>,
     u: &T, v: &T) {
-
     let opt = adj.get_mut(&u);
     match opt {
         Some(vec) => {

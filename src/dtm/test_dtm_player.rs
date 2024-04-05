@@ -38,7 +38,7 @@ mod test {
     use crate::dtm::dtm_player::TestOption;
     use crate::dtm::dtm_server::DTMServer;
 
-    const AUTOMATON_NAME:&str ="TEST_AUTOMATON";
+    const AUTOMATON_NAME: &str = "TEST_AUTOMATON";
 
     static TEST_LOCK: Lazy<Mutex<()>> = Lazy::new(Mutex::default);
 
@@ -90,7 +90,7 @@ mod test {
                     num_tx, num_ops,
                     stop_notify,
                     history,
-                    enable_check
+                    enable_check,
                 );
                 assert!(r.is_ok());
             });
@@ -183,7 +183,7 @@ mod test {
         history: History,
         stop: Arc<AtomicBool>,
         enable_check: bool,
-        _name:String,
+        _name: String,
     }
 
     impl History {
@@ -219,7 +219,7 @@ mod test {
     }
 
     impl TestNode {
-        fn new(node_id: NID,  history: History, enable_check: bool) -> Res<TestNode> {
+        fn new(node_id: NID, history: History, enable_check: bool) -> Res<TestNode> {
             let name = format!("node_{}", node_id);
             let opt = IOServiceOpt {
                 num_message_receiver: 1,
@@ -296,7 +296,7 @@ mod test {
         async fn app_message_loop(
             &self,
             receiver: Arc<dyn ReceiverAsync<AppMsg>>,
-            enable_check: bool
+            enable_check: bool,
         ) -> Res<()> {
             loop {
                 let r = self.app_handle_message(receiver.clone(), enable_check).await;
@@ -328,13 +328,13 @@ mod test {
                     spawn_local_task(Notifier::default(),
                                      format!("app task :{}", task_id).as_str(),
                                      async move {
-                                let r = this.app_task_run(from, to, task_id, task_ops, enable_check).await;
-                                match r {
-                                    Ok(()) => {}
-                                    Err(e) => { error!("app task run error, {}", e.to_string()) }
-                                }
-                            }
-                        ).unwrap();
+                                         let r = this.app_task_run(from, to, task_id, task_ops, enable_check).await;
+                                         match r {
+                                             Ok(()) => {}
+                                             Err(e) => { error!("app task run error, {}", e.to_string()) }
+                                         }
+                                     },
+                    ).unwrap();
                 }
                 AppMsg::TaskStop => {
                     let this = self.clone();
@@ -437,7 +437,7 @@ mod test {
         async fn app_handle_message(
             &self,
             receiver: Arc<dyn ReceiverAsync<AppMsg>>,
-            enable_check: bool
+            enable_check: bool,
         ) -> Res<()> {
             let _ = task_trace!();
             let dtm_msg = receiver.receive().await?;
@@ -458,7 +458,7 @@ mod test {
             let _ = task_trace!();
             trace!("handle action begin {}", task_id);
             for op_id in op_ids {
-                self.handle_task_op( task_id, op_id, enable_check)
+                self.handle_task_op(task_id, op_id, enable_check)
                     .instrument(trace_span!("handle task op")).await?;
             }
             Ok(())
@@ -503,7 +503,7 @@ mod test {
         history: History,
         enable_check: bool,
     ) -> Res<()> {
-        let node = Arc::new(TestNode::new(node_id,  history, enable_check)?);
+        let node = Arc::new(TestNode::new(node_id, history, enable_check)?);
         let local = LocalSet::new();
         {
             let addr = address.clone();
@@ -539,7 +539,7 @@ mod test {
         num_ops: u64,
         stop: Arc<Notify>,
         history: History,
-        enable_check: bool
+        enable_check: bool,
     ) -> Res<()> {
         let r_build = Builder::new_current_thread()
             .enable_all()

@@ -4,8 +4,8 @@
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::str::FromStr;
-use scupt_util::error_type::ET::IOError;
 
+use scupt_util::error_type::ET::IOError;
 use scupt_util::res::Res;
 use serde_json::Value;
 use tracing::info;
@@ -13,13 +13,11 @@ use tracing::info;
 use crate::trace::trace_db::TraceDB;
 use crate::trace::trace_db_interm::TraceDBInterm;
 
-pub struct TraceBuilder {
-
-}
+pub struct TraceBuilder {}
 
 #[derive(Clone)]
 pub struct OptBuild {
-    pub initialize_setup:bool
+    pub initialize_setup: bool,
 }
 
 impl Default for OptBuild {
@@ -29,6 +27,7 @@ impl Default for OptBuild {
         }
     }
 }
+
 impl TraceBuilder {
     /// This function converts TLA+ __action__ variables that have been dumped from the Toolbox and
     /// stored in the input SQLite database to serialized structs using serde_json. The resulting
@@ -48,7 +47,7 @@ impl TraceBuilder {
     pub fn build(
         db_input: String,
         db_output: String,
-        opt_build: OptBuild
+        opt_build: OptBuild,
     ) -> Res<()> {
         Self::build_gut(db_input, db_output, 10000, opt_build)?;
         Ok(())
@@ -59,7 +58,7 @@ impl TraceBuilder {
         path_db_input: String,
         path_db_output: String,
         batch: u64,
-        opt_build_trace: OptBuild
+        opt_build_trace: OptBuild,
     ) -> Res<()>
     {
         info!("To write traces to DB");
@@ -74,11 +73,11 @@ impl TraceBuilder {
         let db_input = TraceDBInterm::new(
             path_db_input,
             Some(temp_dir),
-            Some(20*1024*1024), // 10GB
+            Some(20 * 1024 * 1024), // 10GB
         )?;
         let db_output: RefCell<TraceDB> = RefCell::new(TraceDB::new(path_db_output)?);
         let traces: RefCell<Vec<(String, Vec<Value>)>> = RefCell::new(vec![]);
-        let num :RefCell<u64> = RefCell::new(0);
+        let num: RefCell<u64> = RefCell::new(0);
 
         let f_write = || {
             let mut traces_ref = traces.borrow_mut();

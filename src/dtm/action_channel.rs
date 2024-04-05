@@ -3,10 +3,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use scupt_util::error_type::ET;
 use scupt_util::res::Res;
+use scupt_util::serde_json_string::SerdeJsonString;
 use tokio::sync::{mpsc, Mutex};
 use tracing::trace;
-
-use scupt_util::serde_json_string::SerdeJsonString;
 
 #[derive(Clone)]
 pub struct ActionReceiver {
@@ -20,7 +19,7 @@ pub struct ActionSender {
     sender: mpsc::UnboundedSender<SerdeJsonString>,
 }
 
-impl  ActionSender {
+impl ActionSender {
     fn new(sender: mpsc::UnboundedSender<SerdeJsonString>) -> Self {
         Self {
             sequence: Default::default(),
@@ -42,7 +41,7 @@ impl  ActionSender {
     }
 }
 
-impl  ActionReceiver {
+impl ActionReceiver {
     fn new(receiver: mpsc::UnboundedReceiver<SerdeJsonString>) -> Self {
         Self {
             sequence: Default::default(),

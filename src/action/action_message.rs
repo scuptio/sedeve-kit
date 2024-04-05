@@ -10,7 +10,6 @@ use serde::Serialize;
 use crate::action::action_type::ActionType;
 use crate::action::res_serde::res_serde;
 
-
 /// Action message definition
 /// Name must be consistent with ActionType
 #[derive(
@@ -26,7 +25,6 @@ Encode,
 )]
 pub enum ActionMessage<
     Payload: MsgTrait + 'static,
-
 > {
     /// Check the state correctness of a node, used for asserting invariants
     #[serde(bound = "Payload: MsgTrait")]
@@ -53,30 +51,28 @@ pub enum ActionMessage<
 
 impl<
     Payload: MsgTrait + 'static
-
 > MsgTrait for ActionMessage<Payload> {}
 
-impl <Payload: MsgTrait + 'static>ActionMessage<Payload> {
-
+impl<Payload: MsgTrait + 'static> ActionMessage<Payload> {
     /// Build an ActionMessage through ActionType and Message struct.
-    pub fn from_message(action_type:ActionType, message:Message<Payload>) -> Self {
+    pub fn from_message(action_type: ActionType, message: Message<Payload>) -> Self {
         match action_type {
             ActionType::Check => { ActionMessage::Check(message) }
             ActionType::Setup => { ActionMessage::Setup(message) }
             ActionType::Input => { ActionMessage::Input(message) }
             ActionType::Internal => { ActionMessage::Internal(message) }
-            ActionType::Output => { ActionMessage::Output(message)}
+            ActionType::Output => { ActionMessage::Output(message) }
         }
     }
 
     /// Build an ActionMessage through ActionType, source destination node id,  and message payload.
-    pub fn from_payload(action_type: ActionType, source:NID, dest:NID, payload:Payload) -> Self {
+    pub fn from_payload(action_type: ActionType, source: NID, dest: NID, payload: Payload) -> Self {
         let message = Message::new(payload, source, dest);
         Self::from_message(action_type, message)
     }
 
     /// Build an ActionMessage through serde_json representing string.
-    pub fn from_json_string(json_string:String) -> Res<Self> {
+    pub fn from_json_string(json_string: String) -> Res<Self> {
         let r = serde_json::from_str(json_string.as_str());
         let s = res_serde(r)?;
         Ok(s)
@@ -84,12 +80,12 @@ impl <Payload: MsgTrait + 'static>ActionMessage<Payload> {
 
     /// Source node id
     pub fn source_node_id(&self) -> Res<NID> {
-        self.fn_message(|m|{ Ok(m.source()) })
+        self.fn_message(|m| { Ok(m.source()) })
     }
 
     /// Destination node id
     pub fn dest_node_id(&self) -> Res<NID> {
-        self.fn_message(|m|{ Ok(m.dest()) })
+        self.fn_message(|m| { Ok(m.dest()) })
     }
 
     /// Action type
@@ -103,14 +99,14 @@ impl <Payload: MsgTrait + 'static>ActionMessage<Payload> {
         }
     }
 
-    fn fn_message<F, R>(&self, f:F) -> Res<R>
+    fn fn_message<F, R>(&self, f: F) -> Res<R>
         where F: Fn(&Message<Payload>) -> Res<R> {
         match self {
             ActionMessage::Check(m) => { f(m) }
             ActionMessage::Setup(m) => { f(m) }
             ActionMessage::Input(m) => { f(m) }
             ActionMessage::Output(m) => { f(m) }
-            ActionMessage::Internal(m) => { f(m)}
+            ActionMessage::Internal(m) => { f(m) }
         }
     }
 

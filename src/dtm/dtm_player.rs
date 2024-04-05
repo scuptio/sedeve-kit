@@ -15,9 +15,7 @@ use crate::dtm::action_incoming::ActionIncoming;
 use crate::dtm::dtm_server::DTMServer;
 
 /// Deterministic  Player
-pub struct DTMPlayer {
-
-}
+pub struct DTMPlayer {}
 
 /// Option parameters for a testing
 pub struct TestOption {
@@ -25,15 +23,15 @@ pub struct TestOption {
     /// begin or end Setup/Check/Input/Internal/Output actions, otherwise,
     /// only end Setup/Check/Input actions, begin Output actions, begin/end Internal actions are
     /// synchronized.
-    pub wait_both_begin_and_end_action:bool,
+    pub wait_both_begin_and_end_action: bool,
 
     /// when output_action_sequential is enable, we do not concern the order of a sequence of output
     /// actions
-    pub output_action_sequential:bool,
+    pub output_action_sequential: bool,
 
     /// after `seconds_wait_message_timeout`(default is 30) seconds, report as an inconsistency
     /// trace error
-    pub seconds_wait_message_timeout:u64,
+    pub seconds_wait_message_timeout: u64,
 }
 
 
@@ -46,19 +44,19 @@ impl TestOption {
         }
     }
 
-    pub fn set_wait_both_begin_and_end_action(self, enable:bool) -> Self {
+    pub fn set_wait_both_begin_and_end_action(self, enable: bool) -> Self {
         let mut s = self;
         s.wait_both_begin_and_end_action = enable;
         s
     }
 
-    pub fn set_sequential_output_action(self, enable:bool) -> Self {
+    pub fn set_sequential_output_action(self, enable: bool) -> Self {
         let mut s = self;
         s.output_action_sequential = enable;
         s
     }
 
-    pub fn set_seconds_wait_message_timeout(self, seconds:u64) -> Self {
+    pub fn set_seconds_wait_message_timeout(self, seconds: u64) -> Self {
         let mut s = self;
         s.seconds_wait_message_timeout = seconds;
         s
@@ -75,8 +73,7 @@ impl DTMPlayer
 {
     /// Create a new deterministic player
     pub fn new() -> Self {
-        Self {
-        }
+        Self {}
     }
 
 
@@ -102,7 +99,7 @@ impl DTMPlayer
         peers: HashMap<NID, SocketAddr>,
         action_incoming: Arc<dyn ActionIncoming>,
         notifier: Notifier,
-        option:TestOption,
+        option: TestOption,
         fn_done: F,
     ) -> Res<()>
         where F: Fn() + 'static
@@ -118,7 +115,7 @@ impl DTMPlayer
                 player_node_id,
                 name,
                 notifier.clone(),
-                option
+                option,
             )?;
         let server = Arc::new(s);
         let ls = LocalSet::new();

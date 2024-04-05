@@ -6,7 +6,6 @@ use scupt_util::serde_json_string::SerdeJsonString;
 use serde::Deserialize;
 use serde::Serialize;
 
-
 #[derive(
 Clone,
 Serialize,
@@ -21,18 +20,18 @@ Encode,
 pub enum MessageControl {
     ActionReq {
         // a UUID let the DTM client to retrieve the response ActionACK message
-        id:String,
+        id: String,
         action: SerdeJsonString,
-        begin: bool
+        begin: bool,
     },
     ActionACK {
         // a UUID
-        id:String
+        id: String
     },
 }
 
 
-impl  MsgTrait for MessageControl {}
+impl MsgTrait for MessageControl {}
 
 impl MessageControl {
     pub fn id(&self) -> Res<String> {
@@ -40,7 +39,7 @@ impl MessageControl {
             MessageControl::ActionReq { id, .. } => {
                 Ok(id.clone())
             }
-            MessageControl::ActionACK { id} => {
+            MessageControl::ActionACK { id } => {
                 Ok(id.clone())
             }
         }

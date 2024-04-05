@@ -16,15 +16,15 @@ type ActionCh = (ActionSender, ActionReceiver, Arc<Mutex<u64>>);
 
 #[derive(Clone)]
 pub struct ActionReorder {
-    seconds_timeout : u64,
+    seconds_timeout: u64,
     hash_map: Arc<Mutex<HashMap<ActionSerdeJsonValue,
         ActionCh>>
     >,
 }
 
 
-impl  ActionReorder {
-    pub fn new(seconds_timeout:u64) -> Self {
+impl ActionReorder {
+    pub fn new(seconds_timeout: u64) -> Self {
         Self {
             seconds_timeout,
             hash_map: Default::default(),

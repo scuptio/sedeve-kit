@@ -41,7 +41,7 @@ pub const SERDE_ACTION_TYPE_OUTPUT: &str = "Output";
 pub const SERDE_ACTION_TYPE_INTERNAL: &str = "Internal";
 
 
-pub const ACTION_NAME_SEPARATOR:&str = "::";
+pub const ACTION_NAME_SEPARATOR: &str = "::";
 
 
 pub const __TEST_TLA_ACTION_VARIABLE_CONST: &str = r###"

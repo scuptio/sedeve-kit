@@ -28,12 +28,13 @@ impl DataInput {
         }
     }
 }
+
 pub fn gen_case(
     data_input: DataInput,
     data_output: String,
     dict: HashMap<String, Value>,
-    opt_intermediate_path:Option<String>,
-    initialize_setup:bool
+    opt_intermediate_path: Option<String>,
+    initialize_setup: bool,
 ) -> Res<()> {
     let intermediate = match opt_intermediate_path {
         Some(p) => { p }

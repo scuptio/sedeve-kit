@@ -16,7 +16,7 @@ use crate::trace::action_graph::ActionGraph;
 use crate::trace::read_json::read_from_dict_json;
 use crate::trace::trace_db_interm::{Stage, TraceDBInterm};
 
-pub fn read_actions<F>(path:String, dict: &HashMap<String, Value>, fn_handle_action:&F)
+pub fn read_actions<F>(path: String, dict: &HashMap<String, Value>, fn_handle_action: &F)
                        -> Res<()>
     where F: Fn(Value) -> Res<()>,
 {
@@ -24,8 +24,8 @@ pub fn read_actions<F>(path:String, dict: &HashMap<String, Value>, fn_handle_act
     let mut stmt = res_sqlite(conn.prepare("select json_string from state order by json_string;"))?;
     let mut rows = res_sqlite(stmt.query([]))?;
     while let Some(row) = res_sqlite(rows.next())? {
-        let json:String = res_sqlite(row.get(0))?;
-        let value : Value = res_parse(serde_json::from_str(json.as_str()))?;
+        let json: String = res_sqlite(row.get(0))?;
+        let value: Value = res_parse(serde_json::from_str(json.as_str()))?;
         let value = get_typed_value(value, dict)?;
         fn_handle_action(value)?;
     }
@@ -35,7 +35,7 @@ pub fn read_actions<F>(path:String, dict: &HashMap<String, Value>, fn_handle_act
 pub fn read_action_message<M: MsgTrait + 'static, F>(
     path_db: String,
     path_map: String,
-    f : &F
+    f: &F,
 ) -> Res<()>
     where F: Fn(ActionMessage<M>) -> Res<()>
 {
@@ -100,7 +100,7 @@ pub fn graph_read_actions_from_state_db(path: String, dict: HashMap<String, Valu
             Stage::WriteAction => {
                 db_ref.begin_write_action()?;
                 stage
-            },
+            }
 
             _ => {
                 stage

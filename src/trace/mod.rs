@@ -1,6 +1,3 @@
-
-
-
 pub mod trace_builder;
 pub mod trace_reader;
 pub mod gen_case;

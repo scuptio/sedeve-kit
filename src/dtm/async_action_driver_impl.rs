@@ -5,11 +5,11 @@ use scupt_util::error_type::ET;
 use scupt_util::message::Message;
 use scupt_util::node_id::NID;
 use scupt_util::res::Res;
+use scupt_util::serde_json_string::SerdeJsonString;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::oneshot::{channel, Sender};
 use tracing::trace;
 use uuid::Uuid;
-use scupt_util::serde_json_string::SerdeJsonString;
 
 use crate::action::action_serde_json_value::ActionSerdeJsonValue;
 use crate::action::action_type::{ActionBeginEnd, ActionType};
@@ -17,8 +17,8 @@ use crate::dtm::async_action_driver::AsyncActionDriver;
 use crate::dtm::msg_ctrl::MessageControl;
 
 pub struct AsyncActionDriverImplInner {
-    node_id:NID,
-    server_id:NID,
+    node_id: NID,
+    server_id: NID,
     sender: UnboundedSender<(Message<MessageControl>, Sender<Message<MessageControl>>)>,
 }
 
@@ -28,7 +28,7 @@ pub struct AsyncActionDriverImpl {
 
 
 impl AsyncActionDriverImpl {
-    pub fn new(node_id:NID, server_node_id:NID, sender:UnboundedSender<(Message<MessageControl>, Sender<Message<MessageControl>>)>) -> Self {
+    pub fn new(node_id: NID, server_node_id: NID, sender: UnboundedSender<(Message<MessageControl>, Sender<Message<MessageControl>>)>) -> Self {
         Self {
             inner: Arc::new(AsyncActionDriverImplInner::new(node_id, server_node_id, sender)),
         }
@@ -39,9 +39,9 @@ impl AsyncActionDriverImpl {
 impl AsyncActionDriver for AsyncActionDriverImpl {
     async fn action(
         &self,
-        action_type:ActionType,
+        action_type: ActionType,
         action_begin_end: ActionBeginEnd,
-        source:NID, dest:NID, payload_json:String) -> Res<()> {
+        source: NID, dest: NID, payload_json: String) -> Res<()> {
         let action = ActionSerdeJsonValue::from_json(action_type, source, dest, payload_json)?.to_serde_json_string();
         match action_begin_end {
             ActionBeginEnd::Begin => {
@@ -55,7 +55,7 @@ impl AsyncActionDriver for AsyncActionDriverImpl {
 }
 
 impl AsyncActionDriverImplInner {
-    pub fn new(node_id:NID, server_id:NID, sender:UnboundedSender<(Message<MessageControl>, Sender<Message<MessageControl>>)>) -> Self {
+    pub fn new(node_id: NID, server_id: NID, sender: UnboundedSender<(Message<MessageControl>, Sender<Message<MessageControl>>)>) -> Self {
         Self {
             node_id,
             server_id,
@@ -88,14 +88,14 @@ impl AsyncActionDriverImplInner {
         };
 
         // receive response
-        let response:MessageControl = match resp_receiver.await {
+        let response: MessageControl = match resp_receiver.await {
             Ok(m) => { m.payload() }
             Err(e) => { return Err(ET::RecvError(e.to_string())); }
         };
 
         trace!("receive response {:?}", response);
         match response {
-            MessageControl::ActionACK { .. } => { }
+            MessageControl::ActionACK { .. } => {}
             _ => { panic!("not possible") }
         }
         Ok(())

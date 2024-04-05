@@ -116,6 +116,7 @@ fn strong_connect<T: Eq + Hash + Clone + Ord + Debug>(
 #[cfg(test)]
 mod test {
     use std::collections::HashMap;
+
     use crate::trace::graph_find_scc::graph_find_scc;
     use crate::trace::graph_util::graph_list_equal;
 

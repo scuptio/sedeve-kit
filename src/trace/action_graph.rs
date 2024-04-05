@@ -13,8 +13,8 @@ pub struct ActionGraph<
     adj: HashMap<K, Vec<K>>,
 }
 
-impl <
-    K:Eq + Hash + Clone + Ord + Debug + ToString,
+impl<
+    K: Eq + Hash + Clone + Ord + Debug + ToString,
 >
 ActionGraph<K> {
     pub fn new(
@@ -31,9 +31,9 @@ ActionGraph<K> {
         fn_handle_path: &FP,
     ) -> Res<()>
         where
-            // create a new vertex ID not in set
+        // create a new vertex ID not in set
             NV: Fn(&HashSet<K>) -> K,
-            // on finding a path
+        // on finding a path
             FP: Fn(Vec<K>)
 
     {

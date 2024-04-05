@@ -223,7 +223,7 @@ fn dfs_find_path<V, FP>(
     FP: Fn(&Vec<V>) {
     let opt_vec_u = adj.get(v);
     let vec_u = match opt_vec_u {
-        None => { return }
+        None => { return; }
         Some(vec_u) => { vec_u }
     };
 
@@ -253,7 +253,7 @@ fn dfs_find_path<V, FP>(
 
 struct SCCContext<V> {
     v: V,
-    adj:HashMap<V, Vec<V>>,
+    adj: HashMap<V, Vec<V>>,
 }
 
 
@@ -283,11 +283,11 @@ fn contracted_scc<V, NV, FC>(
             let v_c = fn_new_vertex(&v_set);
             v_set.insert(v_c.clone());
             let _c = SCCContext {
-                        v: v_c.clone(),
-                        adj: scc.clone(),
-                    };
+                v: v_c.clone(),
+                adj: scc.clone(),
+            };
             let scc_context = Arc::new(_c);
-            for (u,  vec) in scc.iter() {
+            for (u, vec) in scc.iter() {
                 for v in vec.iter() {
                     if !all_scc_adj.contains_key(&(u.clone(), v.clone())) {
                         all_scc_adj.insert((u.clone(), v.clone()), scc_context.clone());
@@ -300,7 +300,7 @@ fn contracted_scc<V, NV, FC>(
             fn_find_non_trivial_scc(scc, &v_c);
         }
     }
-    let find_in_scc = |u : V, v : V| {
+    let find_in_scc = |u: V, v: V| {
         let opt = all_scc_adj.get(&(u.clone(), v.clone()));
         match opt {
             Some(c) => {
@@ -309,7 +309,7 @@ fn contracted_scc<V, NV, FC>(
             None => { None }
         }
     };
-    contracted_one_scc( &mut adj1, find_in_scc);
+    contracted_one_scc(&mut adj1, find_in_scc);
     let duration = start.elapsed();
     info!("Time elapsed to contract SCC {:?}",  duration);
     adj1
@@ -340,7 +340,7 @@ fn reverse_adj<V>(
 /// in which the cycle C is "contracted" into one node as follows:
 fn contracted_one_scc<T: Eq + Hash + Clone + Ord + Debug, F>(
     adj: &mut HashMap<T, Vec<T>>,
-    contains_in_scc: F
+    contains_in_scc: F,
 ) where F: Fn(T, T) -> Option<(T, bool, bool)> {
     let mut to_add = vec![];
     let mut to_remove = vec![];
@@ -386,7 +386,6 @@ fn contracted_one_scc<T: Eq + Hash + Clone + Ord + Debug, F>(
         adj_remove_edge(adj, &u, &v);
     }
 }
-
 
 
 fn _find_path_in_scc_begin_to_end<V>(
@@ -462,14 +461,14 @@ fn _find_path_in_scc_begin_to_end<V>(
 }
 
 
-pub fn gen_new_vertex_id<T:Hash + Clone + Eq>(s:&HashSet<T>) -> T
+pub fn gen_new_vertex_id<T: Hash + Clone + Eq>(s: &HashSet<T>) -> T
     where Standard: Distribution<T>
 {
     let mut rng = thread_rng();
     loop {
         let i: T = rng.gen();
         if !s.contains(&i) {
-            return i.clone()
+            return i.clone();
         }
     }
 }
@@ -494,11 +493,6 @@ fn _find_path(adj: &HashMap<i32, Vec<i32>>) {
 }
 
 
-
-
-
-
-
 #[cfg(test)]
 mod tests {
     use std::fs::read_to_string;
@@ -512,12 +506,12 @@ mod tests {
 
     fn std_map_to_serde_json_string(map: &HashMap<i64, Vec<i64>>) -> String {
         let json = serde_json::to_string_pretty(map).unwrap();
-        return json
+        return json;
     }
 
-    fn serde_json_string_to_std_map(json:&String) -> HashMap<i64, Vec<i64>> {
+    fn serde_json_string_to_std_map(json: &String) -> HashMap<i64, Vec<i64>> {
         let json: HashMap<i64, Vec<i64>> = serde_json::from_str(json.as_str()).unwrap();
-        return json
+        return json;
     }
 
     fn gen_adj_map<V>(vec: &Vec<(V, V)>) -> HashMap<V, Vec<V>>
@@ -562,7 +556,7 @@ mod tests {
         };
         let n = AtomicI64::from(0i64);
 
-        let fn_find_scc = |_s: &HashMap<i64, Vec<i64>>, _i: &i64|   {
+        let fn_find_scc = |_s: &HashMap<i64, Vec<i64>>, _i: &i64| {
             n.fetch_add(1, Ordering::SeqCst);
         };
         contracted_scc(&adj_map, &fn_new_vertex, &fn_find_scc);

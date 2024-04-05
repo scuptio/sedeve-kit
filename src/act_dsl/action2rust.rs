@@ -101,7 +101,7 @@ pub fn action_to_rust(path: String, output: String) -> Res<()> {
         } else if s == "action" {
             file_to_action_content(path, true)?
         } else {
-            return Err(ET::IOError("unknown extension".to_string()))
+            return Err(ET::IOError("unknown extension".to_string()));
         };
         trace!("{}", content);
         let mut visitor = ActionVisitor::new(content);
@@ -114,6 +114,6 @@ pub fn action_to_rust(path: String, output: String) -> Res<()> {
         Ok(())
     } else {
         Err(ET::IOError("cannot open file".to_string()))
-    }
+    };
 }
 

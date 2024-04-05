@@ -38,11 +38,11 @@ struct Args {
 
     /// Remove the intermediate table that records TLA+ actions and trace paths after generating the trace.
     #[arg(short, long, default_value = "true")]
-    remove_intermediate:bool,
+    remove_intermediate: bool,
 
     /// Generate setup initialize state trace, default value is false
-    #[arg(short='e', long, default_value = "false")]
-    setup_initialize_state:bool
+    #[arg(short = 'e', long, default_value = "false")]
+    setup_initialize_state: bool,
 }
 
 fn main() {
@@ -56,9 +56,9 @@ fn main() {
     };
 
     let dump_path: Option<String> = args.dot_path;
-    let state_db_path : Option<String>  = args.state_db_path;
-    let intermediate_db_path:Option<String> = args.intermediate_db_path;
-    let setup_initialize_state:bool = args.setup_initialize_state;
+    let state_db_path: Option<String> = args.state_db_path;
+    let intermediate_db_path: Option<String> = args.intermediate_db_path;
+    let setup_initialize_state: bool = args.setup_initialize_state;
     let path_input = if dump_path.is_some() {
         DataInput::DotFile(dump_path.unwrap())
     } else if state_db_path.is_some() {

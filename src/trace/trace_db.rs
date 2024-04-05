@@ -12,7 +12,6 @@ pub struct TraceDB {
 }
 
 
-
 impl TraceDB {
     pub fn new(path: String) -> Res<Self> {
         let r_conn = Connection::open(path.clone());

@@ -5,11 +5,11 @@ use lazy_static::lazy_static;
 use scupt_util::error_type::ET;
 use scupt_util::res::Res;
 
+use crate::act_dsl::ast2rust::{A2RContext, AST2Rust};
 use crate::define::const_str::{
     STR_INVALID_NODE_ID, STR_PARAMETER_MESSAGE,
     STR_PARAMETER_NODE_ID_FROM, STR_PARAMETER_NODE_ID_TO,
 };
-use crate::act_dsl::ast2rust::{A2RContext, AST2Rust};
 
 const TEST_STR: &str = "TEST";
 
@@ -219,7 +219,7 @@ impl DataType {
                     InternalType::NodeId => {
                         ctx.use_node_id = true;
                         "NodeId".to_string()
-                    },
+                    }
                     InternalType::Message(t) => {
                         let s = t.to_rust(ctx)?;
                         format!("Message<{}>", s).to_string()
@@ -230,7 +230,7 @@ impl DataType {
             DataType::DTUserDefineType(t, _) => {
                 Ok(t.clone())
             }
-        }
+        };
     }
 }
 

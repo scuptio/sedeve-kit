@@ -17,31 +17,31 @@ use scupt_util::res_of::res_io;
 use scupt_util::serde_json_string::SerdeJsonString;
 use tokio::runtime::Builder;
 use tracing::error;
+
 use crate::action::action_serde_json_value::ActionSerdeJsonValue;
 use crate::action::action_type::{ActionBeginEnd, ActionType};
 use crate::dtm::async_action_driver::AsyncActionDriver;
 use crate::dtm::dtm_client::DTMClient;
 use crate::dtm::sync_action_driver::SyncActionDriver;
 
-
 /// Initialize an automata setting
 pub fn automata_init_setup(
     name: &str,
-    client_id:NID,
+    client_id: NID,
     server_id: NID,
-    server_addr: &str
+    server_addr: &str,
 ) {
     action_driver_setup_gut(name, client_id, server_id, server_addr, false);
 }
 
 /// Clean an automata setting
-pub fn automata_clear(name: &str,) {
+pub fn automata_clear(name: &str) {
     action_driver_unset_gut(name)
 }
 
 
 /// Is an automation named `name` enable
-pub fn automata_enable(name:&str) -> bool {
+pub fn automata_enable(name: &str) -> bool {
     __DRIVERS.contains(name)
 }
 
@@ -60,7 +60,7 @@ pub fn automata_next_input(
 
     let receiver = driver.sync_input_action().unwrap();
 
-    let msg =  receiver.receive()?;
+    let msg = receiver.receive()?;
     let json = msg.payload().to_serde_json_value().into_serde_json_value();
     let action = ActionSerdeJsonValue::from_json_value(json)?;
     let source = action.source_node_id()?;
@@ -74,8 +74,8 @@ pub fn automata_send_action_to_player(
     _automata_name: &str,
     _action_type: ActionType,
     _action_begin_end: ActionBeginEnd,
-    _source:NID,
-    _dest:NID,
+    _source: NID,
+    _dest: NID,
     _message: &str) {
     let opt = __DRIVERS.get(&_automata_name.to_string());
     let driver = match opt {
@@ -378,19 +378,17 @@ fn action_driver_unset_gut(name: &str) {
         Some(t) => {
             t.get().close();
         }
-        None => {
-
-        }
+        None => {}
     }
-    let _ =  __DRIVERS.remove(&name.to_string());
+    let _ = __DRIVERS.remove(&name.to_string());
 }
 
 fn action_driver_setup_gut(
     name: &str,
-    client_id:NID,
+    client_id: NID,
     server_id: NID,
     server_addr: &str,
-    enable_input_channel:bool,
+    enable_input_channel: bool,
 ) {
     let addr: SocketAddr =
         server_addr.parse()
@@ -411,7 +409,7 @@ async fn async_action_gut<M: MsgTrait + 'static>(
     automata_name: &str,
     action_type: ActionType,
     action_begin_end: ActionBeginEnd,
-    message: Message<M>
+    message: Message<M>,
 ) {
     let opt = __DRIVERS.get_async(&automata_name.to_string()).await;
     let driver = match opt {
@@ -440,8 +438,8 @@ struct __ActionDriver {
     _thd: Arc<Mutex<Vec<JoinHandle<()>>>>,
     _dtm_client: Arc<DTMClient>,
     _driver_async: Arc<dyn AsyncActionDriver>,
-    _driver_sync:Arc<dyn SyncActionDriver>,
-    _server:Arc<Mutex<Option<Arc<dyn IOServiceSync<SerdeJsonString>>>>>
+    _driver_sync: Arc<dyn SyncActionDriver>,
+    _server: Arc<Mutex<Option<Arc<dyn IOServiceSync<SerdeJsonString>>>>>,
 }
 
 
@@ -453,10 +451,10 @@ struct __ActionDriver {
 /// input action, this value must set by `false`
 impl __ActionDriver {
     fn new(
-        client_id:NID,
+        client_id: NID,
         server_id: NID,
         server_addr: SocketAddr,
-        enable_input_channel:bool,
+        enable_input_channel: bool,
     ) -> Res<Self> {
         let r_build = Builder::new_current_thread()
             .enable_all()
@@ -535,7 +533,7 @@ impl __ActionDriver {
                 }
             }
             None => { None }
-        }
+        };
     }
 }
 

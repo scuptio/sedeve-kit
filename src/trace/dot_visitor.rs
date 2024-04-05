@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-
 use scupt_util::error_type::ET;
 use scupt_util::escape_string::escape_string;
 use scupt_util::res::Res;

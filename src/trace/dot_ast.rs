@@ -1,4 +1,3 @@
-
 use crate::action::tla_ast::TLAVariableList;
 
 #[derive(Debug)]

@@ -15,7 +15,7 @@ use crate::dtm::action_reorder::ActionReorder;
 use crate::dtm::msg_ctrl::MessageControl;
 
 struct ActionExecutorInner {
-    seconds_timeout:u64,
+    seconds_timeout: u64,
     wait_both_begin_and_end_action: bool,
     trace_wait_input_begin: ActionReorder,
     trace_wait_input_end: ActionReorder,
@@ -37,8 +37,8 @@ pub struct ActionExecutor {
 
 impl ActionExecutor {
     pub fn new(
-        wait_both_begin_and_end_action:bool,
-        seconds_timeout:u64,
+        wait_both_begin_and_end_action: bool,
+        seconds_timeout: u64,
     ) -> Self {
         Self {
             inner: Arc::new(ActionExecutorInner {
@@ -119,12 +119,12 @@ impl ActionExecutor {
 
     pub async fn expect_action_in_trace(
         &self,
-        source:NID,
-        dest:NID,
-        id:String, // request message id
+        source: NID,
+        dest: NID,
+        id: String, // request message id
         action: ActionSerdeJsonValue,
         begin: bool,
-        ch_sender: UnboundedSender<Message<MessageControl>>
+        ch_sender: UnboundedSender<Message<MessageControl>>,
     ) -> Res<()> {
         let ok = self.expect_action_in_trace_gut(&action, begin).await?;
         if !ok {
@@ -178,8 +178,7 @@ impl ActionExecutor {
                     trace!("RECEIVE: notify read case file {:?}", action);
                     self.inner.trace_wait_input_end.add_action(action).await?;
                 }
-
-           }
+            }
             ActionType::Output => {
                 if begin {
                     trace!("RECEIVE: notify case file {:?}", action);
@@ -189,7 +188,7 @@ impl ActionExecutor {
                     if !ok {
                         return Ok(false);
                     }
-                }  else {
+                } else {
                     if self.inner.wait_both_begin_and_end_action {
                         trace!("RECEIVE: notify read case file {:?}", action);
                         self.inner.trace_wait_output_end.add_action(action).await?;

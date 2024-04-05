@@ -1,4 +1,3 @@
-
 #[cfg(test)]
 mod test {
     use uuid::Uuid;
@@ -22,8 +21,8 @@ mod test {
         gen_case(DataInput::DotFile(path_dot),
                  output_db_path.clone(),
                  dict,
-            None,
-            false,
+                 None,
+                 false,
         ).unwrap();
         let vec = TraceReader::read_trace(output_db_path).unwrap();
         assert_eq!(vec.len(), 643);
