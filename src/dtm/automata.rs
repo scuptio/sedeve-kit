@@ -185,7 +185,7 @@ macro_rules! check {
                 $automata_name,
                 $crate::action::action_type::ActionType::Check,
                 $message
-            ).await;
+            );
         }
     };
 }
