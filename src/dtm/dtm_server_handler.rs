@@ -5,7 +5,7 @@ use std::process::exit;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use scupt_net;
+
 use scupt_net::endpoint_async::EndpointAsync;
 use scupt_net::handle_event::HandleEvent;
 use scupt_net::message_incoming::MessageIncoming;

@@ -1,4 +1,4 @@
-use std::string::String;
+
 
 use scupt_util::error_type::ET;
 use scupt_util::res::Res;

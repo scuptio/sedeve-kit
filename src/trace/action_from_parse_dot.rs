@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::fs::read_to_string;
-use std::string::String;
 
 use log::error;
 use scupt_util::error_type::ET;
