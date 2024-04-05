@@ -181,11 +181,11 @@ macro_rules! setup {
 macro_rules! check {
     ($automata_name:expr,  $message:expr) => {
         {
-            $crate::dtm::automata::automata_action_async(
+            $crate::action_end!(
                 $automata_name,
-                false,
                 $crate::action::action_type::ActionType::Check,
-                $message).await;
+                $message
+            ).await;
         }
     };
 }
