@@ -59,7 +59,7 @@ The action types include:
 | Internal      | Represent an internal event in a node                                                           |
 
 
-Use the [trace-gen](../src/trace_gen/bin/main.rs) to traversal dot file(like [this dot file](../src/data/toolbox_dump.dot)) 
+Use the [trace-gen](../src/trace_gen/main.rs) to traversal dot file(like [this dot file](../src/data/toolbox_dump.dot)) 
 and dump all trace into a database(e.g., [sqlite DB file](../src/data/trace.db))
 The trace format is represented in JSON, similar to [this JSON file](../src/data/trace2.json)
 The [action incoming interface](../src/player/action_incoming.rs) can be used to read traces.

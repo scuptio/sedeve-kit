@@ -5,8 +5,8 @@ mod tests {
     use crate::action::constant;
     use crate::action::tla_typed_value::get_typed_value;
 
-    const S1:&str =
-r###"
+    const S1: &str =
+        r###"
     {
         "kind": 4,
         "object": {
@@ -486,8 +486,8 @@ r###"
     }
     "###;
 
-    const S2:&str =
-r###"
+    const S2: &str =
+        r###"
 {
    "kind":4,
    "object":{
@@ -1215,9 +1215,9 @@ r###"
         }
     }
 
-    fn get_typed(v:&str) -> Value {
-        let value:Value = serde_json::from_str(v).unwrap();
+    fn get_typed(v: &str) -> Value {
+        let value: Value = serde_json::from_str(v).unwrap();
         let value = get_typed_value(value, &constant::__TEST_NODE_ID_MAP.clone()).unwrap();
-        return value
+        return value;
     }
 }

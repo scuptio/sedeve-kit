@@ -5,12 +5,11 @@ mod test {
     use scupt_util::node_id::NID;
     use scupt_util::serde_json_string::SerdeJsonString;
     use serde::{Deserialize, Serialize};
+
     use crate::action::action_message::ActionMessage;
     use crate::action::action_serde_json_value::ActionSerdeJsonValue;
     use crate::action::action_type::ActionType;
     use crate::action::trace::{Trace, TraceJsonValue};
-
-
 
     #[derive(
     Clone,
@@ -24,29 +23,26 @@ mod test {
     Encode,
     )]
     struct TestMessage {
-        x : i32,
-        y : String
+        x: i32,
+        y: String,
     }
 
-    impl MsgTrait for TestMessage {
-
-    }
+    impl MsgTrait for TestMessage {}
 
 
     fn gen_test_action(
-        action_type:ActionType,
-        source_node:NID,
-        dest_node:NID,
-        x:i32,
-        y:String
+        action_type: ActionType,
+        source_node: NID,
+        dest_node: NID,
+        x: i32,
+        y: String,
     ) -> ActionMessage<TestMessage> {
         let m = Message::new(
             TestMessage {
                 x,
-                y
+                y,
             },
             source_node, dest_node,
-
         );
         action_type.action_message(m)
     }
@@ -64,7 +60,7 @@ mod test {
         trace
     }
 
-        const TEST_JSON_STR0:&str = r###"
+    const TEST_JSON_STR0: &str = r###"
 [
     {"Input":{"source":1,"dest":1,"payload":{"x":1,"y":"xxx1"}}},
     {"Internal":{"source":2,"dest":2,"payload":{"x":2,"y":"xxx2"}}},
@@ -72,7 +68,7 @@ mod test {
     {"Input":{"source":4,"dest":4,"payload":{"x":4,"y":"xxx4 "}}}
 ]
 "###;
-        const TEST_JSON_STR: &str = r###"
+    const TEST_JSON_STR: &str = r###"
 {
     "actions":
     [
@@ -94,7 +90,7 @@ mod test {
         let r = TraceJsonValue::from_json_string(TEST_JSON_STR0.to_string());
         assert!(r.is_ok());
 
-        let r = Trace::<TestMessage>::from_json_string(TEST_JSON_STR.to_string()) ;
+        let r = Trace::<TestMessage>::from_json_string(TEST_JSON_STR.to_string());
         assert!(r.is_ok());
 
         let r = TraceJsonValue::from_json_string(TEST_JSON_STR.to_string());
@@ -103,11 +99,11 @@ mod test {
         let trace_json_value = r.unwrap();
         for (_n, v) in trace_json_value.actions.iter().enumerate() {
             let action_json_string = SerdeJsonString::from_json_value(v);
-            let action_json_value  = ActionSerdeJsonValue::from_value(
+            let action_json_value = ActionSerdeJsonValue::from_value(
                 action_json_string.to_serde_json_value().into_serde_json_value());
 
             let json_value = action_json_value.serde_json_value_ref();
-            let message :ActionMessage<TestMessage> = serde_json::from_str(v.to_string().as_str()).unwrap();
+            let message: ActionMessage<TestMessage> = serde_json::from_str(v.to_string().as_str()).unwrap();
             assert_eq!(message.source_node_id().unwrap(), action_json_value.source_node_id().unwrap());
             assert_eq!(message.source_node_id().unwrap(), action_json_value.dest_node_id().unwrap());
             println!("{:?}", json_value);

@@ -40,7 +40,7 @@ mod test {
     enum TestML1 {
         TestM1A(TestML2),
         TestM1B(TestML2),
-        TestEmptyPayload
+        TestEmptyPayload,
     }
 
     #[derive(

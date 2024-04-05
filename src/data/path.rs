@@ -1,12 +1,10 @@
-
-
 #[cfg(test)]
 pub mod test {
+    use log::error;
+    use project_root::get_project_root;
+    use scupt_util::error_type::ET;
     use scupt_util::res::Res;
     use scupt_util::res_of::res_io;
-    use project_root::get_project_root;
-    use log::error;
-    use scupt_util::error_type::ET;
 
     pub fn test_data_path(file_name: String) -> Res<String> {
         let mut path_buf = res_io(get_project_root())?;

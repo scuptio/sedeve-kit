@@ -23,10 +23,9 @@ Debug,
 pub struct TLAActionSeq {
     pub id_prev: i64,
     pub id: i64,
-    pub states:Vec<TLAAction>,
+    pub states: Vec<TLAAction>,
     pub actions: Vec<TLAAction>,
 }
-
 
 
 #[derive(
@@ -34,8 +33,8 @@ Clone,
 Debug,
 )]
 pub struct TLAAction {
-    pub message:TLAMessage,
-    pub action_type:ActionType,
+    pub message: TLAMessage,
+    pub action_type: ActionType,
 }
 
 
@@ -45,10 +44,10 @@ Clone,
 Debug,
 )]
 pub struct TLAMessage {
-    pub source:OID,
-    pub dest:OID,
-    pub name:Vec<String>,
-    pub payload:Value,
+    pub source: OID,
+    pub dest: OID,
+    pub name: Vec<String>,
+    pub payload: Value,
 }
 
 impl TLAActionSeq {
@@ -73,12 +72,12 @@ impl TLAActionSeq {
         serde_json_util::json_util_map_get_value_ref(map, constant::ACTION_SEQUENCE_FIELD_STATES)
     }
 
-    pub fn from_str(string:&String) -> Res<Self> {
-        let value:Value = res_serde(serde_json::from_str(string.as_str()))?;
+    pub fn from_str(string: &String) -> Res<Self> {
+        let value: Value = res_serde(serde_json::from_str(string.as_str()))?;
         Self::from(value)
     }
 
-    pub fn from(value:Value) -> Res<Self> {
+    pub fn from(value: Value) -> Res<Self> {
         let id_prev = Self::field_prev_state_id(&value)?;
         let id = Self::field_state_id(&value)?;
         let value_actions = Self::field_actions(&value)?;
@@ -112,7 +111,7 @@ impl TLAActionSeq {
         })
     }
 
-    pub fn actions(&self) ->  &Vec<TLAAction> {
+    pub fn actions(&self) -> &Vec<TLAAction> {
         &self.actions
     }
 
@@ -138,7 +137,7 @@ impl TLAActionSeq {
 }
 
 impl TLAAction {
-    pub fn from(value :&Value) -> Res<Self> {
+    pub fn from(value: &Value) -> Res<Self> {
         let map = res_option(value.as_object())?;
         let s_action_type = serde_json_util::json_util_map_get_string(&map, constant::ACTION_FIELD_TYPE)?;
         let payload = serde_json_util::json_util_map_get_value(&map, constant::ACTION_FIELD_PAYLOAD)?;
@@ -174,10 +173,10 @@ impl TLAAction {
 }
 
 impl TLAMessage {
-    pub fn from(value:Value) -> Res<Self> {
+    pub fn from(value: Value) -> Res<Self> {
         if !value.is_object() {
             error!("Message payload JSON value must be an object,  JSON: {:?}", value);
-            return Err(ET::ParseError("TLAMessage is not an object".to_string()))
+            return Err(ET::ParseError("TLAMessage is not an object".to_string()));
         }
         let map = res_option(value.as_object())?;
         let source = serde_json_util::json_util_map_get_value(&map, constant::MESSAGE_FIELD_SOURCE)?;
@@ -192,8 +191,8 @@ impl TLAMessage {
             .map(|s| { s.to_string() })
             .collect();
         Ok(Self {
-            source:res_option(source.as_i64())? as OID,
-            dest:res_option(dest.as_i64())? as OID,
+            source: res_option(source.as_i64())? as OID,
+            dest: res_option(dest.as_i64())? as OID,
             name: vec,
             payload,
         })
@@ -201,7 +200,7 @@ impl TLAMessage {
 }
 
 
-pub fn tla_action_var_text_to_json(text:String, constant_dict_map:HashMap<String, Value>) -> Res<Value>{
+pub fn tla_action_var_text_to_json(text: String, constant_dict_map: HashMap<String, Value>) -> Res<Value> {
     let mut parser = TLAVarsParser::new();
     let tree = parser.parse(&text)?;
     let visitor = TLAVarListVisitor::new(text.clone());

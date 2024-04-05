@@ -8,7 +8,9 @@ path = "src/rust_gen/bin/main.rs"
 
 [[bin]]
 name = "trace_gen"
-path = "src/trace_gen/bin/main.rs"
+path = "src/trace_gen/main.rs"
+
+
 
 
 [package]
@@ -22,6 +24,8 @@ homepage = "https://github.com/scuptio/"
 documentation = "https://github.com/scuptio/sedeve-kit/README.md"
 readme = "README.md"
 license = "Apache-2.0"
+
+
 
 [dependencies]
 tree-sitter-action = { path = "tree-sitter-action" }
@@ -59,5 +63,9 @@ serde_bytes = "0.11.7"
 console-subscriber = "0.2.0"
 async-backtrace = "0.2.7"
 once_cell = "1.19.0"
+num = "0.4"
+num-derive = "0.4"
+num-traits = "0.2"
+
 
 
