@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: rustup default nightly
+      - run: rustup default stable
       - run: rustup update
       - name: Build
         run: cargo build --verbose
