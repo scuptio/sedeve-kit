@@ -1,6 +1,3 @@
-#![feature(const_trait_impl)]
-#![feature(unboxed_closures)]
-
 pub mod dtm;
 pub mod trace;
 pub mod define;
