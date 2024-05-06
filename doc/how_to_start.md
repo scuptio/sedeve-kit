@@ -18,7 +18,7 @@ We developed  TLA+ modules
 
    Specify TLA+ library path option locations
 
-<img src="../doc/set_library_path_locations.png" width="50%" height="50%">
+<img src="../doc/figure/set_library_path_locations.png" width="50%" height="50%">
 
 ## Write TLA+ specification
 
@@ -121,7 +121,7 @@ We define certain *anchor actions* that allow us to send a message to the *deter
 
 The figure below illustrates how the *deterministic player* reorders the actions based on predefined orders.
 
-![reorder_action](../doc/reorder_actions.png)
+![reorder_action](../doc/figure/reorder_actions.png)
 
 The physical system will align with the logical model, ensuring consistency. 
 Our framework incorporates various macros to facilitate the implementation of *anchor actions* 
