@@ -525,7 +525,6 @@ impl DotVisitor {
         node_context_string(&self.text, node)
     }
 
-
     fn add_node_action_json(&mut self, node_stmt: &dot_ast::NodeStmt) -> Res<()> {
         let mut list = tla_ast::TLAVariableList {
             vec: vec![]

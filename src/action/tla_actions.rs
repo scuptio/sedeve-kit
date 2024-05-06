@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use scupt_util::error_type::ET;
+use scupt_util::error_type::ET::NoneOption;
 use scupt_util::id::OID;
 use scupt_util::res::Res;
 use scupt_util::res_of::res_option;
@@ -90,6 +91,10 @@ impl TLAActionSeq {
                 let opt = value.as_array();
                 let array = res_option(opt)?;
                 for v in array.iter() {
+                    if !v.is_object() {
+                        error!("state: {:?}", value_states);
+                        error!("action: {:?}", value_actions);
+                    }
                     let action = TLAAction::from(v)?;
                     vec_tla_action.push(action);
                 }
@@ -138,6 +143,10 @@ impl TLAActionSeq {
 
 impl TLAAction {
     pub fn from(value: &Value) -> Res<Self> {
+        if !value.is_object() {
+            error!("value {}, is not object", value);
+            return Err(NoneOption)
+        }
         let map = res_option(value.as_object())?;
         let s_action_type = serde_json_util::json_util_map_get_string(&map, constant::ACTION_FIELD_TYPE)?;
         let payload = serde_json_util::json_util_map_get_value(&map, constant::ACTION_FIELD_PAYLOAD)?;

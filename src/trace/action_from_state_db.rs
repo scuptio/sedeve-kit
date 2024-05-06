@@ -91,8 +91,8 @@ fn read_action_batch<F>(
     Ok(())
 }
 
-pub fn graph_read_actions_from_state_db(path: String, dict: HashMap<String, Value>, output_path: String) -> Res<ActionGraph<i64>> {
-    let db = RefCell::new(TraceDBInterm::new(output_path, None, None)?);
+pub fn graph_read_actions_from_state_db(path: String, dict: HashMap<String, Value>, output_path: String, sqlite_cache_size: Option<u64>) -> Res<ActionGraph<i64>> {
+    let db = RefCell::new(TraceDBInterm::new(output_path, None, sqlite_cache_size)?);
     let stage = {
         let db_ref = db.borrow();
         let stage = db_ref.get_state()?;

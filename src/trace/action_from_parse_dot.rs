@@ -19,9 +19,9 @@ pub fn parse_dot(path: String, dict: HashMap<String, Value>) -> Res<()> {
 }
 
 // read action from dot file, and output actions to sqlite database
-pub fn dot_action_to_db(dot_path: String, dict: HashMap<String, Value>, output_db: String) -> Res<ActionGraph<i64>> {
+pub fn dot_action_to_db(dot_path: String, dict: HashMap<String, Value>, output_db: String, sqlite_cache_size: Option<u64>) -> Res<ActionGraph<i64>> {
     let visitor = parse_dot_gut(dot_path, dict)?;
-    let trace_db = TraceDBInterm::new(output_db, None, None)?;
+    let trace_db = TraceDBInterm::new(output_db, None, sqlite_cache_size)?;
     trace_db.write_action(visitor.actions().clone())?;
     let graph = trace_db.gen_graph()?;
     Ok(graph)

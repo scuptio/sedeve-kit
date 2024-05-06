@@ -22,6 +22,7 @@ mod test {
                  output_db_path.clone(),
                  dict,
                  None,
+                 Some(10),
                  false,
         ).unwrap();
         let vec = TraceReader::read_trace(output_db_path).unwrap();

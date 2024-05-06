@@ -18,12 +18,14 @@ pub struct TraceBuilder {}
 #[derive(Clone)]
 pub struct OptBuild {
     pub initialize_setup: bool,
+    pub sqlite_cache_size: Option<u64>,
 }
 
 impl Default for OptBuild {
     fn default() -> Self {
         Self {
             initialize_setup: false,
+            sqlite_cache_size: None,
         }
     }
 }

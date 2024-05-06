@@ -4,6 +4,7 @@ use std::ffi::CString;
 use std::sync::Mutex;
 
 use lazy_static::lazy_static;
+use md5::Digest;
 use rusqlite::{Connection, OptionalExtension};
 use rusqlite::ffi::{sqlite3_mprintf, sqlite3_temp_directory};
 use scupt_util::res::Res;
@@ -48,7 +49,12 @@ impl TraceDBInterm {
         let r_conn = Connection::open(path.clone());
         let mut conn = res_sqlite(r_conn)?;
         if let Some(size) = cache_size {
-            let _r = conn.pragma_update(None, "cache_size", size);
+            // sqlite document: https://www.sqlite.org/pragma.html#pragma_cache_size
+            // negative number for size in MBs
+            // "the number of cache pages is adjusted to be a number of pages that would use
+            // approximately abs(N*1024) bytes of memory based on the current page size"
+            let mbs = -(size as i64);
+            let _r = conn.pragma_update(None, "cache_size", mbs);
             res_sqlite(_r)?;
         }
 
@@ -73,7 +79,8 @@ impl TraceDBInterm {
             r#"create table if not exists path (
                      id text not null,
                      seq long not null,
-                     action_id long not null
+                     action_id long not null,
+                     primary key (id, seq)
                  )"#, ());
         res_sqlite(r)?;
         res_sqlite(tran.commit())?;
@@ -121,17 +128,25 @@ impl TraceDBInterm {
 
     pub fn write_path(&self, batch: Vec<Vec<i64>>) -> Res<()> {
         let sql = "insert into path (
-                        id,
-                        seq,
-                        action_id
-                        ) values (?1, ?2, ?3)";
+                            id,
+                            seq,
+                            action_id
+                        ) values (?1, ?2, ?3)
+                        on conflict (id, seq) do nothing
+                        ";
         let mut conn = self.conn.lock().unwrap();
         let r_tran = conn.transaction();
         let tran = res_sqlite(r_tran)?;
         {
             let mut stmt = res_sqlite(tran.prepare(sql))?;
+
             for path in batch {
-                let id = uuid::Uuid::new_v4().to_string();
+                let mut hasher = md5::Md5::new();
+                for i in &path {
+                    hasher.update(i.to_ne_bytes());
+                }
+                let hash = hasher.finalize();
+                let id = format!("{:x}", hash);
                 for (i, action_id) in path.iter().rev().enumerate() {
                     let r = stmt.execute((id.clone(), (i + 1) as i32, *action_id));
                     let _ = res_sqlite(r)?;
