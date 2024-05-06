@@ -43,6 +43,10 @@ struct Args {
     /// Generate setup initialize state trace, default value is false
     #[arg(short = 'e', long, default_value = "false")]
     setup_initialize_state: bool,
+
+    #[arg(short = 'c', long)]
+    /// SQLite cache size in MBs.
+    sqlite_cache_size: Option<u64>
 }
 
 fn main() {
@@ -59,6 +63,7 @@ fn main() {
     let state_db_path: Option<String> = args.state_db_path;
     let intermediate_db_path: Option<String> = args.intermediate_db_path;
     let setup_initialize_state: bool = args.setup_initialize_state;
+    let sqlite_cache_size = args.sqlite_cache_size;
     let path_input = if dump_path.is_some() {
         DataInput::DotFile(dump_path.unwrap())
     } else if state_db_path.is_some() {
@@ -89,5 +94,5 @@ fn main() {
     };
 
     gen_case(path_input, path_output, dict,
-             intermediate_db_path, setup_initialize_state).unwrap();
+             intermediate_db_path, sqlite_cache_size, setup_initialize_state).unwrap();
 }

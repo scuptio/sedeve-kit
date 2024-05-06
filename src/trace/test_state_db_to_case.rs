@@ -32,6 +32,7 @@ mod test {
                  output.clone(),
                  dict,
                  None,
+                 None,
                  setup_initialize,
         ).unwrap();
         let vec = TraceReader::read_trace(output).unwrap();

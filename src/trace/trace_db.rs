@@ -20,7 +20,7 @@ impl TraceDB {
             let tran = res_sqlite(conn.transaction())?;
             let r = tran.execute(
                 r#"create table if not exists trace (
-                        id text not null,
+                        id text not null primary key,
                         trace_json text not null
                         )"#, ());
             res_sqlite(r)?;
@@ -34,7 +34,7 @@ impl TraceDB {
     }
 
     pub fn write_trace(&self, traces: Vec<(String, Vec<Value>)>) -> Res<()> {
-        let sql = "insert into trace (id, trace_json) values (?1, ?2);";
+        let sql = "insert into trace (id, trace_json) values (?1, ?2) on conflict (id) do nothing;";
         let mut conn = self.conn.lock().unwrap();
         {
             let trans = conn.transaction().unwrap();

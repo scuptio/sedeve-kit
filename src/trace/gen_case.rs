@@ -34,6 +34,7 @@ pub fn gen_case(
     data_output: String,
     dict: HashMap<String, Value>,
     opt_intermediate_path: Option<String>,
+    sqlite_cache_size: Option<u64>,
     initialize_setup: bool,
 ) -> Res<()> {
     let intermediate = match opt_intermediate_path {
@@ -48,23 +49,23 @@ pub fn gen_case(
         DataInput::DotFile(path) => {
             info!("Read dot file {}", path);
 
-            let graph = dot_action_to_db(path.clone(), dict, intermediate.clone())?;
+            let graph = dot_action_to_db(path.clone(), dict, intermediate.clone(), sqlite_cache_size)?;
             let duration = inst.elapsed();
 
             info!("Time elapsed to parse {}, time costs: {:?}", path, duration);
 
             let inst = Instant::now();
-            action_graph_output_to_db(&gen_new_vertex_id, &graph, intermediate.clone())?;
+            action_graph_output_to_db(&gen_new_vertex_id, &graph, intermediate.clone(), sqlite_cache_size)?;
             let duration = inst.elapsed();
             info!("Time elapsed to generate action trace, time costs: {:?}",  duration);
         }
         DataInput::StateDB(path) => {
-            let graph = graph_read_actions_from_state_db(path.clone(), dict, intermediate.clone())?;
+            let graph = graph_read_actions_from_state_db(path.clone(), dict, intermediate.clone(), sqlite_cache_size)?;
             let duration = inst.elapsed();
             info!("Time elapsed to read from state DB {} and write actions, time costs: {:?}", path, duration);
 
             let inst = Instant::now();
-            action_graph_output_to_db(&gen_new_vertex_id, &graph, intermediate.clone())?;
+            action_graph_output_to_db(&gen_new_vertex_id, &graph, intermediate.clone(), sqlite_cache_size)?;
             let duration = inst.elapsed();
             info!("Time elapsed to generate path, time costs: {:?}",  duration);
         }
@@ -74,6 +75,7 @@ pub fn gen_case(
     let inst = Instant::now();
     let opt = OptBuild {
         initialize_setup,
+        sqlite_cache_size,
     };
     TraceBuilder::build(intermediate, data_output, opt)?;
 
@@ -89,8 +91,9 @@ fn action_graph_output_to_db<
     fn_new_vertex: &NV,
     action_graph: &ActionGraph<i64>,
     db_path: String,
+    sqlite_cache_size: Option<u64>,
 ) -> Res<()> {
-    let db = RefCell::new(TraceDBInterm::new(db_path, None, None)?);
+    let db = RefCell::new(TraceDBInterm::new(db_path, None, sqlite_cache_size)?);
     let write_path = {
         let db_ref = db.borrow();
         let stage = db_ref.get_state()?;
