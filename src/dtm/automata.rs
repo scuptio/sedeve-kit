@@ -5,18 +5,20 @@ use std::thread::JoinHandle;
 
 use lazy_static::lazy_static;
 use scc::HashIndex;
+use scupt_net::es_option::ESServeOpt;
 use scupt_net::io_service::{IOService, IOServiceOpt};
 use scupt_net::io_service_sync::IOServiceSync;
 use scupt_net::message_receiver_sync::ReceiverSync;
 use scupt_net::notifier::Notifier;
 use scupt_util::error_type::ET;
+use scupt_util::logger::logger_setup;
 use scupt_util::message::{Message, MsgTrait};
 use scupt_util::node_id::NID;
 use scupt_util::res::Res;
 use scupt_util::res_of::res_io;
 use scupt_util::serde_json_string::SerdeJsonString;
 use tokio::runtime::Builder;
-use tracing::error;
+use tracing::{debug, error};
 
 use crate::action::action_serde_json_value::ActionSerdeJsonValue;
 use crate::action::action_type::{ActionBeginEnd, ActionType};
@@ -25,13 +27,23 @@ use crate::dtm::dtm_client::DTMClient;
 use crate::dtm::sync_action_driver::SyncActionDriver;
 
 /// Initialize an automata setting
-pub fn automata_init_setup(
+pub fn automata_setup(
     name: &str,
-    client_id: NID,
-    server_id: NID,
-    server_addr: &str,
+    tested_nid: NID,
+    player_nid: NID,
+    player_addr: &str,
 ) {
-    action_driver_setup_gut(name, client_id, server_id, server_addr, false);
+    action_driver_setup_gut(name, tested_nid, None, player_nid, player_addr);
+}
+
+pub fn automata_setup_with_input(
+    name: &str,
+    tested_nid: NID,
+    tested_addr:&str,
+    player_nid: NID,
+    player_addr: &str,
+) {
+    action_driver_setup_gut(name, tested_nid, Some(tested_addr), player_nid, player_addr);
 }
 
 /// Clean an automata setting
@@ -117,7 +129,7 @@ macro_rules! auto_init {
         $player_addr:expr
     ) => {
         {
-            $crate::dtm::automata::automata_init_setup($automata_name, $node_id, $player_id, $player_addr);
+            $crate::dtm::automata::automata_setup($automata_name, $node_id, $player_id, $player_addr);
         }
     };
 }
@@ -385,17 +397,25 @@ fn action_driver_unset_gut(name: &str) {
 
 fn action_driver_setup_gut(
     name: &str,
-    client_id: NID,
-    server_id: NID,
-    server_addr: &str,
-    enable_input_channel: bool,
+    tested_nid: NID,
+    tested_addr:Option<&str>,
+    player_nid: NID,
+    player_addr: &str
 ) {
     let addr: SocketAddr =
-        server_addr.parse()
+        player_addr.parse()
             .expect("Unable to resolve domain");
+
+    let tested_addr = tested_addr.map(|s|{
+        s.parse()
+            .expect("Unable to resolve domain")
+    });
+    let _tested_addr = tested_addr.clone();
     if !__DRIVERS.contains(name) {
-        let driver = __ActionDriver::new(client_id, server_id, addr, enable_input_channel).unwrap();
+        logger_setup("debug");
+        let driver = __ActionDriver::new(tested_nid, tested_addr, player_nid, addr).unwrap();
         let opt_d = __DRIVERS.insert(name.to_string(), driver);
+        debug!("create driver tested node:{} addr {:?}, player node:{} addr:{}", tested_nid, _tested_addr, player_nid, addr);
         match opt_d {
             Ok(_) => {}
             Err((k, _)) => {
@@ -451,22 +471,24 @@ struct __ActionDriver {
 /// input action, this value must set by `false`
 impl __ActionDriver {
     fn new(
-        client_id: NID,
-        server_id: NID,
-        server_addr: SocketAddr,
-        enable_input_channel: bool,
+        tested_nid: NID,
+        opt_tested_addr:Option<SocketAddr>,
+        player_nid: NID,
+        player_addr: SocketAddr
     ) -> Res<Self> {
         let r_build = Builder::new_current_thread()
             .enable_all()
             .build();
         let r = res_io(r_build)?;
         let runtime = Arc::new(r);
-        let node_name = format!("driver_{}->{}", client_id, server_id);
+        let node_name = format!("driver_{}->{}", tested_nid, player_nid);
         let notifier = Notifier::new_with_name(node_name.clone());
         let cli = DTMClient::new(
-            node_name.clone(), client_id, server_id,
-            server_addr,
+            node_name.clone(), tested_nid, player_nid,
+            player_addr,
             notifier.clone())?;
+
+
         let mut vec_thd = vec![];
         {
             let r = runtime.clone();
@@ -482,7 +504,7 @@ impl __ActionDriver {
         };
         let async_driver = cli.new_async_driver()?;
         let sync_driver = cli.new_sync_driver()?;
-        let opt_server = if !enable_input_channel {
+        let opt_server = if let Some(addr) = opt_tested_addr  {
             let opt = IOServiceOpt {
                 num_message_receiver: 1,
                 testing: false,
@@ -490,18 +512,23 @@ impl __ActionDriver {
                 port_debug: None,
             };
             let io_service = IOService::new_sync_service(
-                client_id, node_name.clone(), opt, notifier.clone())?;
+                tested_nid, node_name.clone(), opt, notifier.clone())?;
             {
                 let r = runtime.clone();
                 let service = io_service.clone();
+                let sink = service.default_sink();
                 let f = move || {
                     service.block_run(None, r);
                 };
+
+
                 let r_thd = thread::Builder::new()
                     .name("dtm-incoming-action".to_string())
                     .spawn(f);
                 let thd = r_thd.unwrap();
                 vec_thd.push(thd);
+
+                sink.serve(addr, ESServeOpt::default().enable_no_wait(false))?;
             }
             Some(io_service)
         } else {

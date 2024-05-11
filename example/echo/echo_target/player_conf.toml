@@ -1,0 +1,13 @@
+trace_db_path = "/tmp/trace.db"
+
+[player_addr]
+nid = 1
+addr = "127.0.0.1:24001"
+
+[[peer_addr]]
+nid = 2
+addr = "127.0.0.1:24002"
+
+[[peer_addr]]
+nid = 3
+addr = "127.0.0.1:24003"

@@ -1,38 +1,29 @@
+mod player_conf;
+use player_conf::PlayerConf;
 use std::collections::HashMap;
 use std::fs::read_to_string;
 use std::net::SocketAddr;
 
 use clap::Parser;
 use scupt_net::notifier::Notifier;
+use scupt_util::logger::logger_setup;
 use scupt_util::node_id::NID;
 use scupt_util::res::Res;
 use scupt_util::res_of::{res_io, res_parse};
-use serde::{Deserialize, Serialize};
+use toml;
 
 use sedeve_kit::dtm::action_incoming_factory::ActionIncomingFactory;
 use sedeve_kit::dtm::dtm_player::DTMPlayer;
 use sedeve_kit::trace::trace_db::TraceDB;
 
+
 /// action definition to Rust code template
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// server node id
+    /// player config path
     #[arg(short, long)]
     pub conf_path: String,
-}
-
-#[derive(
-Clone,
-Serialize,
-Debug,
-Deserialize,
-)]
-pub struct PlayerConfig {
-    pub db_path: String,
-    pub player_id: NID,
-    pub player_address: String,
-    pub node_peer: HashMap<NID, String>,
 }
 
 fn player_gut(db_path: String, player_id: NID, player_address: SocketAddr, peers: HashMap<NID, SocketAddr>) -> Res<()> {
@@ -61,14 +52,20 @@ fn player_gut(db_path: String, player_id: NID, player_address: SocketAddr, peers
 
 fn player_run(conf: String) -> Res<()> {
     let s = res_io(read_to_string(conf))?;
-    let c: PlayerConfig = res_parse(serde_json::from_str(s.as_str()))?;
-    let player_addr: SocketAddr = res_parse(c.player_address.parse())?;
+    let c: PlayerConf = toml::from_str(s.as_str()).unwrap();
+    let player_addr: SocketAddr = res_parse(c.player_addr.addr.parse())?;
     let mut peers = HashMap::new();
-    for (n, s_addr) in c.node_peer.iter() {
-        let a: SocketAddr = res_parse(s_addr.parse())?;
-        peers.insert(n.clone(), a);
+
+
+    logger_setup(c.log_level.as_str());
+
+    for addr in c.peer_addr.iter() {
+        let a: SocketAddr = res_parse(addr.addr.parse())?;
+        peers.insert(addr.nid.clone(), a);
     }
-    player_gut(c.db_path, c.player_id, player_addr, peers)?;
+
+
+    player_gut(c.trace_db_path, c.player_addr.nid, player_addr, peers)?;
     Ok(())
 }
 

@@ -98,29 +98,73 @@ void session(
     tcp::acceptor a(io_context, tcp::endpoint(tcp::v4(), port));
     for (;;) {
         tcp::socket sock(io_context);
+    #ifdef ENABLE_DTM
+
+    #else
         a.accept(sock);
         auto endpoint = sock.remote_endpoint();
-
-        uint64_t remote_id =  endpoint_to_id(endpoint.address().to_string() , endpoint.port());
-        auto queue = create_sync_queue_for_remote(remote_id);
+    #endif
+        uint64_t remote_id =  0;
+        auto queue = get_sync_queue_for_remote(remote_id);
         std::thread(session, std::move(sock), local_id, remote_id, std::move(queue)).detach();
     }
 }
 
 int main(int argc, char *argv[]) {
     try {
-        if (argc != 3) {
-            std::cerr << "Usage: blocking_tcp_echo_server <port> <id>\n";
+        if (argc != 6) {
+            std::cerr << "Usage: echo server <port> <id> <tested port> <player id> <player ip> <player port>\n";
             return 1;
         }
 
-        io_context io_context;
+        uint16_t port = std::atoi(argv[1]);
+        uint64_t node_id = uint64_t(std::atoi(argv[2]));
+        uint16_t dtm_t_port = std::atoi(argv[3]);
+        uint64_t player_id = uint64_t(std::atoi(argv[4]));
+        std::string player_ip = argv[5];
+        uint16_t player_port = std::atoi(argv[6]);
 
-        server(io_context, std::atoi(argv[1]), uint64_t(std::atoi(argv[2])));
+        std::string tested_addr = "0.0.0.0:" + std::to_string(dtm_t_port);
+        std::string player_addr = player_ip + ":" + std::to_string(player_port);
+        automata_setup_with_input(AUTO_ECHO, node_id, tested_addr.c_str(), player_id, player_addr.c_str());
+
+        io_context io_context;
+        server(io_context, port, node_id);
     }
     catch (std::exception &e) {
         std::cerr << "Exception: " << e.what() << "\n";
     }
 
     return 0;
+}
+
+
+int loop_incoming_input_from_player() {
+    uint64_t _output_source_node_id = 0;
+    uint64_t _output_dest_node_id = 0;
+    uint64_t _output_action_type = 0;
+    char _output_buf_output_action_json[40960];
+    uint64_t _buf_len;
+    uint64_t _output_len;
+
+    while (true) {
+        int ret = automata_next_input(
+             AUTO_ECHO,
+             &_output_source_node_id,
+             &_output_dest_node_id,
+             &_output_action_type,
+             _output_buf_output_action_json,
+             sizeof(_output_buf_output_action_json),
+             &_output_len);
+        if (ret < 0) {
+             return ret;
+        }
+        auto queue = get_sync_queue_for_remote(_output_source_node_id);
+        if (queue == nullptr) {
+            auto _ = create_sync_queue_for_remote(_output_source_node_id);
+        } else {
+            auto ch = global_channel();
+
+        }
+    }
 }

@@ -26,7 +26,7 @@ struct Args {
 
     /// Type name of the actions
     #[arg(short, long)]
-    out_db_path: Option<String>,
+    out_trace_db_path: Option<String>,
 
     /// Type intermediate database path
     #[arg(short, long)]
@@ -78,7 +78,7 @@ fn main() {
     }
     let file_name = path_buf.file_name().unwrap().to_str().unwrap().to_string();
 
-    let path_output = match &args.out_db_path {
+    let path_output = match &args.out_trace_db_path {
         Some(path) => { path.clone() }
         None => {
             let output_sqlite_path = match path_buf.parent() {

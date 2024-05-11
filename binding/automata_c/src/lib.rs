@@ -4,24 +4,48 @@ use sedeve_kit::dtm::automata;
 use num::FromPrimitive;
 
 
-/// Initialize an automata
+/// Set up an automata
 /// `_name`, the automata's name
-/// `_client_id`, client node id
-/// `_server_id`, server(dtm player) node id
-/// `_server_addr`, server(deterministic player to connect) network address [ip:port]
+/// `_tested_nid`, tested node's node id
+/// `_player_nid`, deterministic player's node id
+/// `_player_addr`, deterministic player's network address [ip:port]
 #[no_mangle]
-pub extern "C" fn automata_init_setup(
+pub extern "C" fn automata_setup(
     _name: *const c_char,
-    _client_id:u64,
-    _server_id: u64,
-    _server_addr: *const c_char
+    _tested_nid:u64,
+    _player_nid: u64,
+    _player_addr: *const c_char
 ) {
     let name = unsafe { CStr::from_ptr(_name) }.to_str().unwrap().to_string();
-    let server_addr = unsafe { CStr::from_ptr(_server_addr) }.to_str().unwrap().to_string();
-    automata::automata_init_setup(
+    let server_addr = unsafe { CStr::from_ptr(_player_addr) }.to_str().unwrap().to_string();
+    automata::automata_setup(
         name.as_str(),
-        _client_id,
-        _server_id,
+        _tested_nid,
+        _player_nid,
+        server_addr.as_str()
+    );
+}
+
+/// Set up an automata
+/// `_name`, the automata's name
+/// `_tested_nid`, tested node's node id
+/// `_tested_nid`, tested node's network address [ip:port]
+/// `_player_nid`, deterministic player's node id
+/// `_player_addr`, deterministic player's network address [ip:port]
+#[no_mangle]
+pub extern "C" fn automata_setup_with_input(
+    _name: *const c_char,
+    _tested_nid:u64,
+    _tested_addr:*const c_char,
+    _player_nid: u64,
+    _player_addr: *const c_char
+) {
+    let name = unsafe { CStr::from_ptr(_name) }.to_str().unwrap().to_string();
+    let server_addr = unsafe { CStr::from_ptr(_player_addr) }.to_str().unwrap().to_string();
+    automata::automata_setup(
+        name.as_str(),
+        _tested_nid,
+        _player_nid,
         server_addr.as_str()
     );
 }
@@ -93,7 +117,7 @@ pub extern "C" fn automata_next_input(
 /// `_dest_node_id`, dest node id
 /// `_message_json_string`, message in json reprensentaion
 #[no_mangle]
-pub extern "C" fn automata_action_to_player(
+pub extern "C" fn automata_action(
     _name:*const c_char,
     _action_type:u64,
     _action_begin_end:u64,

@@ -1,0 +1,9 @@
+{
+  "A_s1": 1,
+  "A_s2": 2,
+  "A_c1": 100,
+  "A_c2": 200,
+  "A_m1": "message 1",
+  "A_m2": "message 2",
+  "INVALID_NODE_ID": null
+}

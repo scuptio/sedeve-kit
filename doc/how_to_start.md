@@ -65,10 +65,10 @@ The trace format is represented in JSON, similar to [this JSON file](../src/data
 The [action incoming interface](../src/player/action_incoming.rs) can be used to read traces.
 
 
-The trace_gen's command lines:
+The sedeve_trace_gen's command lines:
 
 ``` 
-Usage: trace_gen [OPTIONS]
+Usage: sedeve_trace_gen [OPTIONS]
 
 Options:
   -d, --dot-path <DOT_PATH>
