@@ -27,7 +27,7 @@ use tokio::time::Duration;
 use tokio::time::sleep;
 use tracing::{debug, error, Instrument, trace, trace_span};
 
-use crate::action::action_serde_json_value::ActionSerdeJsonValue;
+use crate::action::action_json::ActionJson;
 use crate::action::action_type::ActionType;
 use crate::dtm::action_executor::ActionExecutor;
 use crate::dtm::action_incoming::ActionIncoming;
@@ -215,7 +215,7 @@ impl DTMServerHandler {
         input: Arc<dyn ActionIncoming>,
         f: &mut F,
     ) -> Res<()>
-        where F: FnMut(ActionSerdeJsonValue, u64) -> Res<()>
+        where F: FnMut(ActionJson, u64) -> Res<()>
     {
         let mut index = 0;
         loop {
@@ -238,7 +238,7 @@ impl DTMServerHandler {
             };
 
             index += 1;
-            let value = ActionSerdeJsonValue::from_json_value(value)?;
+            let value = ActionJson::from_json_value(value)?;
             f(value, index)?;
         }
         Ok(())
@@ -247,22 +247,22 @@ impl DTMServerHandler {
 
     fn input_to_per_node_trace(
         input: Arc<dyn ActionIncoming>,
-    ) -> Res<HashMap<NID, Vec<(ActionSerdeJsonValue, u64)>>> {
-        let mut map: HashMap<NID, Vec<(ActionSerdeJsonValue, u64)>> = HashMap::new();
-        let mut f = |v: ActionSerdeJsonValue, index: u64| -> Res<()> {
+    ) -> Res<HashMap<NID, Vec<(ActionJson, u64)>>> {
+        let mut map: HashMap<NID, Vec<(ActionJson, u64)>> = HashMap::new();
+        let mut f = |v: ActionJson, index: u64| -> Res<()> {
             let action_type = v.action_type()?;
 
             let nid = match action_type {
                 ActionType::Input |
                 ActionType::Setup |
                 ActionType::Check => {
-                    v.dest_node_id()?
+                    v.dest_nid()?
                 }
                 ActionType::Internal => {
-                    v.dest_node_id()?
+                    v.dest_nid()?
                 }
                 ActionType::Output => {
-                    v.source_node_id()?
+                    v.source_nid()?
                 }
             };
             if !map.contains_key(&nid) {
@@ -280,9 +280,9 @@ impl DTMServerHandler {
 
     fn input_to_one_trace(
         input: Arc<dyn ActionIncoming>,
-    ) -> Res<Vec<(ActionSerdeJsonValue, u64)>> {
-        let mut vec: Vec<(ActionSerdeJsonValue, u64)> = Vec::new();
-        let mut f = |v: ActionSerdeJsonValue, index: u64| -> Res<()> {
+    ) -> Res<Vec<(ActionJson, u64)>> {
+        let mut vec: Vec<(ActionJson, u64)> = Vec::new();
+        let mut f = |v: ActionJson, index: u64| -> Res<()> {
             vec.push((v, index));
             Ok(())
         };
@@ -295,7 +295,7 @@ impl DTMServerHandler {
         dtm_server_node_id: NID,
         node_id: Option<NID>,
         notify: Notifier,
-        trace: Vec<(ActionSerdeJsonValue, u64)>,
+        trace: Vec<(ActionJson, u64)>,
         executor: Arc<ActionExecutor>,
         sender: Arc<dyn SenderAsync<SerdeJsonString>>,
         output_action_sequential: bool,
@@ -337,13 +337,13 @@ impl DTMServerHandler {
                 || action_type == ActionType::Check
             {
                 if action_type == ActionType::Input {
-                    let dest_nid = value.dest_node_id()?;
+                    let dest_nid = value.dest_nid()?;
                     let _ = found_input_action.insert(dest_nid);
                 }
                 true
             } else {
                 if action_type == ActionType::Internal {
-                    let nid = value.source_node_id()?;
+                    let nid = value.source_nid()?;
                     // send message to node when only there are no previous input actions.
                     !found_input_action.contains(&nid)
                 } else {
@@ -354,11 +354,11 @@ impl DTMServerHandler {
             if need_send_message_to_node {
                 waiter.wait_finish_prefix(index).await;
                 let value = value.serde_json_value_ref();
-                let json_value = ActionSerdeJsonValue::from_json_value(value.clone())?;
-                let dest_node_id = json_value.dest_node_id()?;
+                let json_value = ActionJson::from_json_value(value.clone())?;
+                let dest_node_id = json_value.dest_nid()?;
                 let action_message = SerdeJsonString::from_json_value(
                     json_value.message_payload_json_value()?);
-                trace!("action message: {:?}", action_message);
+                debug!("action message: {:?}", action_message);
                 let m = Message::new(action_message, dtm_server_node_id, dest_node_id);
                 sender.send(m, OptSend::default().enable_no_wait(false))
                     .instrument(trace_span!("message to node"))
@@ -459,7 +459,7 @@ impl DTMServerHandler {
         match message {
             MessageControl::ActionReq { id, action, begin } => {
                 let v = action.to_serde_json_value();
-                let action_json = ActionSerdeJsonValue::from_value(v.into_serde_json_value());
+                let action_json = ActionJson::from_value(v.into_serde_json_value());
                 self.handler.executor.expect_action_in_trace(source, dest, id, action_json, begin, channel).await?;
             }
             MessageControl::ActionACK { id: _ } => {

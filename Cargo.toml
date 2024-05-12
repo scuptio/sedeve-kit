@@ -1,13 +1,13 @@
 [[bin]]
-name = "player"
+name = "sedeve_player"
 path = "src/player/bin/main.rs"
 
 [[bin]]
-name = "rust_gen"
+name = "sedeve_rust_gen"
 path = "src/rust_gen/bin/main.rs"
 
 [[bin]]
-name = "trace_gen"
+name = "sedeve_trace_gen"
 path = "src/trace_gen/main.rs"
 
 
@@ -67,5 +67,6 @@ num = "0.4"
 num-derive = "0.4"
 num-traits = "0.2"
 md-5 = "0.10.6"
+toml = "0.8.12"
 
 

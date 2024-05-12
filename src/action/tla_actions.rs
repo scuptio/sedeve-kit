@@ -9,7 +9,7 @@ use serde_json::{Map, Number, Value};
 use tracing::error;
 
 use crate::action::{constant, serde_json_util};
-use crate::action::action_serde_json_value::ActionSerdeJsonValue;
+use crate::action::action_json::ActionJson;
 use crate::action::action_type::ActionType;
 use crate::action::res_serde::res_serde;
 use crate::action::tal_vars_parser::TLAVarsParser;
@@ -157,7 +157,7 @@ impl TLAAction {
         })
     }
 
-    pub fn to_action_json(&self) -> Res<ActionSerdeJsonValue> {
+    pub fn to_action_json(&self) -> Res<ActionJson> {
         let payload = {
             let mut payload = self.message.payload.clone();
             payload = get_typed_enum(self.message.name.clone(), payload);
@@ -177,7 +177,7 @@ impl TLAAction {
             map.insert(self.action_type.to_string(), message);
             Value::Object(map)
         };
-        ActionSerdeJsonValue::from_json_value(action)
+        ActionJson::from_json_value(action)
     }
 }
 

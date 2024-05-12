@@ -1,5 +1,5 @@
 pub mod action_type;
-pub mod action_serde_json_value;
+pub mod action_json;
 pub mod tla_actions;
 pub mod constant;
 pub mod serde_json_util;
@@ -15,4 +15,5 @@ mod res_serde;
 pub mod panic;
 pub mod tla_typed_value;
 mod test_tla_typed_value;
+pub mod message_json;
 

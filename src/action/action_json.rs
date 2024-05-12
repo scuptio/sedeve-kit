@@ -11,17 +11,16 @@ use serde_json::{json, Value};
 
 use crate::action::action_message::ActionMessage;
 use crate::action::action_type::ActionType;
-use crate::action::constant::{MESSAGE_FIELD_DEST, MESSAGE_FIELD_SOURCE};
+use crate::action::message_json::MessageJson;
 use crate::action::res_serde::res_serde;
-use crate::action::serde_json_util::json_util_map_get_value;
 
 #[derive(Clone, Debug)]
-pub struct ActionSerdeJsonValue {
+pub struct ActionJson {
     value: SerdeJsonValue,
 }
 
 
-impl Deref for ActionSerdeJsonValue {
+impl Deref for ActionJson {
     type Target = SerdeJsonValue;
 
     fn deref(&self) -> &SerdeJsonValue {
@@ -29,13 +28,13 @@ impl Deref for ActionSerdeJsonValue {
     }
 }
 
-impl DerefMut for ActionSerdeJsonValue {
+impl DerefMut for ActionJson {
     fn deref_mut(&mut self) -> &mut SerdeJsonValue {
         &mut self.value
     }
 }
 
-impl ActionSerdeJsonValue {
+impl ActionJson {
     pub fn from_value(value: Value) -> Self {
         Self {
             value: SerdeJsonValue::new(value),
@@ -88,19 +87,21 @@ impl ActionSerdeJsonValue {
         Err(ET::JSONError("no action type".to_string()))
     }
 
-    pub fn source_node_id(&self) -> Res<NID> {
-        self.handle_object_key_value(|_k, v| {
-            Self::get_node_id(v, MESSAGE_FIELD_SOURCE)
+    pub fn source_nid(&self) -> Res<NID> {
+        self.handle_object_one_key_value(|_k, v| {
+            let ms = MessageJson::new(v);
+            ms.source_nid()
         })
     }
 
-    pub fn dest_node_id(&self) -> Res<NID> {
-        self.handle_object_key_value(|_k, v| {
-            Self::get_node_id(v, MESSAGE_FIELD_DEST)
+    pub fn dest_nid(&self) -> Res<NID> {
+        self.handle_object_one_key_value(|_k, v| {
+            let ms = MessageJson::new(v);
+            ms.dest_nid()
         })
     }
 
-    fn handle_object_key_value<F, R>(&self, f: F) -> Res<R>
+    fn handle_object_one_key_value<F, R>(&self, f: F) -> Res<R>
         where F: Fn(&String, &Value) -> Res<R>
     {
         let map = res_option(self.value.serde_json_value_ref().as_object())?;
@@ -112,22 +113,15 @@ impl ActionSerdeJsonValue {
         }
         return Err(ET::SerdeError("json format error".to_string()));
     }
-
-    fn get_node_id(value: &Value, key: &str) -> Res<NID> {
-        let map = res_option(value.as_object())?;
-        let v = json_util_map_get_value(map, key)?;
-        let nid = res_option(v.as_u64())? as NID;
-        Ok(nid)
-    }
 }
 
-impl Hash for ActionSerdeJsonValue {
+impl Hash for ActionJson {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.value.hash(state);
     }
 }
 
-impl PartialEq for ActionSerdeJsonValue {
+impl PartialEq for ActionJson {
     fn eq(&self, other: &Self) -> bool {
         self.value.eq(&other.value)
     }
@@ -137,7 +131,7 @@ impl PartialEq for ActionSerdeJsonValue {
     }
 }
 
-impl Eq for ActionSerdeJsonValue {}
+impl Eq for ActionJson {}
 
 
 #[cfg(test)]
@@ -151,8 +145,8 @@ mod test {
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
 
+    use crate::action::action_json::ActionJson;
     use crate::action::action_message::ActionMessage;
-    use crate::action::action_serde_json_value::ActionSerdeJsonValue;
 
     #[derive(
     Clone,
@@ -176,7 +170,7 @@ mod test {
         let mut map = HashMap::new();
         for i in 0..10i32 {
             ActionMessage::Input(Message::<M>::new(M { v: 1 }, 2, 1));
-            let j = ActionSerdeJsonValue::from_json_value(Value::from(i)).unwrap();
+            let j = ActionJson::from_json_value(Value::from(i)).unwrap();
             let n = map.insert(j, i);
             assert!(n.is_none());
         }
@@ -234,8 +228,8 @@ mod test {
 }"#;
         let v1 = serde_json::from_str(s1).unwrap();
         let v2 = serde_json::from_str(s2).unwrap();
-        let a1 = ActionSerdeJsonValue::from_json_value(v1).unwrap();
-        let a2 = ActionSerdeJsonValue::from_json_value(v2).unwrap();
+        let a1 = ActionJson::from_json_value(v1).unwrap();
+        let a2 = ActionJson::from_json_value(v2).unwrap();
         assert_eq!(a1, a2);
         let mut h1 = DefaultHasher::new();
         let mut h2 = DefaultHasher::new();

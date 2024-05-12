@@ -11,7 +11,7 @@ use tokio::sync::oneshot::{channel, Sender};
 use tracing::trace;
 use uuid::Uuid;
 
-use crate::action::action_serde_json_value::ActionSerdeJsonValue;
+use crate::action::action_json::ActionJson;
 use crate::action::action_type::{ActionBeginEnd, ActionType};
 use crate::dtm::async_action_driver::AsyncActionDriver;
 use crate::dtm::msg_ctrl::MessageControl;
@@ -42,7 +42,7 @@ impl AsyncActionDriver for AsyncActionDriverImpl {
         action_type: ActionType,
         action_begin_end: ActionBeginEnd,
         source: NID, dest: NID, payload_json: String) -> Res<()> {
-        let action = ActionSerdeJsonValue::from_json(action_type, source, dest, payload_json)?.to_serde_json_string();
+        let action = ActionJson::from_json(action_type, source, dest, payload_json)?.to_serde_json_string();
         match action_begin_end {
             ActionBeginEnd::Begin => {
                 self.inner.async_begin_action(action).await
