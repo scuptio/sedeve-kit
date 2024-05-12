@@ -9,7 +9,7 @@ use tokio::sync::mpsc::UnboundedSender;
 use tokio::time::sleep;
 use tracing::{error, trace};
 
-use crate::action::action_serde_json_value::ActionSerdeJsonValue;
+use crate::action::action_json::ActionJson;
 use crate::action::action_type::ActionType;
 use crate::dtm::action_reorder::ActionReorder;
 use crate::dtm::msg_ctrl::MessageControl;
@@ -58,7 +58,7 @@ impl ActionExecutor {
     }
 
 
-    pub async fn expect_node_sync(&self, action: &ActionSerdeJsonValue) -> Res<bool> {
+    pub async fn expect_node_sync(&self, action: &ActionJson) -> Res<bool> {
         let action_type = action.action_type()?;
         let msg = action.serde_json_value_ref();
         match action_type {
@@ -122,7 +122,7 @@ impl ActionExecutor {
         source: NID,
         dest: NID,
         id: String, // request message id
-        action: ActionSerdeJsonValue,
+        action: ActionJson,
         begin: bool,
         ch_sender: UnboundedSender<Message<MessageControl>>,
     ) -> Res<()> {
@@ -157,7 +157,7 @@ impl ActionExecutor {
         Ok(())
     }
 
-    async fn expect_action_in_trace_gut(&self, action: &ActionSerdeJsonValue, begin: bool) -> Res<bool> {
+    async fn expect_action_in_trace_gut(&self, action: &ActionJson, begin: bool) -> Res<bool> {
         trace!("enter, SIMULATOR: receive Action {:?}, {}", action, begin);
         let action_type = action.action_type()?;
         match action_type {

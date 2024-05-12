@@ -1,11 +1,9 @@
 use num::FromPrimitive;
 use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
-
 use sedeve_kit::action::action_type::{ActionBeginEnd, ActionType};
-use sedeve_kit::dtm::automata;
 use sedeve_kit::action::action_type;
-
+use sedeve_kit::dtm::automata;
 
 #[pyfunction]
 pub fn action_begin() -> PyResult<u64> {
@@ -84,6 +82,13 @@ pub fn automata_clear(_name: String) {
     automata::automata_clear(_name.as_str())
 }
 
+/// Close input channel
+/// `_name`, the automata's name
+#[pyfunction]
+pub fn automata_close_input(_name: String) {
+    automata::automata_close_input(_name.as_str())
+}
+
 /// Is an automata named `name` enable
 #[pyfunction]
 pub fn automata_enable(_name: String) -> bool {
@@ -94,18 +99,18 @@ pub fn automata_enable(_name: String) -> bool {
 /// `_name`, the automata's name
 /// `_source_node_id`, source node id
 /// `_dest_node_id`, dest node id
-/// `_action_type`, action type
+
 /// `_output_json_message`, output message
 #[pyfunction]
 pub fn automata_next_input(
     _name: String,
-) -> PyResult<(u64, u64, u64, String)> {
+) -> PyResult<(u64, u64, String)> {
     let r = automata::automata_next_input(
         _name.as_str()
     );
     return match r {
-        Ok((source, dest, action_type, message)) => {
-            Ok((source, dest, action_type as u64, message))
+        Ok((source, dest, message)) => {
+            Ok((source, dest, message))
         }
         Err(_e) => {
             Err(PyTypeError::new_err(_e.to_string()))

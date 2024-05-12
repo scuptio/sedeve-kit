@@ -17,11 +17,6 @@ link_directories(
     ../../binding/automata_c/target/release
 )
 
-add_executable(
-    echo_client
-    inst_context.cpp
-    echo_client.cpp
-)
 
 add_executable(
     echo_server
@@ -36,9 +31,4 @@ target_link_libraries(
     boost_thread
 )
 
-target_link_libraries(
-    echo_client
-    automata_c
-    boost_json
-    boost_thread
-)
+

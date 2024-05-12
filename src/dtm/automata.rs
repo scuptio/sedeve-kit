@@ -11,7 +11,6 @@ use scupt_net::io_service_sync::IOServiceSync;
 use scupt_net::message_receiver_sync::ReceiverSync;
 use scupt_net::notifier::Notifier;
 use scupt_util::error_type::ET;
-use scupt_util::logger::logger_setup;
 use scupt_util::message::{Message, MsgTrait};
 use scupt_util::node_id::NID;
 use scupt_util::res::Res;
@@ -20,8 +19,8 @@ use scupt_util::serde_json_string::SerdeJsonString;
 use tokio::runtime::Builder;
 use tracing::{debug, error};
 
-use crate::action::action_serde_json_value::ActionSerdeJsonValue;
 use crate::action::action_type::{ActionBeginEnd, ActionType};
+use crate::action::message_json::MessageJson;
 use crate::dtm::async_action_driver::AsyncActionDriver;
 use crate::dtm::dtm_client::DTMClient;
 use crate::dtm::sync_action_driver::SyncActionDriver;
@@ -43,12 +42,18 @@ pub fn automata_setup_with_input(
     player_nid: NID,
     player_addr: &str,
 ) {
+    debug!("setup with input id {} {}", tested_nid, tested_addr);
     action_driver_setup_gut(name, tested_nid, Some(tested_addr), player_nid, player_addr);
 }
 
 /// Clean an automata setting
 pub fn automata_clear(name: &str) {
     action_driver_unset_gut(name)
+}
+
+/// Close input
+pub fn automata_close_input(name: &str) {
+    action_driver_close_input(name)
 }
 
 
@@ -61,11 +66,13 @@ pub fn automata_enable(name: &str) -> bool {
 /// Automata read next input action
 pub fn automata_next_input(
     _automata_name: &str
-) -> Res<(NID, NID, ActionType, String)> {
+) -> Res<(NID, NID, String)> {
+    debug!("input {}", _automata_name);
     let opt = __DRIVERS.get(&_automata_name.to_string());
     let driver = match opt {
         Some(e) => { Arc::new(e.get().clone()) }
         None => {
+            debug!("cannot get automata {} node", _automata_name);
             return Err(ET::NoneOption);
         }
     };
@@ -73,13 +80,33 @@ pub fn automata_next_input(
     let receiver = driver.sync_input_action().unwrap();
 
     let msg = receiver.receive()?;
+
+    let _m = msg.clone();
+
     let json = msg.payload().to_serde_json_value().into_serde_json_value();
-    let action = ActionSerdeJsonValue::from_json_value(json)?;
-    let source = action.source_node_id()?;
-    let dest = action.dest_node_id()?;
-    let action_type = action.action_type()?;
-    let message = action.message_payload_json_value()?.to_string();
-    return Ok((source, dest, action_type, message));
+    let mj = MessageJson::new(&json);
+    let r_source = mj.source_nid();
+    let source = match r_source {
+        Ok(a) => a,
+        Err(_e) => { panic!("{:?}, json error {}, no source node id", mj, _e) }
+    };
+    let r_dest = mj.dest_nid();
+    let dest = match r_dest {
+        Ok(a) => a,
+        Err(_e) => { panic!("{:?}, json error {}, no dest node id", mj, _e) }
+    };
+
+
+    let r_message = mj.payload();
+    let message = match r_message {
+        Ok(a) => a.to_string(),
+        Err(_e) => { panic!("{:?}, json error {}, no message payload", mj, _e) }
+    };
+
+
+    debug!("input {:?}", _m);
+
+    return Ok((source, dest, message));
 }
 
 pub fn automata_send_action_to_player(
@@ -395,6 +422,17 @@ fn action_driver_unset_gut(name: &str) {
     let _ = __DRIVERS.remove(&name.to_string());
 }
 
+
+fn action_driver_close_input(name: &str) {
+    let opt = __DRIVERS.get(&name.to_string());
+    match opt {
+        Some(t) => {
+            t.get().close_incoming();
+        }
+        None => {}
+    }
+}
+
 fn action_driver_setup_gut(
     name: &str,
     tested_nid: NID,
@@ -412,7 +450,6 @@ fn action_driver_setup_gut(
     });
     let _tested_addr = tested_addr.clone();
     if !__DRIVERS.contains(name) {
-        logger_setup("debug");
         let driver = __ActionDriver::new(tested_nid, tested_addr, player_nid, addr).unwrap();
         let opt_d = __DRIVERS.insert(name.to_string(), driver);
         debug!("create driver tested node:{} addr {:?}, player node:{} addr:{}", tested_nid, _tested_addr, player_nid, addr);
@@ -459,6 +496,8 @@ struct __ActionDriver {
     _dtm_client: Arc<DTMClient>,
     _driver_async: Arc<dyn AsyncActionDriver>,
     _driver_sync: Arc<dyn SyncActionDriver>,
+    _client_stop: Notifier,
+    _server_stop: Notifier,
     _server: Arc<Mutex<Option<Arc<dyn IOServiceSync<SerdeJsonString>>>>>,
 }
 
@@ -466,7 +505,7 @@ struct __ActionDriver {
 ///
 /// `enable_input_channel`
 /// receive input action from incoming channel
-/// When the a node build with scupt-net library, the library can automatically translate the
+/// When the node build with scupt-net library, the library can automatically translate the
 /// SerdeJsonString action message to the expected message, and we need no extra receiver channel of
 /// input action, this value must set by `false`
 impl __ActionDriver {
@@ -482,11 +521,11 @@ impl __ActionDriver {
         let r = res_io(r_build)?;
         let runtime = Arc::new(r);
         let node_name = format!("driver_{}->{}", tested_nid, player_nid);
-        let notifier = Notifier::new_with_name(node_name.clone());
+        let client_stop_notifier = Notifier::new_with_name(node_name.clone() + "_client");
         let cli = DTMClient::new(
             node_name.clone(), tested_nid, player_nid,
             player_addr,
-            notifier.clone())?;
+            client_stop_notifier.clone())?;
 
 
         let mut vec_thd = vec![];
@@ -504,6 +543,8 @@ impl __ActionDriver {
         };
         let async_driver = cli.new_async_driver()?;
         let sync_driver = cli.new_sync_driver()?;
+
+        let server_stop_notifier = Notifier::new_with_name(node_name.clone() + "_server");
         let opt_server = if let Some(addr) = opt_tested_addr  {
             let opt = IOServiceOpt {
                 num_message_receiver: 1,
@@ -512,7 +553,7 @@ impl __ActionDriver {
                 port_debug: None,
             };
             let io_service = IOService::new_sync_service(
-                tested_nid, node_name.clone(), opt, notifier.clone())?;
+                tested_nid, node_name.clone(), opt, server_stop_notifier.clone())?;
             {
                 let r = runtime.clone();
                 let service = io_service.clone();
@@ -539,13 +580,21 @@ impl __ActionDriver {
             _dtm_client: Arc::new(cli),
             _driver_async: async_driver,
             _driver_sync: sync_driver,
+            _client_stop: client_stop_notifier,
+            _server_stop: server_stop_notifier,
             _server: Arc::new(Mutex::new(opt_server)),
         };
         Ok(s)
     }
 
     fn close(&self) {
+        self._client_stop.notify_all();
+        self._server_stop.notify_all();
         self._dtm_client.close();
+    }
+
+    fn close_incoming(&self) {
+        self._server_stop.notify_all();
     }
 
     fn sync_input_action(&self) -> Option<Arc<dyn ReceiverSync<SerdeJsonString>>> {
@@ -556,10 +605,14 @@ impl __ActionDriver {
                 if receivers.len() == 1 {
                     Some(receivers[0].clone())
                 } else {
+                    debug!("sync receiver len {}", receivers.len());
                     None
                 }
             }
-            None => { None }
+            None => {
+                debug!("sync server None");
+                None
+            }
         };
     }
 }

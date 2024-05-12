@@ -18,8 +18,8 @@ make
 
 ## Run Model Checking, and output action database
     
-1. Open echo.tla
-
+1. Open [echo.tla](spec/echo.tla)
+    
     File -> Open Spec -> Add New Spec -> Browse.. -> choose echo.tla -> Finish
 
 2. Setting the model, New Model ->
@@ -52,15 +52,14 @@ make
    ```
   
    ```json
-    {
-        "A_s1": 1,
-        "A_s2": 2,
-        "A_c1": 100,
-        "A_c2": 200,
-        "A_m1": "message 1",
-        "A_m2": "message 2",
-        "INVALID_NODE_ID": null
-    }
+   {
+      "A_s1": 10,
+      "A_s2": 20,
+      "A_c1": 100,
+      "A_c2": 200,
+      "A_m1": "message 1",
+      "A_m2": "message 2"
+   }
     ```
 
 2. Generate trace data
@@ -80,19 +79,22 @@ make
     ```
 
     ```toml
-    trace_db_path = "/tmp/echo/trace.db"
-    
-    [player_addr]
-    nid = 1
-    addr = "127.0.0.1:24001"
-    
-    [[peer_addr]]
-    nid = 2
-    addr = "127.0.0.1:24002"
-    
-    [[peer_addr]]
-    nid = 3
-    addr = "127.0.0.1:24003"
+   log_level = "debug"
+   
+   trace_db_path = "/tmp/echo/trace.db"
+   
+   [player_addr]
+   nid = 1
+   addr = "127.0.0.1:24000"
+   
+   [[peer_addr]]
+   nid = 10
+   addr = "127.0.0.1:24001"
+   
+   [[peer_addr]]
+   nid = 20
+   addr = "127.0.0.1:24002"
+   ```
 
 2. Run the player
    ```shell
@@ -100,6 +102,7 @@ make
    ```
 
 3. Run the deterministic testing of echo
+   CONSTANT
    ```shell
    python dtm_echo.py
    ```

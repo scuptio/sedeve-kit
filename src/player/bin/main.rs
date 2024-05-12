@@ -1,5 +1,3 @@
-mod player_conf;
-use player_conf::PlayerConf;
 use std::collections::HashMap;
 use std::fs::read_to_string;
 use std::net::SocketAddr;
@@ -11,11 +9,14 @@ use scupt_util::node_id::NID;
 use scupt_util::res::Res;
 use scupt_util::res_of::{res_io, res_parse};
 use toml;
+use tracing::debug;
 
+use player_conf::PlayerConf;
 use sedeve_kit::dtm::action_incoming_factory::ActionIncomingFactory;
 use sedeve_kit::dtm::dtm_player::DTMPlayer;
 use sedeve_kit::trace::trace_db::TraceDB;
 
+mod player_conf;
 
 /// action definition to Rust code template
 #[derive(Parser, Debug)]
@@ -30,13 +31,14 @@ fn player_gut(db_path: String, player_id: NID, player_address: SocketAddr, peers
     let db = TraceDB::new(db_path)?;
 
     let vec = db.read_trace()?;
-    for s in vec {
+    for (i, s) in vec.iter().enumerate() {
         let notifier = Notifier::new();
         let n = notifier.clone();
-        let incoming = ActionIncomingFactory::action_incoming_from_string(s)?;
+        let incoming = ActionIncomingFactory::action_incoming_from_string(s.clone())?;
         let f_done = move || {
             n.task_notify_all();
         };
+        debug!("DTM player run trace {} {}", i + 1, s);
         DTMPlayer::run_trace(
             player_id,
             player_address.clone(),

@@ -1,0 +1,15 @@
+log_level = "debug"
+
+trace_db_path = "/tmp/echo/trace.db"
+
+[player_addr]
+nid = 1
+addr = "127.0.0.1:24000"
+
+[[peer_addr]]
+nid = 10
+addr = "127.0.0.1:24001"
+
+[[peer_addr]]
+nid = 20
+addr = "127.0.0.1:24002"

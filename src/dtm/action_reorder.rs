@@ -9,7 +9,7 @@ use tokio::time::Duration;
 use tokio::time::sleep;
 use tracing::{Instrument, trace, trace_span};
 
-use crate::action::action_serde_json_value::ActionSerdeJsonValue;
+use crate::action::action_json::ActionJson;
 use crate::dtm::action_channel::{ActionReceiver, ActionSender, io_event_channel};
 
 type ActionCh = (ActionSender, ActionReceiver, Arc<Mutex<u64>>);
@@ -17,7 +17,7 @@ type ActionCh = (ActionSender, ActionReceiver, Arc<Mutex<u64>>);
 #[derive(Clone)]
 pub struct ActionReorder {
     seconds_timeout: u64,
-    hash_map: Arc<Mutex<HashMap<ActionSerdeJsonValue,
+    hash_map: Arc<Mutex<HashMap<ActionJson,
         ActionCh>>
     >,
 }
@@ -31,14 +31,14 @@ impl ActionReorder {
         }
     }
 
-    pub async fn wait_action(&self, action: &ActionSerdeJsonValue) -> Res<bool> {
+    pub async fn wait_action(&self, action: &ActionJson) -> Res<bool> {
         let (_, r) = self.get_channel(action).await;
         let ok = select! {
             recv = r.recv() => {
                 self.dec_ref_num(action).await;
                 let a_s = recv?;
                 let value:SerdeJsonValue = a_s.to_serde_json_value();
-                let a2 = ActionSerdeJsonValue::from_value(value.into_serde_json_value());
+                let a2 = ActionJson::from_value(value.into_serde_json_value());
                 assert!(a2.eq(action));
                 true
             }
@@ -49,14 +49,14 @@ impl ActionReorder {
         Ok(ok)
     }
 
-    pub async fn add_action(&self, action: &ActionSerdeJsonValue) -> Res<()> {
+    pub async fn add_action(&self, action: &ActionJson) -> Res<()> {
         let (s, _) = self.get_channel(action).await;
         s.send(action.to_serde_json_string())?;
         self.dec_ref_num(action).await;
         Ok(())
     }
 
-    async fn get_channel(&self, action: &ActionSerdeJsonValue) -> (ActionSender, ActionReceiver) {
+    async fn get_channel(&self, action: &ActionJson) -> (ActionSender, ActionReceiver) {
         let mut map = self.hash_map.lock().await;
         let opt_recv = map.get(&action);
         match opt_recv {
@@ -77,7 +77,7 @@ impl ActionReorder {
         }
     }
 
-    async fn dec_ref_num(&self, action: &ActionSerdeJsonValue) {
+    async fn dec_ref_num(&self, action: &ActionJson) {
         let map = self.hash_map.lock().await;
         let opt_recv = map.get(&action);
         match opt_recv {

@@ -32,6 +32,10 @@ void automata_setup_with_input(const char *_name,
 /// `_name`, the automata's name
 void automata_clear(const char *_name);
 
+/// Close input channel
+/// `_name`, the automata's name
+void automata_close_input(const char *_name);
+
 /// Is an automata named `name` enable
 int32_t automata_enable(const char *_name);
 
@@ -39,14 +43,12 @@ int32_t automata_enable(const char *_name);
 /// `_name`, the automata's name
 /// `_output_source_node_id`, source node id
 /// `_output_dest_node_id`, dest node id
-/// `_output_action_type`, action type
 /// `_output_buf_output_action_json`, output buffer
 /// `_buf_len`, the buffer length
 /// `_output_len`, write bytes to output buffer
 int32_t automata_next_input(const char *_name,
                             uint64_t *_output_source_node_id,
                             uint64_t *_output_dest_node_id,
-                            uint64_t *_output_action_type,
                             char *_output_buf_output_action_json,
                             uint64_t _buf_len,
                             uint64_t *_output_len);

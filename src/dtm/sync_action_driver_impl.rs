@@ -10,7 +10,7 @@ use tokio::sync::mpsc::UnboundedSender;
 use tracing::trace;
 use uuid::Uuid;
 
-use crate::action::action_serde_json_value::ActionSerdeJsonValue;
+use crate::action::action_json::ActionJson;
 use crate::action::action_type::{ActionBeginEnd, ActionType};
 use crate::dtm::msg_ctrl::MessageControl;
 use crate::dtm::sync_action_driver::SyncActionDriver;
@@ -36,7 +36,7 @@ impl SyncActionDriverImpl {
 
 impl SyncActionDriver for SyncActionDriverImpl {
     fn action(&self, action_type: ActionType, action_begin_end: ActionBeginEnd, source_node_id: NID, dest_node_id: NID, action_json_str: String) -> Res<()> {
-        let action = ActionSerdeJsonValue::from_json(action_type, source_node_id, dest_node_id, action_json_str)?.to_serde_json_string();
+        let action = ActionJson::from_json(action_type, source_node_id, dest_node_id, action_json_str)?.to_serde_json_string();
         match action_begin_end {
             ActionBeginEnd::Begin => {
                 self.inner.async_begin_action(action)
