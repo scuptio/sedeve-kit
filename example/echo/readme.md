@@ -102,7 +102,7 @@ make
    ```
 
 3. Run the deterministic testing of echo
-   CONSTANT
+
    ```shell
    python dtm_echo.py
    ```
