@@ -19,7 +19,7 @@ To bridge the gap between design and implementation,
 the tool makes the implementation a precise refinement of the design. 
 Think of the design as a low-resolution animation, containing only the keyframes. The implementation, on the other hand, is a high-definition animation that not only preserves the keyframes but also adds more details. This ensures a seamless transition from concept to reality and aligns the original design while adding the necessary details for the implementation.
 
-![architecture](doc/figure/keyframe.jpg)
+![architecture](doc/figure/sedeve-kit.png)
 
 
 ## Architecture
@@ -35,7 +35,7 @@ The architecture of **sedeve-kit** is as the following figure, which includes th
 **S-Net**: Library to build network channel
 
 
-![architecture](doc/figure/architecture.jpg)
+![architecture](doc/figure/architecture.png)
 
 ## Workflow
 
