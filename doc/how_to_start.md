@@ -7,9 +7,8 @@ you need to configure the [TLA+ toolbox](https://lamport.azurewebsites.net/tla/t
 
 Follow these steps to set it up:
 
-1. 
-Download the [SedeveModules jar](https://github.com/scuptio/SedeveModules/releases)
-We developed  TLA+ modules 
+1. Download the [SedeveModules jar](https://github.com/scuptio/SedeveModules/releases). 
+We developed TLA+ modules 
 [StateDB](https://github.com/scuptio/SedeveModules/blob/master/modules/StateDB.tla), 
 [GenID](https://github.com/scuptio/SedeveModules/blob/master/modules/GenID.tla) .
 
@@ -85,7 +84,6 @@ The figure below illustrates how the *deterministic player* reorders the actions
 The physical system will align with the logical model, ensuring consistency. 
 Our framework incorporates various macros to facilitate the implementation of *anchor actions* 
 that verify the coherence between our source-level implementation and abstract-level design.
-
 
 
 ### Implement the Rust code
