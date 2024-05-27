@@ -2,7 +2,7 @@
 ## Prerequisite
 
 
-We utilize [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) as our parser generator tool for the TLA+ toolbox output dot file.
+We utilize [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) .
 
 ### Install tree-sitter-cli:
 
