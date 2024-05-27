@@ -12,7 +12,7 @@ We developed TLA+ modules
 [StateDB](https://github.com/scuptio/SedeveModules/blob/master/modules/StateDB.tla), 
 [GenID](https://github.com/scuptio/SedeveModules/blob/master/modules/GenID.tla) .
 
-Download the [SQLite JDBC driver jar](https://github.com/xerial/sqlite-jdbc/releases/download/3.45.3.0/sqlite-jdbc-3.45.3.0.jar)
+    Download the [SQLite JDBC driver jar](https://github.com/xerial/sqlite-jdbc/releases/download/3.45.3.0/sqlite-jdbc-3.45.3.0.jar)
 
 2. In tla+ toolbox, go to
 
@@ -20,7 +20,8 @@ Download the [SQLite JDBC driver jar](https://github.com/xerial/sqlite-jdbc/rele
 
    Specify TLA+ library path option of *SedeveModules*,  *SQLite JDBC driver*
 
-<img src="../doc/figure/set_library_path_locations.png" width="50%" height="50%">
+   
+   <img src="../doc/figure/set_library_path_locations.png" width="50%" height="50%">
 
 ## Write TLA+ specification
 
@@ -45,7 +46,10 @@ to specify the action of [I/O automata](doc/model_the_system.md) and output the 
 -Dtlc2.overrides.TLCOverrides=tlc2.overrides.TLCOverrides:tlc2.overrides.SedeveTLCOverrides
 ```
 
-   The "tlc2.overrides.TLCOverrides" is used by thethe [ComunityModeules](https://github.com/tlaplus/CommunityModules); and "the tlc2.overrides.SedeveTLCOverrides" is used by [SedeveModules](https://github.com/scuptio/SedeveModules/)
+   The "tlc2.overrides.TLCOverrides" is used by thethe [ComunityModeules](https://github.com/tlaplus/CommunityModules); and "the tlc2.overrides.SedeveTLCOverrides" is used by [SedeveModules](https://github.com/scuptio/SedeveModules/).
+
+   More about overrides, see [SpecProcessor.java](https://github.com/tlaplus/tlaplus/blob/72793369891dd72d31d6d48444df18b33434c966/tlatools/org.lamport.tlatools/src/tlc2/tool/impl/SpecProcessor.java#L637),
+   [TLCOverrides.java](https://github.com/tlaplus/CommunityModules/blob/9c13c116cbcb4975c7d33ee7a71ba471b88687b2/modules/tlc2/overrides/TLCOverrides.java#L29)
 
 3. Click then `Runs TLC on the model` Button
  
@@ -91,6 +95,12 @@ that verify the coherence between our source-level implementation and abstract-l
 ### Add assert invariants to the testing source code
 
 During testing, we add invariants to assert the correctness of our assumptions.
+
+### Running deterministic testing
+
+When running deterministic testing, the message channel would be taken over by the *deterministic player*.
+
+![deterministic testing](../doc/figure/dtm_testing.jpg)
 
 
 ## Example
