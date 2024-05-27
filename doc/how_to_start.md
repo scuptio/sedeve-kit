@@ -7,16 +7,19 @@ you need to configure the [TLA+ toolbox](https://lamport.azurewebsites.net/tla/t
 
 Follow these steps to set it up:
 
-1. Download the [CommunityModules-dep.jar](https://github.com/scuptio/TLAPlusCommunityModules/releases)
+1. 
+Download the [SedeveModules jar](https://github.com/scuptio/SedeveModules/releases)
 We developed  TLA+ modules 
-[StateDB](https://github.com/scuptio/TLAPlusCommunityModules/blob/master/modules/StateDB.tla), 
-[GenID](https://github.com/scuptio/TLAPlusCommunityModules/blob/master/modules/GenID.tla) .
+[StateDB](https://github.com/scuptio/SedeveModules/blob/master/modules/StateDB.tla), 
+[GenID](https://github.com/scuptio/SedeveModules/blob/master/modules/GenID.tla) .
+
+Download the [SQLite JDBC driver jar](https://github.com/xerial/sqlite-jdbc/releases/download/3.45.3.0/sqlite-jdbc-3.45.3.0.jar)
 
 2. In tla+ toolbox, go to
 
    File -> Preferences -> TLA+ Preference
 
-   Specify TLA+ library path option locations
+   Specify TLA+ library path option of *SedeveModules*,  *SQLite JDBC driver*
 
 <img src="../doc/figure/set_library_path_locations.png" width="50%" height="50%">
 
@@ -26,19 +29,27 @@ In the TLA+ specification, we use
 [InitAction](https://github.com/scuptio/tlaplus-specification/blob/main/spec/action.tla#L187) 
 and 
 [SetAction](https://github.com/scuptio/tlaplus-specification/blob/main/spec/action.tla#L209)
-to specify the action of [I/O automata](doc/model_the_system.md).
+to specify the action of [I/O automata](doc/model_the_system.md) and output the state to sqlite database.
 
-## Run TLA+ model checker and generate state database(a sqlite database).
+
+## Run TLA+ model checker and generate state database(a sqlite file).
 
 1. Filling Model checker setting:
    
    Specify constant value and Temporal formula
 
-2. Click then "Runs TLC on the model" Button
+2. In `Model` -> `TLC Options` Page ->  `Parameters` -> `JVM arguments:` box:
 
-   After the model checker finishes running, navigate to the folder:
-      
-   /_xxxx_/_xxxx_/_xxxx_.toolbox/Model\__xxxx_ 
+   Specify Java property parameter "tlc2.overrides.TLCOverrides" by filling the text,
+
+``` 
+-Dtlc2.overrides.TLCOverrides=tlc2.overrides.TLCOverrides:tlc2.overrides.SedeveTLCOverrides
+```
+
+   The "tlc2.overrides.TLCOverrides" is used by thethe [ComunityModeules](https://github.com/tlaplus/CommunityModules); and "the tlc2.overrides.SedeveTLCOverrides" is used by [SedeveModules](https://github.com/scuptio/SedeveModules/)
+
+3. Click then `Runs TLC on the model` Button
+ 
 
 ## Development by specification
 
@@ -52,67 +63,15 @@ The action types include:
 
 | Action Type	  | Description of Action Type 	                                                                    |
 |---------------|-------------------------------------------------------------------------------------------------|
-| Input Setup   | Set up and initializes the state of a node                                                      |
-| Input Check   | Check the state correctness of a node, used for asserting invariants                            |
-| Input Message | Represent a node receiving an input message, from a network endpoint or a terminal, for example |
+| Input | Represent a node receiving an input message, from a network endpoint or a terminal, for example |
 | Output        | Represent a node sending an output message, to a network endpoint or a terminal, for example    |
 | Internal      | Represent an internal event in a node                                                           |
 
 
-Use the [trace-gen](../src/trace_gen/main.rs) to traversal dot file(like [this dot file](../src/data/toolbox_dump.dot)) 
+Use the [trace-gen](../src/trace_gen/main.rs) to traversal state space
 and dump all trace into a database(e.g., [sqlite DB file](../src/data/trace.db))
 The trace format is represented in JSON, similar to [this JSON file](../src/data/trace2.json)
 The [action incoming interface](../src/player/action_incoming.rs) can be used to read traces.
-
-
-The sedeve_trace_gen's command lines:
-
-``` 
-Usage: sedeve_trace_gen [OPTIONS]
-
-Options:
-  -d, --dot-path <DOT_PATH>
-          Path of the TLA+ output .dot file
-  -s, --state-db-path <STATE_DB_PATH>
-          Path of the state sqlite DB file
-  -o, --out-db-path <OUT_DB_PATH>
-          Type name of the actions
-  -i, --intermediate-db-path <INTERMEDIATE_DB_PATH>
-          Type intermediate database path
-  -m, --map-const-path <MAP_CONST_PATH>
-          Path of the json file stores the constant value map
-  -r, --remove-intermediate
-          Remove the intermediate table that records TLA+ actions and trace paths after generating the trace
-  -e, --setup-initialize-state
-          Generate setup initialize state trace, default value is false
-  -h, --help
-          Print help
-  -V, --version
-          Print version
-```
-
-`-map-const-path` parameter can be used to specify a JSON file that maps TLA+ constant values to code primitive types in the source code.
-
-A example JSON file can be like:
-
-```
-{
-    "A_n1" : 1,
-    "A_n2" : 2,
-    "x" : 1000
-}
-```
-
-The following command lines parse [toolbox_dump.dot](../src/data/toolbox_dump.dot) and generate output trace to [trace.db](../src/data/trace.db)
-
-
-```
-[PREFIX]/target/debug/trace_gen  \
-  --state-db-path [state_db_file_path] \
-  --out-db-path [output_db_file_path] \
-  --intermediate-db-path [intermediate_db_file_path] \
-  --map-const-path  [PREFIX]/const_map/2pc_map_const.json
-```
 
 
 ### Insert *anchor action*s to the testing source code
@@ -127,74 +86,6 @@ The physical system will align with the logical model, ensuring consistency.
 Our framework incorporates various macros to facilitate the implementation of *anchor actions* 
 that verify the coherence between our source-level implementation and abstract-level design.
 
-
-The *anchor actions* include server macros:
-
-- *auto_init*:  Enable an automata
-
-- *auto_clear*:  Clear an automata
-
-- *action_begin*:  Begin an action
-
-- *action_end*: End an action 
-
-- *setup_begin* : Begin a Setup action
-
-- *setup_end* :  End a Setup action
-
-- *setup*:  The same as *setup_end*
-
-- *setup_begin* : Begin a Check action
-
-- *setup_end* :  End a Check action
-
-- *check*:  The same as *check_end*
-
-- *input_begin* : Begin an Input action
-
-- *input_end* :  End an Input action
-
-- *input*:  The same as *input_end*
-
-- *output_begin* : Begin an Output action
-
-- *output_end* : End an Output action
-
-- *output*:  The same as *output_begin*
-
-- *internal_begin* : Begin an Internal action
-
-- *internal_end* : End an Internal action
-
-These macros are defined in [automata.rs](../src/player/automata).
-
-An example using *anchor actions* could be found in [test_dtm_player.rs](../src/player/test_dtm_player.rs).
-
-
-
-
-### Generate code stubs from Action DSL
-
-To simplify development, we have created a tool set that automatically generates Rust code.
-This tool set includes an Action language and a command-line tool.
-The Action language is a domain-specific language (DSL) defined by [grammar.js](../src/tree-sitter-action/grammar.js)
-It is used to guide the generation of Rust code for specification-driven testing. 
-The *Action* can be written in TLA+ specification files and are enclosed in comments marked by **(\*@Begin@** and **@End@\*)** .
-The [rust-gen](../src/rust_gen/bin/main.rs) tool can read automata definitions from *Action*s and generate Rust code
-stubs.
-
-Here is the rust_gen command line:
-
-```
-Usage: rust_gen [OPTIONS] --action-path <ACTION_PATH>
-
-Options:
-  -a, --action-path <ACTION_PATH>  .action or .tla+ file path
-  -o, --output-path <OUTPUT_PATH>  output rust code file path
-  -h, --help                       Print help
-  -V, --version                    Print version
-
-```
 
 
 ### Implement the Rust code
