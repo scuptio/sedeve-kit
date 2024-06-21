@@ -3,14 +3,7 @@ pub mod trace_reader;
 pub mod gen_case;
 pub mod read_json;
 
-mod action_from_parse_dot;
-mod action_graph;
-pub mod dot_ast;
-mod dot_parser;
-mod dot_visitor;
-mod context_string;
-mod test_label_parse;
-mod test_dot_parse;
+pub(crate) mod action_graph;
 
 mod graph_find_path;
 
@@ -20,7 +13,6 @@ mod cover_walk_path;
 mod subgraph_path;
 
 mod test_to_trace;
-mod test_dot_to_case;
 mod test_trace_reader;
 pub mod to_json_value;
 pub mod action_from_state_db;

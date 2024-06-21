@@ -34,7 +34,7 @@ The *action_type* can be "Input", "Output", or "Internal".
 The **action** has a one-to-one mapping to action $\pi_i, 1 \le i \le r$.
 
 
-An example of `__action__` variable dump likes the following (to search `__action__` in [this dot file](../src/data/toolbox_dump.dot)):
+An example of `__action__` variable dump likes the following :
 
   ```
 __action__ = [

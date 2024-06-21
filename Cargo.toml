@@ -3,14 +3,8 @@ name = "sedeve_player"
 path = "src/player/bin/main.rs"
 
 [[bin]]
-name = "sedeve_rust_gen"
-path = "src/rust_gen/bin/main.rs"
-
-[[bin]]
 name = "sedeve_trace_gen"
 path = "src/trace_gen/main.rs"
-
-
 
 
 [package]
@@ -26,11 +20,7 @@ readme = "README.md"
 license = "Apache-2.0"
 
 
-
 [dependencies]
-tree-sitter-action = { path = "tree-sitter-action" }
-tree-sitter-dot = { path = "tree-sitter-dot" }
-tree-sitter-label-tla = { path = "tree-sitter-label-tla" }
 scupt-util = { git = "https://github.com/scuptio/scupt-util.git" }
 scupt-net = { git = "https://github.com/scuptio/scupt-net.git" }
 
