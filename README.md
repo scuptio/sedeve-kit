@@ -47,7 +47,7 @@ First, we initiate the design by [using I/O automata to model the system](doc/mo
 Then we use TLA+ to specify the design(__Step (1)__ in Architecture Figure). 
 
 Next, we run a model checker on this specification and ensure they pass the model-checking process(__Step (2)__), guaranteeing correctness at the abstraction level.
-At the same time, the model checker generates a test case and trace set(__Step (3)__).
+At the same time, the model checker generates a model, then we use [sedeve_trace_gen](https://github.com/scuptio/sedeve-kit/blob/main/src/trace_gen/main.rs) to generate the trace set by [finding all possible path algorithm](doc/generate_trace_algorithm.md)(__Step (3)__).
 
 
 We then write the code based on the specification and [map the logical model to the physical system](doc/from_design_to_code.md).
