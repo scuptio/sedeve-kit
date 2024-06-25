@@ -11,17 +11,19 @@ use crate::action::trace::TraceJsonValue;
 use crate::dtm::action_incoming::ActionIncoming;
 
 pub struct ActionInputJson {
+    trace_text:String,
     actions: Mutex<VecDeque<String>>,
 }
 
 impl ActionInputJson {
     pub fn from_json_string(json_string: String) -> Res<Self> {
-        let exec = Self::read_from_string(json_string)?;
+        let exec = Self::read_from_string(json_string.clone())?;
         let mut actions = vec![];
         for v in exec.actions.iter() {
             actions.push(v.to_string());
         }
         let input = Self {
+            trace_text: json_string,
             actions: Mutex::new(VecDeque::from(actions)),
         };
         Ok(input)
@@ -33,12 +35,14 @@ impl ActionInputJson {
     }
 
     fn from_json_value(json_value: Value) -> Res<Self> {
+        let trace_text = serde_json::to_string(&json_value).unwrap();
         let t = TraceJsonValue::from_json_value(json_value)?;
         let mut actions = vec![];
         for v in t.actions.iter() {
             actions.push(v.to_string());
         }
         Ok(Self {
+            trace_text,
             actions: Mutex::new(VecDeque::from(actions)),
         })
     }
@@ -69,6 +73,10 @@ impl ActionIncoming for ActionInputJson {
             Some(e) => { Ok(e) }
             None => { Err(ET::EOF) }
         }
+    }
+
+    fn trace_text(&self) -> Res<String> {
+        Ok(self.trace_text.clone())
     }
 }
 
