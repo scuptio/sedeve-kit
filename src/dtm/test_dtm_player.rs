@@ -148,12 +148,14 @@ mod test {
     impl MsgTrait for AppMsg {}
 
     struct ActionInputStub {
+        text:String,
         queue: Arc<Mutex<VecDeque<ActionMessage<AppMsg>>>>,
     }
 
     impl ActionInputStub {
         pub fn new(vec: Vec<ActionMessage<AppMsg>>) -> Self {
             Self {
+                text: serde_json::to_string(&vec).unwrap(),
                 queue: Arc::new(Mutex::new(VecDeque::from(vec)))
             }
         }
@@ -167,6 +169,10 @@ mod test {
                 Some(m) => { Ok(m.to_serde_json_string()?.to_string()) }
                 None => { Err(ET::EOF) }
             }
+        }
+
+        fn trace_text(&self) -> Res<String> {
+            Ok(self.text.clone())
         }
     }
 
