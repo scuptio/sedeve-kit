@@ -44,32 +44,15 @@ to specify the action of [I/O automata](doc/model_the_system.md) and output the 
 A trace is a finite sequence of actions. An action is a step of state transition. We define several action types based on their functionalities.
 The action types include:
 
-
-| Action Type	  | Description of Action Type 	                                                                    |
-|---------------|-------------------------------------------------------------------------------------------------|
-| Input | Represent a node receiving an input message, from a network endpoint or a terminal, for example |
-| Output        | Represent a node sending an output message, to a network endpoint or a terminal, for example    |
-| Internal      | Represent an internal event in a node                                                           |
-
-
-Use the [trace-gen](../src/trace_gen/main.rs) to traversal state space
+Use the [sedeve_trace-gen](../src/trace_gen/main.rs) to traversal state space
 and dump all trace into a database(e.g., [sqlite DB file](../src/data/trace.db))
 The trace format is represented in JSON, similar to [this JSON file](../src/data/trace2.json)
-The [action incoming interface](../src/player/action_incoming.rs) can be used to read traces.
+The [action incoming interface](../src/dtm/action_incoming.rs) can be used to read action steps of trace.
 
 
 ### Insert *anchor action*s to the testing source code
 
 We define certain *anchor actions* that allow us to send a message to the *deterministic player* for reordering the actions.
-
-The figure below illustrates how the *deterministic player* reorders the actions based on predefined orders.
-
-![reorder_action](../doc/figure/reorder_actions.png)
-
-The physical system will align with the logical model, ensuring consistency. 
-Our framework incorporates various macros to facilitate the implementation of *anchor actions* 
-that verify the coherence between our source-level implementation and abstract-level design.
-
 
 ### Implement the Rust code
 
@@ -78,11 +61,6 @@ that verify the coherence between our source-level implementation and abstract-l
 During testing, we add invariants to assert the correctness of our assumptions.
 
 ### Running deterministic testing
-
-When running deterministic testing, the message channel would be taken over by the *deterministic player*.
-
-![deterministic testing](../doc/figure/dtm_testing.jpg)
-
 
 ## Example
 [Two-Phase Commit Protocol(2PC)](https://en.wikipedia.org/wiki/Two-phase_commit_protocol) is a atomic commit protocol.

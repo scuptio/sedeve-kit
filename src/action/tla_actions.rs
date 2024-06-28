@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use scupt_util::error_type::ET;
 use scupt_util::error_type::ET::NoneOption;
 use scupt_util::id::OID;
@@ -12,9 +10,7 @@ use crate::action::{constant, serde_json_util};
 use crate::action::action_json::ActionJson;
 use crate::action::action_type::ActionType;
 use crate::action::res_serde::res_serde;
-use crate::action::tal_vars_parser::TLAVarsParser;
 use crate::action::tla_typed_value::get_typed_enum;
-use crate::action::tla_var_list_visitor::TLAVarListVisitor;
 
 // the action sequence defined in TLA+
 #[derive(
@@ -209,12 +205,3 @@ impl TLAMessage {
 }
 
 
-pub fn tla_action_var_text_to_json(text: String, constant_dict_map: HashMap<String, Value>) -> Res<Value> {
-    let mut parser = TLAVarsParser::new();
-    let tree = parser.parse(&text)?;
-    let visitor = TLAVarListVisitor::new(text.clone());
-    let l = visitor.visit_root(tree.root_node())?;
-
-    let v = res_option(l.to_json(&constant_dict_map))?;
-    Ok(v)
-}

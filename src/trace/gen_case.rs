@@ -6,7 +6,6 @@ use scupt_util::res::Res;
 use serde_json::Value;
 use tracing::info;
 
-use crate::trace::action_from_parse_dot::dot_action_to_db;
 use crate::trace::action_from_state_db::graph_read_actions_from_state_db;
 use crate::trace::action_graph::ActionGraph;
 use crate::trace::graph_find_path::gen_new_vertex_id;
@@ -16,14 +15,12 @@ use crate::trace::trace_db_interm::{Stage, TraceDBInterm};
 const PATH_WRITE_BATCH: usize = 1000;
 
 pub enum DataInput {
-    DotFile(String),
     StateDB(String),
 }
 
 impl DataInput {
     pub fn path(&self) -> String {
         match self {
-            DataInput::DotFile(p) => { p.clone() }
             DataInput::StateDB(p) => { p.clone() }
         }
     }
@@ -46,19 +43,6 @@ pub fn gen_case(
     info!("use const mapping: {:?}", dict);
     let inst = Instant::now();
     match data_input {
-        DataInput::DotFile(path) => {
-            info!("Read dot file {}", path);
-
-            let graph = dot_action_to_db(path.clone(), dict, intermediate.clone(), sqlite_cache_size)?;
-            let duration = inst.elapsed();
-
-            info!("Time elapsed to parse {}, time costs: {:?}", path, duration);
-
-            let inst = Instant::now();
-            action_graph_output_to_db(&gen_new_vertex_id, &graph, intermediate.clone(), sqlite_cache_size)?;
-            let duration = inst.elapsed();
-            info!("Time elapsed to generate action trace, time costs: {:?}",  duration);
-        }
         DataInput::StateDB(path) => {
             let graph = graph_read_actions_from_state_db(path.clone(), dict, intermediate.clone(), sqlite_cache_size)?;
             let duration = inst.elapsed();

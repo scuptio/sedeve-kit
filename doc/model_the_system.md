@@ -11,6 +11,14 @@ We can find most of the concepts in Nancy Lynch's Distributed Algorithms.
 * $sig(A)$, a signature $S$ is a triple consisting of three disjoint sets of actions: 
 the input actions, $in(S)$, the output actions, $out(S)$  and the internal actions, $int(S)$
 
+  
+| Action Type	  | Description of Action Type 	                                                                    |
+|---------------|-------------------------------------------------------------------------------------------------|
+| Input | Represent a node receiving an input message, from a network endpoint or a terminal, for example |
+| Output        | Represent a node sending an output message, to a network endpoint or a terminal, for example    |
+| Internal      | Represent an internal event in a node                                                           |
+
+
 * $state(A)$, a set of states
 
 * $start(A)$, initial states, a nonempty subset of $state(A)$

@@ -16,10 +16,6 @@ enum TestType {
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Path of the TLA+ output .dot file
-    #[arg(short, long)]
-    dot_path: Option<String>,
-
     /// Path of the state sqlite DB file
     #[arg(short, long)]
     state_db_path: Option<String>,
@@ -59,14 +55,11 @@ fn main() {
         Err(e) => { panic!("read from dict json file error: {}", e.to_string()); }
     };
 
-    let dump_path: Option<String> = args.dot_path;
     let state_db_path: Option<String> = args.state_db_path;
     let intermediate_db_path: Option<String> = args.intermediate_db_path;
     let setup_initialize_state: bool = args.setup_initialize_state;
     let sqlite_cache_size = args.sqlite_cache_size;
-    let path_input = if dump_path.is_some() {
-        DataInput::DotFile(dump_path.unwrap())
-    } else if state_db_path.is_some() {
+    let path_input = if state_db_path.is_some() {
         DataInput::StateDB(state_db_path.unwrap())
     } else {
         panic!("no input path");
