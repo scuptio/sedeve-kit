@@ -18,7 +18,7 @@ To prevent these non-deterministic events, they can be defined as input actions 
 
 [Algorithm](generate_trace_algorithm.md)
 
-#### 2. Use the TLA+ model(logical model) to generate the .dot file
+#### 2. Use the TLA+ model(logical model) to generate trace
 
 $trace(A) = s_0, \pi_1, s_1, \pi_2, s_2, ...,  \pi_r, s_r$
 
@@ -28,7 +28,7 @@ In most cases, we are only interested in the first state, $s_0$, and the sequenc
 Output the sequence $s_0, \pi_1, \pi_2, ..., \pi_r$ to a file for the *deterministic
 player [action-player](../src/player/bin/main.rs)*.
 
-We define `__action__` variable in each TLA+ specification and used to dump states for generating test cases.
+We define `__action__` variable in each TLA+ specification and used to dump states and actions for generating test cases.
 
 The *action_type* can be "Input", "Output", or "Internal".
 The **action** has a one-to-one mapping to action $\pi_i, 1 \le i \le r$.
