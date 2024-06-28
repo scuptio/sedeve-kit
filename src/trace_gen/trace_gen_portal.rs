@@ -46,7 +46,7 @@ pub struct GenArgs {
 
 
 pub fn portal(args: GenArgs) {
-    let r_dict = read_json::read_from_dict_json(args.map_const_path);
+    let r_dict = read_json::tla_constant_mapping(args.map_const_path);
     let dict = match r_dict {
         Ok(dict) => { dict }
         Err(e) => { panic!("read from dict json file error: {}", e.to_string()); }

@@ -13,7 +13,7 @@ use crate::action::action_message::ActionMessage;
 use crate::action::tla_actions::TLAActionSeq;
 use crate::action::tla_typed_value::get_typed_value;
 use crate::trace::action_graph::ActionGraph;
-use crate::trace::read_json::read_from_dict_json;
+use crate::trace::read_json::tla_constant_mapping;
 use crate::trace::trace_db_interm::{Stage, TraceDBInterm};
 
 pub fn read_actions<F>(path: String, dict: &HashMap<String, Value>, fn_handle_action: &F)
@@ -39,7 +39,7 @@ pub fn read_action_message<M: MsgTrait + 'static, F>(
 ) -> Res<()>
     where F: Fn(ActionMessage<M>) -> Res<()>
 {
-    let map = read_from_dict_json(Some(path_map.clone())).unwrap();
+    let map = tla_constant_mapping(Some(path_map.clone())).unwrap();
     let f = |v: Value| -> Res<()> {
         let tla_action_seq = TLAActionSeq::from(v.clone())?;
         for vec in [tla_action_seq.actions(), tla_action_seq.states()] {

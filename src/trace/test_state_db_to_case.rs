@@ -5,7 +5,7 @@ mod test {
 
     use crate::data::path::_test::_test_data_path;
     use crate::trace::gen_case::{DataInput, gen_case};
-    use crate::trace::read_json::read_from_dict_json;
+    use crate::trace::read_json::tla_constant_mapping;
     use crate::trace::trace_reader::TraceReader;
 
     #[test]
@@ -24,7 +24,7 @@ mod test {
 
     fn db_to_trace(input: String, output: String, setup_initialize: bool, expected_size: usize) {
         let path_json = _test_data_path("map_const.json".to_string());
-        let r_dict = read_from_dict_json(Some(path_json));
+        let r_dict = tla_constant_mapping(Some(path_json));
         let dict = match r_dict {
             Ok(dict) => { dict }
             Err(e) => { panic!("read from dict json file error: {}", e.to_string()); }
