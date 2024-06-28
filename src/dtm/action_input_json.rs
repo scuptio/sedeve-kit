@@ -85,18 +85,21 @@ mod test {
     use std::fs::read_to_string;
     use std::sync::Arc;
 
-    use crate::data::path::test::test_data_path;
+    use crate::data::path::_test::_test_data_path;
     use crate::dtm::action_incoming::ActionIncoming;
+    use crate::dtm::action_incoming_factory::ActionIncomingFactory;
     use crate::dtm::action_input_json::ActionInputJson;
 
     #[test]
-    fn test() {
-        let path = test_data_path("trace1.json".to_string()).unwrap();
-        let incoming1: Arc<dyn ActionIncoming> = Arc::new(ActionInputJson::from_file(path.clone()).unwrap());
+    fn test_read_trace_json() {
+        let path = _test_data_path("trace1.json".to_string());
+        let incoming1: Arc<dyn ActionIncoming> =
+            ActionIncomingFactory::action_incoming_from_json_file(path.clone()).unwrap();
         let string = read_to_string(path).unwrap();
-        let incoming2: Arc<dyn ActionIncoming> = Arc::new(ActionInputJson::from_json_string(string).unwrap());
+        let incoming2: Arc<dyn ActionIncoming> =
+            ActionIncomingFactory::action_incoming_from_string(string).unwrap();
 
-        let path = test_data_path("trace2.json".to_string()).unwrap();
+        let path = _test_data_path("trace2.json".to_string());
         let incoming3: Arc<dyn ActionIncoming> = Arc::new(ActionInputJson::from_file(path.clone()).unwrap());
         let string = read_to_string(path).unwrap();
         let incoming4: Arc<dyn ActionIncoming> = Arc::new(ActionInputJson::from_json_string(string).unwrap());

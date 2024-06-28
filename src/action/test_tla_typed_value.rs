@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod tests {
+mod test {
     use serde_json::Value;
 
     use crate::action::constant;

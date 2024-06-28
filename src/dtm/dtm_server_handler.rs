@@ -253,9 +253,7 @@ impl DTMServerHandler {
             let action_type = v.action_type()?;
 
             let nid = match action_type {
-                ActionType::Input |
-                ActionType::Setup |
-                ActionType::Check => {
+                ActionType::Input => {
                     v.dest_nid()?
                 }
                 ActionType::Internal => {
@@ -333,8 +331,6 @@ impl DTMServerHandler {
             let action_type = value.action_type()?;
             let need_send_message_to_node = if
             action_type == ActionType::Input
-                || action_type == ActionType::Setup
-                || action_type == ActionType::Check
             {
                 if action_type == ActionType::Input {
                     let dest_nid = value.dest_nid()?;

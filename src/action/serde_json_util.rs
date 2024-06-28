@@ -3,29 +3,6 @@ use scupt_util::res::Res;
 use serde_json::{Map, Value};
 use tracing::error;
 
-pub fn json_util_empty_to_null(value: Value) -> Value {
-    match value {
-        Value::Object(map) => {
-            if map.is_empty() {
-                Value::Null
-            } else {
-                Value::Object(map)
-            }
-        }
-        Value::Array(vec) => {
-            if vec.is_empty() {
-                Value::Null
-            } else {
-                Value::Array(vec)
-            }
-        }
-        _ => {
-            value
-        }
-    }
-}
-
-
 pub fn json_util_map_get_value(map: &Map<String, Value>, key: &str) -> Res<Value> {
     match map.get(key) {
         None => {
@@ -72,27 +49,3 @@ pub fn json_util_map_get_i64(map: &Map<String, Value>, key: &str) -> Res<i64> {
     }
 }
 
-pub fn json_util_map_get_object(map: &Map<String, Value>, key: &str) -> Res<Map<String, Value>> {
-    let v = json_util_map_get_value(map, key)?;
-    let obj_map = match v {
-        Value::Null => {
-            Map::new()
-        }
-        Value::Array(array) => {
-            if array.is_empty() {
-                Map::new()
-            } else {
-                error!("array is not a object");
-                return Err(ET::NoneOption);
-            }
-        }
-        Value::Object(map) => {
-            map.clone()
-        }
-        x => {
-            error!("{:?} is not a object", x);
-            return Err(ET::NoneOption);
-        }
-    };
-    Ok(obj_map)
-}

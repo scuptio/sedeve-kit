@@ -26,14 +26,6 @@ Encode,
 pub enum ActionMessage<
     Payload: MsgTrait + 'static,
 > {
-    /// Check the state correctness of a node, used for asserting invariants
-    #[serde(bound = "Payload: MsgTrait")]
-    Check(Message<Payload>),
-
-    /// Set up and initializes the state of a node
-    #[serde(bound = "Payload: MsgTrait")]
-    Setup(Message<Payload>),
-
     /// Represent a node receiving an input message, from a network endpoint or a terminal, for example.
     /// When check_all_begin_end disable, the driver would expected to send only end input action.
     #[serde(bound = "Payload: MsgTrait")]
@@ -57,8 +49,6 @@ impl<Payload: MsgTrait + 'static> ActionMessage<Payload> {
     /// Build an ActionMessage through ActionType and Message struct.
     pub fn from_message(action_type: ActionType, message: Message<Payload>) -> Self {
         match action_type {
-            ActionType::Check => { ActionMessage::Check(message) }
-            ActionType::Setup => { ActionMessage::Setup(message) }
             ActionType::Input => { ActionMessage::Input(message) }
             ActionType::Internal => { ActionMessage::Internal(message) }
             ActionType::Output => { ActionMessage::Output(message) }
@@ -91,8 +81,6 @@ impl<Payload: MsgTrait + 'static> ActionMessage<Payload> {
     /// Action type
     pub fn action_type(&self) -> ActionType {
         match self {
-            ActionMessage::Check(_) => { ActionType::Check }
-            ActionMessage::Setup(_) => { ActionType::Setup }
             ActionMessage::Input(_) => { ActionType::Input }
             ActionMessage::Output(_) => { ActionType::Output }
             ActionMessage::Internal(_) => { ActionType::Internal }
@@ -102,8 +90,6 @@ impl<Payload: MsgTrait + 'static> ActionMessage<Payload> {
     fn fn_message<F, R>(&self, f: F) -> Res<R>
         where F: Fn(&Message<Payload>) -> Res<R> {
         match self {
-            ActionMessage::Check(m) => { f(m) }
-            ActionMessage::Setup(m) => { f(m) }
             ActionMessage::Input(m) => { f(m) }
             ActionMessage::Output(m) => { f(m) }
             ActionMessage::Internal(m) => { f(m) }

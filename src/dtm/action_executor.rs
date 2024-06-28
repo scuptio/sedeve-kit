@@ -62,9 +62,7 @@ impl ActionExecutor {
         let action_type = action.action_type()?;
         let msg = action.serde_json_value_ref();
         match action_type {
-            ActionType::Input |
-            ActionType::Setup |
-            ActionType::Check
+            ActionType::Input
             => {
                 trace!("INPUT: notify case file input {:?}", msg);
                 self.inner.node_wait_input.add_action(action).await?;
@@ -161,9 +159,7 @@ impl ActionExecutor {
         trace!("enter, SIMULATOR: receive Action {:?}, {}", action, begin);
         let action_type = action.action_type()?;
         match action_type {
-            ActionType::Input |
-            ActionType::Setup |
-            ActionType::Check => {
+            ActionType::Input => {
                 if begin {
                     if self.inner.wait_both_begin_and_end_action {
                         trace!("RECEIVE: notify case file {:?}", action);

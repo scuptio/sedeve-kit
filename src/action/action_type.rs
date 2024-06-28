@@ -31,20 +31,15 @@ Decode,
 Encode,
 )]
 pub enum ActionType {
-    /// Set up and initializes the state of a node
-    Setup = 0,
-
-    /// Check the state correctness of a node, used for asserting invariants
-    Check = 1,
 
     /// Represent a node receiving an input message, from a network endpoint or a terminal, for example
-    Input = 2,
+    Input = 1,
 
     /// Represent a node sending an output message, to a network endpoint or a terminal, for example
-    Output = 3,
+    Output = 2,
 
     /// Represent an internal event in a node
-    Internal = 4,
+    Internal = 3,
 }
 
 #[derive(
@@ -71,8 +66,8 @@ impl ActionType {
             constant::ACTION_TYPE_OUTPUT => { ActionType::Output }
             constant::ACTION_TYPE_INPUT => { ActionType::Input }
             constant::ACTION_TYPE_INTERNAL => { ActionType::Internal }
-            constant::ACTION_TYPE_SETUP => { ActionType::Setup }
-            constant::ACTION_TYPE_CHECK => { ActionType::Check }
+            constant::ACTION_TYPE_SETUP => { ActionType::Input }
+            constant::ACTION_TYPE_CHECK => { ActionType::Input }
             _ => { panic!("unknown TLA+ action type error") }
         }
     }
@@ -82,16 +77,14 @@ impl ActionType {
             constant::SERDE_ACTION_TYPE_OUTPUT => { ActionType::Output }
             constant::SERDE_ACTION_TYPE_INPUT => { ActionType::Input }
             constant::SERDE_ACTION_TYPE_INTERNAL => { ActionType::Internal }
-            constant::SERDE_ACTION_TYPE_SETUP => { ActionType::Setup }
-            constant::SERDE_ACTION_TYPE_CHECK => { ActionType::Check }
+            constant::SERDE_ACTION_TYPE_SETUP => { ActionType::Input }
+            constant::SERDE_ACTION_TYPE_CHECK => { ActionType::Input }
             _ => { panic!("unknown serde action type error") }
         }
     }
 
     pub fn action_message<P: MsgTrait + 'static>(&self, m: Message<P>) -> ActionMessage<P> {
         match self {
-            ActionType::Check => { ActionMessage::Check(m) }
-            ActionType::Setup => { ActionMessage::Setup(m) }
             ActionType::Input => { ActionMessage::Input(m) }
             ActionType::Internal => { ActionMessage::Internal(m) }
             ActionType::Output => { ActionMessage::Output(m) }
@@ -100,8 +93,6 @@ impl ActionType {
 
     pub fn to_string(&self) -> String {
         let s = match self {
-            ActionType::Check => { constant::SERDE_ACTION_TYPE_CHECK.to_string() }
-            ActionType::Setup => { constant::SERDE_ACTION_TYPE_SETUP.to_string() }
             ActionType::Input => { constant::SERDE_ACTION_TYPE_INPUT.to_string() }
             ActionType::Internal => { constant::SERDE_ACTION_TYPE_INTERNAL.to_string() }
             ActionType::Output => { constant::SERDE_ACTION_TYPE_OUTPUT.to_string() }

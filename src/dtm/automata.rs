@@ -201,34 +201,6 @@ macro_rules! action_end {
     };
 }
 
-/// End a Setup action , alias of `setup_end`
-#[macro_export]
-macro_rules! setup {
-    ($automata_name:expr,  $message:expr) => {
-        {
-            $crate::action_end!(
-                $automata_name,
-                $crate::action::action_type::ActionType::Setup,
-                $message
-            )
-        }
-    };
-}
-
-/// End a Check action , alias of `check_end`
-#[macro_export]
-macro_rules! check {
-    ($automata_name:expr,  $message:expr) => {
-        {
-            $crate::action_end!(
-                $automata_name,
-                $crate::action::action_type::ActionType::Check,
-                $message
-            );
-        }
-    };
-}
-
 /// End an Input action , alias of `input_end`
 #[macro_export]
 macro_rules! input {
@@ -279,35 +251,6 @@ macro_rules! setup_end {
             $crate::action_end!(
                 $automata_name,
                 $crate::action::action_type::ActionType::Setup,
-                $message
-            )
-        }
-    };
-}
-
-/// Begin a Check action
-#[macro_export]
-macro_rules! check_begin {
-    ($automata_name:expr,  $message:expr) => {
-        {
-             $crate::action_begin!(
-                $automata_name,
-                $crate::action::action_type::ActionType::Check,
-                $message
-            )
-        }
-    };
-}
-
-
-/// End a Check action
-#[macro_export]
-macro_rules! check_end {
-    ($automata_name:expr,  $message:expr) => {
-        {
-            $crate::action_end!(
-                $automata_name,
-                $crate::action::action_type::ActionType::Check,
                 $message
             )
         }

@@ -1,14 +1,14 @@
 #[cfg(test)]
-mod tests {
+mod test {
     use scupt_util::init_logger::logger_setup;
 
-    use crate::data::path::test::test_data_path;
+    use crate::data::path::_test::_test_data_path;
     use crate::trace::trace_reader::TraceReader;
 
     #[test]
     fn test_trace_reader() {
         logger_setup();
-        let sqlite_path = test_data_path("trace.db".to_string()).unwrap();
+        let sqlite_path = _test_data_path("trace.db".to_string());
         let vec = TraceReader::read_trace(sqlite_path).unwrap();
         let vec_len = vec.len();
         let mut n = 0;

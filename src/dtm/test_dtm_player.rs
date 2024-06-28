@@ -18,7 +18,7 @@ mod test {
     use scupt_net::task::spawn_local_task;
     use scupt_net::task_trace;
     use scupt_util::error_type::ET;
-    use scupt_util::logger::{logger_setup, logger_setup_with_console};
+    use scupt_util::logger::logger_setup;
     use scupt_util::message::{Message, MsgTrait};
     use scupt_util::node_id::NID;
     use scupt_util::res::Res;
@@ -33,30 +33,27 @@ mod test {
     use crate::{action_begin, action_end, auto_clear, auto_init, input, internal_begin, internal_end, output};
     use crate::action::action_message::ActionMessage;
     use crate::action::action_type::ActionType;
-    use crate::action::panic::set_panic_hook;
     use crate::dtm::action_incoming::ActionIncoming;
     use crate::dtm::dtm_player::TestOption;
     use crate::dtm::dtm_server::DTMServer;
-
-    const AUTOMATON_NAME: &str = "TEST_AUTOMATON";
 
     static TEST_LOCK: Lazy<Mutex<()>> = Lazy::new(Mutex::default);
 
     #[test]
     fn test_dtm_player_check_all() {
-        //set_panic_hook();
-        logger_setup_with_console("trace");
-        run_test(3, 4, 5, 18000, true);
+        logger_setup("debug");
+        info!("test_dtm_player_check_all");
+        run_test("auto_check_all", 3, 4, 5, 18000, true);
     }
 
     #[test]
     fn test_dtm_player_no_check() {
-        set_panic_hook();
-        logger_setup("info");
-        run_test(3, 4, 5, 19000, false);
+        logger_setup("debug");
+        info!("test_dtm_player_no_check");
+        run_test("auto_no_check", 3, 4, 5, 19000, false);
     }
 
-    fn run_test(num_node: u64, num_tx: u64, num_ops: u64, port: u16, enable_check: bool) {
+    fn run_test(auto_name: &str, num_node: u64, num_tx: u64, num_ops: u64, port: u16, enable_check: bool) {
         let _l = TEST_LOCK.lock().unwrap();
         let mut node_ids = vec![];
         let dtm_node_id = (num_node + 1) as NID;
@@ -97,15 +94,16 @@ mod test {
             thd_simulator.push(thd);
         }
 
-        auto_init!(AUTOMATON_NAME,0,  dtm_node_id, dtm_address.to_string().as_str());
+        auto_init!(auto_name,0,  dtm_node_id, dtm_address.to_string().as_str());
 
         for (k, v) in address.iter() {
             let id = k.clone();
             let addr = v.clone();
             let history = history.clone();
             let builder = thread::Builder::new().name(format!("node_{}", id));
+            let _auto_name = auto_name.to_string();
             let thd = builder.spawn(move || {
-                let r = run_node(id, addr, history, enable_check);
+                let r = run_node(_auto_name.to_string(), id, addr, history, enable_check);
                 assert!(r.is_ok());
             }).unwrap();
             thd_nodes.push(thd);
@@ -121,7 +119,7 @@ mod test {
             let _ = j.join();
         }
 
-        auto_clear!(AUTOMATON_NAME);
+        auto_clear!(auto_name);
     }
 
     #[derive(
@@ -190,6 +188,7 @@ mod test {
         stop: Arc<AtomicBool>,
         enable_check: bool,
         _name: String,
+        auto_name: String,
     }
 
     impl History {
@@ -225,7 +224,7 @@ mod test {
     }
 
     impl TestNode {
-        fn new(node_id: NID, history: History, enable_check: bool) -> Res<TestNode> {
+        fn new(auto_name: String, node_id: NID, history: History, enable_check: bool) -> Res<TestNode> {
             let name = format!("node_{}", node_id);
             let opt = IOServiceOpt {
                 num_message_receiver: 1,
@@ -240,6 +239,7 @@ mod test {
                 stop: Arc::new(AtomicBool::new(false)),
                 enable_check,
                 _name: name,
+                auto_name,
             })
         }
 
@@ -264,12 +264,13 @@ mod test {
             {
                 let s = self.clone();
                 let node_id = self.service.node_id();
+                let auto_name = self.auto_name.clone();
                 ls.spawn_local(async move {
                     spawn_local_task(
                         Notifier::new(),
                         format!("app handle message {}", node_id).as_str(),
                         async move {
-                            let r = s.app_run_handle_message().await;
+                            let r = s.app_run_handle_message(auto_name).await;
                             match r {
                                 Ok(()) => {}
                                 Err(e) => { error!("{}", e.to_string()) }
@@ -287,6 +288,7 @@ mod test {
 
         async fn app_run_handle_message(
             &self,
+            name: String,
         ) -> Res<()> {
             let receiver = {
                 let receivers = self.service.receiver();
@@ -295,17 +297,18 @@ mod test {
                 }
                 receivers[0].clone()
             };
-            self.app_message_loop(receiver, self.enable_check).await?;
+            self.app_message_loop(name, receiver, self.enable_check).await?;
             Ok(())
         }
 
         async fn app_message_loop(
             &self,
+            name: String,
             receiver: Arc<dyn ReceiverAsync<AppMsg>>,
             enable_check: bool,
         ) -> Res<()> {
             loop {
-                let r = self.app_handle_message(receiver.clone(), enable_check).await;
+                let r = self.app_handle_message(name.clone(), receiver.clone(), enable_check).await;
                 match r {
                     Ok(()) => {}
                     Err(e) => {
@@ -322,6 +325,7 @@ mod test {
 
         async fn process_app_message(
             &self,
+            name: String,
             dtm_msg: Message<AppMsg>,
             enable_check: bool,
         ) -> Res<()> {
@@ -334,7 +338,7 @@ mod test {
                     spawn_local_task(Notifier::default(),
                                      format!("app task :{}", task_id).as_str(),
                                      async move {
-                                         let r = this.app_task_run(from, to, task_id, task_ops, enable_check).await;
+                                         let r = this.app_task_run(name.as_str(), from, to, task_id, task_ops, enable_check).await;
                                          match r {
                                              Ok(()) => {}
                                              Err(e) => { error!("app task run error, {}", e.to_string()) }
@@ -345,11 +349,12 @@ mod test {
                 AppMsg::TaskStop => {
                     let this = self.clone();
                     let enable_check = self.enable_check;
+                    let _name = name.clone();
                     spawn_local_task(
                         Notifier::new(),
                         format!("node {} stop task", from).as_str(),
                         async move {
-                            let r = this.app_task_stop(from, to, enable_check).await;
+                            let r = this.app_task_stop(_name.as_str(), from, to, enable_check).await;
                             match r {
                                 Ok(()) => {}
                                 Err(e) => { error!("app task run error, {}", e.to_string()) }
@@ -364,6 +369,7 @@ mod test {
         #[async_backtrace::framed]
         async fn app_task_run(
             &self,
+            auto_name: &str,
             from: NID,
             to: NID,
             task_id: u64,
@@ -379,11 +385,11 @@ mod test {
                 );
 
                 if enable_check {
-                    action_begin!(AUTOMATON_NAME, ActionType::Input, m.clone());
+                    action_begin!(auto_name, ActionType::Input, m.clone());
                     self.add_action_to_history(ActionMessage::Input(m.clone()));
-                    action_end!(AUTOMATON_NAME, ActionType::Input, m.clone());
+                    action_end!(auto_name, ActionType::Input, m.clone());
                 } else {
-                    input!(AUTOMATON_NAME, m.clone());
+                    input!(auto_name, m.clone());
                 }
             }
 
@@ -397,11 +403,11 @@ mod test {
                 );
 
                 if enable_check {
-                    action_begin!(AUTOMATON_NAME, ActionType::Output, m.clone());
+                    action_begin!(auto_name, ActionType::Output, m.clone());
                     self.add_action_to_history(ActionMessage::Output(m.clone()));
-                    action_end!(AUTOMATON_NAME, ActionType::Output, m.clone());
+                    action_end!(auto_name, ActionType::Output, m.clone());
                 } else {
-                    output!(AUTOMATON_NAME, m.clone());
+                    output!(auto_name, m.clone());
                 }
             }
             Ok(())
@@ -411,6 +417,7 @@ mod test {
         #[async_backtrace::framed]
         async fn app_task_stop(
             &self,
+            auto_name: &str,
             from: NID,
             to: NID,
             enable_check: bool,
@@ -424,11 +431,11 @@ mod test {
             );
 
             if enable_check {
-                action_begin!(AUTOMATON_NAME, ActionType::Input, msg.clone());
+                action_begin!(auto_name, ActionType::Input, msg.clone());
                 self.add_action_to_history(ActionMessage::Input(msg.clone()));
-                action_end!(AUTOMATON_NAME, ActionType::Input, msg.clone());
+                action_end!(auto_name, ActionType::Input, msg.clone());
             } else {
-                input!(AUTOMATON_NAME, msg.clone());
+                input!(auto_name, msg.clone());
             }
             self.stop().await;
             trace!("app task stop {} end", to);
@@ -442,6 +449,7 @@ mod test {
         #[async_backtrace::framed]
         async fn app_handle_message(
             &self,
+            name: String,
             receiver: Arc<dyn ReceiverAsync<AppMsg>>,
             enable_check: bool,
         ) -> Res<()> {
@@ -449,7 +457,7 @@ mod test {
             let dtm_msg = receiver.receive().await?;
             let s = self.clone();
             task::spawn_local(async move {
-                let _ = s.process_app_message(dtm_msg, enable_check).await;
+                let _ = s.process_app_message(name, dtm_msg, enable_check).await;
             });
             Ok(())
         }
@@ -463,8 +471,9 @@ mod test {
         ) -> Res<()> {
             let _ = task_trace!();
             trace!("handle action begin {}", task_id);
+            let name = self.auto_name.clone();
             for op_id in op_ids {
-                self.handle_task_op(task_id, op_id, enable_check)
+                self.handle_task_op(name.as_str(), task_id, op_id, enable_check)
                     .instrument(trace_span!("handle task op")).await?;
             }
             Ok(())
@@ -473,6 +482,7 @@ mod test {
         #[async_backtrace::framed]
         async fn handle_task_op(
             &self,
+            auto_name: &str,
             id: u64,
             op_id: u64,
             enable_check: bool,
@@ -488,14 +498,14 @@ mod test {
             let action_internal = ActionMessage::Internal(m.clone());
 
             if enable_check {
-                action_begin!(AUTOMATON_NAME, ActionType::Internal, m.clone());
+                action_begin!(auto_name, ActionType::Internal, m.clone());
                 trace!("do something {:?}", m);
                 self.add_action_to_history(action_internal.clone());
-                action_end!(AUTOMATON_NAME, ActionType::Internal, m.clone());
+                action_end!(auto_name, ActionType::Internal, m.clone());
             } else {
-                internal_begin!(AUTOMATON_NAME, m.clone());
+                internal_begin!(auto_name, m.clone());
                 trace!("do something {:?}", m);
-                internal_end!(AUTOMATON_NAME, m.clone());
+                internal_end!(auto_name, m.clone());
             }
             trace!("{} {}", id, op_id);
 
@@ -504,12 +514,13 @@ mod test {
     }
 
     fn run_node(
+        auto_name: String,
         node_id: NID,
         address: SocketAddr,
         history: History,
         enable_check: bool,
     ) -> Res<()> {
-        let node = Arc::new(TestNode::new(node_id, history, enable_check)?);
+        let node = Arc::new(TestNode::new(auto_name, node_id, history, enable_check)?);
         let local = LocalSet::new();
         {
             let addr = address.clone();

@@ -178,6 +178,7 @@ mod test {
 
     #[test]
     fn test_action_map_order() {
+        println!("test_action_map_order");
         let s1 = r#"
 {
    "Input":{
@@ -230,11 +231,14 @@ mod test {
         let v2 = serde_json::from_str(s2).unwrap();
         let a1 = ActionJson::from_json_value(v1).unwrap();
         let a2 = ActionJson::from_json_value(v2).unwrap();
-        assert_eq!(a1, a2);
+        assert_eq!(a1, a2, "test_action_map_order action  value not equal {:?} /= {:?}",
+                   a1.to_serde_json_string(),
+                   a2.to_serde_json_string());
         let mut h1 = DefaultHasher::new();
         let mut h2 = DefaultHasher::new();
         a1.hash(&mut h1);
         a2.hash(&mut h2);
-        assert_eq!(h1.finish(), h2.finish());
+        assert_eq!(h1.finish(), h2.finish(), "test_action_map_order hash value not equal");
+        println!("end test_action_map_order");
     }
 }
