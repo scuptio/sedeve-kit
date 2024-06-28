@@ -64,7 +64,7 @@ During testing, we add invariants to assert the correctness of our assumptions.
 
 ## Example
 [Two-Phase Commit Protocol(2PC)](https://en.wikipedia.org/wiki/Two-phase_commit_protocol) is a atomic commit protocol.
-The example of using this kit to develop 2PC could be found at [this repo](https://github.com/scuptio/example-2pc).
+The example of using this kit to develop 2PC could be found at [example-2pc](https://github.com/scuptio/example-2pc).
 
 [Raft](https://raft.github.io/) consensus algorithm.
-We implement Raft[repo](https://github.com/scuptio/scupt-raft)
+We implement [scupt-raft](https://github.com/scuptio/scupt-raft)
