@@ -80,7 +80,7 @@ fn _subgraph_g1_to_g2_dfs<V: Eq + Hash + Clone>(
 }
 
 #[cfg(test)]
-mod tests {
+mod test {
     use super::*;
 
     #[test]

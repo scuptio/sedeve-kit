@@ -31,7 +31,6 @@ substring = "1.4.5"
 tracing = "0.1.37"
 tracing-subscriber = "0.3.14"
 log = "0.4.17"
-tree-sitter = { git = "https://github.com/scuptio/tree-sitter" }
 project-root = "0.2.2"
 bincode = "2.0.0-rc.3"
 serde = { version = "1.0.197", features = ["derive", "rc"] }

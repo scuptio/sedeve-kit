@@ -27,7 +27,7 @@ pub struct PlayerConf {
 
 
 #[cfg(test)]
-mod tests {
+mod test {
     use crate::player_conf::{NodeAddr, PlayerConf};
 
     #[test]

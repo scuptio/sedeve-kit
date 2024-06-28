@@ -59,7 +59,7 @@ fn _covering_walk_path_dfs<V: Eq + Hash + Clone + Debug>(
 }
 
 #[cfg(test)]
-mod tests {
+mod test {
     use std::str::FromStr;
 
     use scupt_util::error_type::ET;

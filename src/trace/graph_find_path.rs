@@ -494,13 +494,13 @@ fn _find_path(adj: &HashMap<i32, Vec<i32>>) {
 
 
 #[cfg(test)]
-mod tests {
+mod test {
     use std::fs::read_to_string;
     use std::sync::atomic::{AtomicI64, Ordering};
 
     use scupt_util::init_logger::logger_setup;
 
-    use crate::data::path::test::test_data_path;
+    use crate::data::path::_test::_test_data_path;
 
     use super::*;
 
@@ -546,7 +546,7 @@ mod tests {
     #[test]
     fn test_contracted_scc() {
         logger_setup();
-        let test_case_path = test_data_path("graph_adj.json".to_string()).unwrap();
+        let test_case_path = _test_data_path("graph_adj.json".to_string());
         let json_string = read_to_string(test_case_path).unwrap();
         let adj_map = serde_json_string_to_std_map(&json_string);
         let _ = std_map_to_serde_json_string(&adj_map);

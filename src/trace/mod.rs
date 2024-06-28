@@ -3,7 +3,7 @@ pub mod trace_reader;
 pub mod gen_case;
 pub mod read_json;
 
-pub(crate) mod action_graph;
+pub mod action_graph;
 
 mod graph_find_path;
 
@@ -11,8 +11,6 @@ mod graph_util;
 mod graph_find_scc;
 mod cover_walk_path;
 mod subgraph_path;
-
-mod test_to_trace;
 mod test_trace_reader;
 pub mod to_json_value;
 pub mod action_from_state_db;
