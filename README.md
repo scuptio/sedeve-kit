@@ -65,10 +65,6 @@ This process is iterative and can evolve continuously.
 To use the kit, see [how to start](doc/how_to_start.md).
 
 
-##  TODO
-
-[todo](doc/todo.md)
-
 
 
 
