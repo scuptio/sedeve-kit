@@ -93,7 +93,12 @@ fn strong_connect<T: Eq + Hash + Clone + Ord + Debug>(
             on_stack.remove(&u);
 
             // Get the neighbors of the vertex
-            let w_neighbors = adj.get(&u).unwrap().clone();
+            let w_neighbors = if let Some(n) = adj.get(&u) {
+                n.clone()
+            } else {
+                vec![]
+            };
+
             for n in &w_neighbors {
                 if v_set.contains(n) {
                     // Add the node and its neighbors to the strongly connected component

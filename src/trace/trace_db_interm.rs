@@ -157,6 +157,7 @@ impl TraceDBInterm {
         let _ = res_sqlite(_r)?;
         Ok(())
     }
+
     pub fn write_action(&self, batch: Vec<(i64, i64, String, String)>) -> Res<()> {
         let mut conn = self.conn.lock().unwrap();
         let r_tran = conn.transaction();

@@ -1,14 +1,13 @@
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::time::Instant;
 
 use scupt_util::res::Res;
 use serde_json::Value;
 use tracing::info;
 
-use crate::trace::action_from_state_db::graph_read_actions_from_state_db;
+use crate::trace::action_from_state_db::state_db_to_from_action;
 use crate::trace::action_graph::ActionGraph;
-use crate::trace::graph_find_path::gen_new_vertex_id;
 use crate::trace::trace_builder::{OptBuild, TraceBuilder};
 use crate::trace::trace_db_interm::{Stage, TraceDBInterm};
 
@@ -44,12 +43,12 @@ pub fn gen_case(
     let inst = Instant::now();
     match data_input {
         DataInput::StateDB(path) => {
-            let graph = graph_read_actions_from_state_db(path.clone(), dict, intermediate.clone(), sqlite_cache_size)?;
+            let graph = state_db_to_from_action(path.clone(), dict, intermediate.clone(), sqlite_cache_size)?;
             let duration = inst.elapsed();
             info!("Time elapsed to read from state DB {} and write actions, time costs: {:?}", path, duration);
 
             let inst = Instant::now();
-            action_graph_output_to_db(&gen_new_vertex_id, &graph, intermediate.clone(), sqlite_cache_size)?;
+            action_graph_output_to_db(&graph, intermediate.clone(), sqlite_cache_size)?;
             let duration = inst.elapsed();
             info!("Time elapsed to generate path, time costs: {:?}",  duration);
         }
@@ -69,10 +68,7 @@ pub fn gen_case(
 }
 
 
-fn action_graph_output_to_db<
-    NV: Fn(&HashSet<i64>) -> i64,
->(
-    fn_new_vertex: &NV,
+fn action_graph_output_to_db(
     action_graph: &ActionGraph<i64>,
     db_path: String,
     sqlite_cache_size: Option<u64>,
@@ -116,7 +112,7 @@ fn action_graph_output_to_db<
         };
 
         let inst = Instant::now();
-        action_graph.handle_action(fn_new_vertex, &f_write_path)?;
+        action_graph.build_path( &f_write_path)?;
         {
             write_batch_to_db();
         }

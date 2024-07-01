@@ -20,26 +20,39 @@ ActionGraph<K> {
     pub fn new(
         adj: HashMap<K, Vec<K>>,
     ) -> Self {
+        let mut adj = adj;
+        Self::formalize_adj(&mut adj);
         Self {
             adj,
         }
     }
 
-    pub fn handle_action<NV, FP>(
+    pub fn formalize_adj(adj:& mut HashMap<K, Vec<K>>) {
+        let mut s = HashSet::new();
+        for (_k, v) in adj.iter_mut() {
+            v.sort();
+            for _v in v.iter() {
+                s.insert(_v.clone());
+            }
+        }
+
+
+        for i in s {
+            if !adj.contains_key(&i) {
+                adj.insert(i, vec![]);
+            }
+        }
+    }
+
+    pub fn build_path< FP>(
         &self,
-        fn_new_vertex: &NV,
         fn_handle_path: &FP,
     ) -> Res<()>
         where
-        // create a new vertex ID not in set
-            NV: Fn(&HashSet<K>) -> K,
         // on finding a path
             FP: Fn(Vec<K>)
 
     {
-        let fn_find_scc = |s: &HashMap<K, Vec<K>>, i: &K| {
-            trace!("find scc {:?}, {:?}", i, s);
-        };
         let adj = self.adj.clone();
         let fn_find_path = |v: Vec<K>| {
             trace!("find path {:?}", v);
@@ -70,8 +83,10 @@ ActionGraph<K> {
             }
             fn_handle_path(v);
         };
-        graph_find_path(&self.adj, &fn_new_vertex, &fn_find_scc, &fn_find_path);
+        graph_find_path(&self.adj, &fn_find_path);
 
         Ok(())
     }
 }
+
+
