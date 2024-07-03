@@ -7,6 +7,7 @@ use std::hash::Hash;
 // g1: A HashMap storing the adjacent relations of the first subgraph.
 // g2: A HashMap storing the adjacent relations of the second subgraph.
 // Returns a Result containing a vector of vertices representing the path, or an error if no path is found.
+#[allow(dead_code)]
 pub fn subgraph_from_g1_to_g2_path<V: Eq + Hash + Clone>(
     start: V,
     g: &HashMap<V, Vec<V>>,

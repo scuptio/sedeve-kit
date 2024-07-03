@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -9,10 +8,8 @@ use rand::distributions::{Distribution, Standard};
 
 use tracing::{info, trace};
 
-use crate::trace::cover_walk_path::covering_walk_path;
 use crate::trace::graph_find_scc::graph_find_scc;
 use crate::trace::graph_util::{adj_add_new_edge, adj_remove_edge};
-use crate::trace::subgraph_path::subgraph_from_g1_to_g2_path;
 
 pub fn graph_find_path<V,  FP>(
     adj: &HashMap<V, Vec<V>>,
@@ -131,9 +128,7 @@ fn dfs_find_path<V, FP>(
 }
 
 
-
-
-
+#[allow(dead_code)]
 fn contracted_scc<V, NV, FC>(
     adj: &HashMap<V, Vec<V>>,
     fn_new_vertex: &NV,
@@ -278,7 +273,7 @@ fn contracted_one_scc<T: Eq + Hash + Clone + Ord + Debug, F>(
     }
 }
 
-
+#[allow(dead_code)]
 pub fn gen_new_vertex_id<T: Hash + Clone + Eq>(s: &HashSet<T>) -> T
     where Standard: Distribution<T>
 {
