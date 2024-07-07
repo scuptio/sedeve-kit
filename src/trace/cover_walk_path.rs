@@ -8,6 +8,7 @@ use tracing::trace;
 // start: The start vertex.
 // scc: A HashMap storing the adjacent relations of the strongly connected component.
 // Returns a Result containing a vector of vertices representing the covering walk path.
+#[allow(dead_code)]
 pub fn covering_walk_path<V: Eq + Hash + Clone + Debug>(start: V, scc: &HashMap<V, Vec<V>>) -> Result<Vec<V>, String> {
     let mut visited = HashSet::new();
     let mut visited_adj = HashSet::new();

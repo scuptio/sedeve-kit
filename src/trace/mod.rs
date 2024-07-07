@@ -17,3 +17,5 @@ pub mod action_from_state_db;
 mod test_state_db_to_case;
 pub mod trace_db_interm;
 pub mod trace_db;
+pub mod fuzz_graph;
+

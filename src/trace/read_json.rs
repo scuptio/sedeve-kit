@@ -41,6 +41,8 @@ pub fn tla_constant_mapping(opt_path: Option<String>) -> Res<HashMap<String, Val
 }
 
 
+
+#[cfg(test)]
 mod tests {
     use std::collections::HashMap;
     use std::fs;

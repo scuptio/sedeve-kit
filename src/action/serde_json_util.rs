@@ -1,7 +1,6 @@
 use scupt_util::error_type::ET;
-use scupt_util::error_type::ET::NoneOption;
 use scupt_util::res::Res;
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value};
 use tracing::error;
 
 pub fn json_util_map_get_value(map: &Map<String, Value>, key: &str) -> Res<Value> {
@@ -50,9 +49,15 @@ pub fn json_util_map_get_i64(map: &Map<String, Value>, key: &str) -> Res<i64> {
     }
 }
 
-#[test]
-fn test_serde_json_util() {
-    let j = json!({
+#[cfg(test)]
+mod test {
+    use scupt_util::error_type::ET;
+    use serde_json::json;
+    use crate::action::serde_json_util::{json_util_map_get_i64, json_util_map_get_string, json_util_map_get_value, json_util_map_get_value_ref};
+
+    #[test]
+    fn test_serde_json_util() {
+        let j = json!({
         "i64":1,
         "string":"s",
         "value" : {
@@ -61,23 +66,24 @@ fn test_serde_json_util() {
         }
     });
 
-    let map = j.as_object().unwrap();
+        let map = j.as_object().unwrap();
 
-    // OK
-    assert_eq!(Ok(1), json_util_map_get_i64(map, "i64"));
-    assert_eq!(Ok("s".to_string()), json_util_map_get_string(map, "string"));
-    let r1 = json_util_map_get_value(map, "value");
-    assert!(r1.is_ok());
-    let r1 = json_util_map_get_value_ref(map, "value");
-    assert!(r1.is_ok());
+        // OK
+        assert_eq!(Ok(1), json_util_map_get_i64(map, "i64"));
+        assert_eq!(Ok("s".to_string()), json_util_map_get_string(map, "string"));
+        let r1 = json_util_map_get_value(map, "value");
+        assert!(r1.is_ok());
+        let r1 = json_util_map_get_value_ref(map, "value");
+        assert!(r1.is_ok());
 
-    // non exist
-    assert_eq!(Err(NoneOption), json_util_map_get_i64(map, "non_exist"));
-    assert_eq!(Err(NoneOption), json_util_map_get_string(map, "non_exist"));
-    assert_eq!(Err(NoneOption), json_util_map_get_value(map, "non_exist"));
-    assert_eq!(Err(NoneOption),  json_util_map_get_value(map, "non_exist"));
+        // non exist
+        assert_eq!(Err(ET::NoneOption), json_util_map_get_i64(map, "non_exist"));
+        assert_eq!(Err(ET::NoneOption), json_util_map_get_string(map, "non_exist"));
+        assert_eq!(Err(ET::NoneOption), json_util_map_get_value(map, "non_exist"));
+        assert_eq!(Err(ET::NoneOption), json_util_map_get_value(map, "non_exist"));
 
-    // wrong types
-    assert_eq!(Err(NoneOption), json_util_map_get_i64(map, "string"));
-    assert_eq!(Err(NoneOption), json_util_map_get_string(map, "i64"));
+        // wrong types
+        assert_eq!(Err(ET::NoneOption), json_util_map_get_i64(map, "string"));
+        assert_eq!(Err(ET::NoneOption), json_util_map_get_string(map, "i64"));
+    }
 }
