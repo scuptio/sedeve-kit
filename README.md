@@ -13,7 +13,7 @@ Code development: We write the code according to the established specifications,
 System testing: Upon completing the coding process, we rigorously test the system using the test cases generated in the initial stage.
 By maintaining a connection between abstract design and concrete implementation, we can confidently guarantee the quality of our system. This approach ensures our design's accuracy and fosters consistency throughout the development process, ultimately resulting in a reliable and high-quality distributed system.
 
-![architecture](doc/figure/verifying.png)
+[<img src="doc/figure/verifying.png" width="100%">](https://youtu.be/dKuNG8LW0yg "Click to view the demo video")
 
 
 ## Bridge the gap between design and implementation
