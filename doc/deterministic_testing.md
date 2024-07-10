@@ -2,11 +2,11 @@
 
 When running deterministic testing, the message channel would be taken over by the *deterministic player*.
 
-![deterministic testing](../doc/figure/dtm_testing.jpg)
+![deterministic testing](../doc/figure/dtm_testing.svg)
 
 The figure below illustrates how the *deterministic player* reorders the actions based on predefined orders.
 
-![reorder_action](../doc/figure/reorder_actions.png)
+![reorder_action](../doc/figure/reorder_actions.svg)
 
 The physical system will align with the logical model, ensuring consistency.
 Our framework incorporates various macros to facilitate the implementation of *anchor actions*

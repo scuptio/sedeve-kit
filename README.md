@@ -13,7 +13,7 @@ Code development: We write the code according to the established specifications,
 System testing: Upon completing the coding process, we rigorously test the system using the test cases generated in the initial stage.
 By maintaining a connection between abstract design and concrete implementation, we can confidently guarantee the quality of our system. This approach ensures our design's accuracy and fosters consistency throughout the development process, ultimately resulting in a reliable and high-quality distributed system.
 
-[<img src="doc/figure/verifying.png" width="100%">](https://youtu.be/IKqJ6UX1q2o "Click to view the demo video")
+[<img src="doc/figure/verifying.svg" width="100%">](https://youtu.be/IKqJ6UX1q2o "Click to view the demo video")
 
 
 ## Bridge the gap between design and implementation
@@ -22,7 +22,7 @@ To bridge the gap between design and implementation,
 the tool makes the implementation a precise refinement of the design. 
 Think of the design as a low-resolution animation, containing only the keyframes. The implementation, on the other hand, is a high-definition animation that not only preserves the keyframes but also adds more details. This ensures a seamless transition from concept to reality and aligns the original design while adding the necessary details for the implementation.
 
-![architecture](doc/figure/design_to_impl.png)
+![architecture](doc/figure/design_to_impl.svg)
 
 
 ## Architecture
@@ -38,7 +38,7 @@ The architecture of **sedeve-kit** is as the following figure, which includes th
 **S-Net**: Library to build network channel
 
 
-![architecture](doc/figure/architecture.png)
+![architecture](doc/figure/architecture.svg)
 
 ## Workflow
 
