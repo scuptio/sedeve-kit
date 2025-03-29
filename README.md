@@ -1,8 +1,6 @@
 # sedeve-kit
 
-![build](https://github.com/scuptio/sedeve-kit/actions/workflows/build.yaml/badge.svg)
-
-
+![build](../../actions/workflows/build.yaml/badge.svg)
 
 
 Developing distributed systems is challenging due to the complexities of ensuring correctness with existing concurrency and faults. 
