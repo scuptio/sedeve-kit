@@ -8,13 +8,15 @@ Follow these steps to set it up:
    [StateDB](https://github.com/scuptio/SedeveModules/blob/master/modules/StateDB.tla),
    [GenID](https://github.com/scuptio/SedeveModules/blob/master/modules/GenID.tla) .
 
-   Download the [SQLite JDBC driver jar](https://github.com/xerial/sqlite-jdbc/releases/download/3.45.3.0/sqlite-jdbc-3.45.3.0.jar)
+   Download [CommunityModules](https://github.com/tlaplus/CommunityModules/releases)
+   
+   Download [SQLite JDBC driver](https://github.com/xerial/sqlite-jdbc/releases/download/3.45.3.0/sqlite-jdbc-3.45.3.0.jar), SedeveModules save state space to SQLite DB.
 
-2. In tla+ toolbox, go to
+3. In tla+ toolbox, go to
 
    File -> Preferences -> TLA+ Preference
 
-   Specify TLA+ library path option of *SedeveModules*,  *SQLite JDBC driver*
+   Specify TLA+ library path option of *SedeveModules*,  *SQLite JDBC driver*, *CommunityModules*
 
 
    <img src="../doc/figure/set_library_path_locations.png" width="50%" height="50%">
