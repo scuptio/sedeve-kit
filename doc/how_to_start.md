@@ -26,8 +26,17 @@ to specify the action of [I/O automata](doc/model_the_system.md) and output the 
 ``` 
 -Dtlc2.overrides.TLCOverrides=tlc2.overrides.TLCOverrides:tlc2.overrides.SedeveTLCOverrides
 ```
+for Linux/Unix OS;
 
-   The "tlc2.overrides.TLCOverrides" is used by [ComunityModeules](https://github.com/tlaplus/CommunityModules); and "the tlc2.overrides.SedeveTLCOverrides" is used by [SedeveModules](https://github.com/scuptio/SedeveModules/).
+or 
+``` 
+-Dtlc2.overrides.TLCOverrides=tlc2.overrides.TLCOverrides;tlc2.overrides.SedeveTLCOverrides
+```
+for Windows OS.
+
+Use the correct separator (`:` or `;`) according to your OS.
+
+   The "tlc2.overrides.TLCOverrides" is for [ComunityModeules](https://github.com/tlaplus/CommunityModules); and "the tlc2.overrides.SedeveTLCOverrides" is for [SedeveModules](https://github.com/scuptio/SedeveModules/).
 
    More about overrides, see [SpecProcessor.java](https://github.com/tlaplus/tlaplus/blob/72793369891dd72d31d6d48444df18b33434c966/tlatools/org.lamport.tlatools/src/tlc2/tool/impl/SpecProcessor.java#L637),
    [TLCOverrides.java](https://github.com/tlaplus/CommunityModules/blob/9c13c116cbcb4975c7d33ee7a71ba471b88687b2/modules/tlc2/overrides/TLCOverrides.java#L29)
